@@ -291,6 +291,6 @@ We especially value contributions that:
 
 ---
 
-**Questions?** Contact us at contributors@webqx.health
+**Questions?** Contact us at info@webqx.health
 
 Thank you for contributing to better healthcare technology! 🏥💙
