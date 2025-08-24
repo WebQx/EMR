@@ -19,6 +19,7 @@
     "telehealth:stop": "cd modules/telehealth/deployment && find . -name docker-compose.yml -execdir docker-compose down \\;",
     "telehealth:test": "jest modules/telehealth/tests/",
     "telehealth:health": "curl -f http://localhost:3000/health/telehealth",
+  "verify:telemetry": "node tools/flutter/telemetry_verify.js",
     "chatehr:mock": "node scripts/start-mock-chatehr.js",
     "chatehr:test": "jest __tests__/chatEHR.test.js",
     "chatehr:health": "curl -f http://localhost:3000/api/chatehr/health"
@@ -74,6 +75,7 @@
     "node": ">=16.0.0"
   },
   "devDependencies": {
+  "@google-analytics/data": "^1.4.0",
     "@testing-library/jest-dom": "^6.6.4",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",

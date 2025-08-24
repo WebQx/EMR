@@ -1,0 +1,209 @@
+name: Flutter platform checks (Android / Windows / iOS)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  ubuntu-android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      - name: Restore Android google-services.json from secrets
+        if: secrets.ANDROID_GOOGLE_SERVICES_JSON != ''
+        run: |
+          echo "Restoring android/app/google-services.json from secret"
+          echo "${{ secrets.ANDROID_GOOGLE_SERVICES_JSON }}" | base64 --decode > android/app/google-services.json
+
+      - name: Make check script executable
+        run: chmod +x tools/flutter/check_flutter_firebase_configs.sh || true
+
+      - name: Run firebase config checker
+        run: ./tools/flutter/check_flutter_firebase_configs.sh
+
+      - name: Locate Flutter pubspecs and print package names
+        run: |
+          echo "Searching workspace for pubspec.yaml files..."
+          found=0
+          while IFS= read -r f; do
+            found=1
+            echo "--- Found: $f"
+            awk '/^[[:space:]]*name:[[:space:]]*/{print; exit}' "$f" || echo "  name: (not found)"
+          done < <(find . -name pubspec.yaml -print)
+          if [ "$found" -eq 0 ]; then
+            echo "No pubspec.yaml files found in workspace."
+          fi
+
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      - name: Build Android
+        run: flutter build apk --release
+
+      - name: Upload Android artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk
+          path: build/app/outputs/flutter-apk/*.apk
+
+      - name: Cleanup restored Android config
+        if: always()
+        run: |
+          if [ -f android/app/google-services.json ]; then
+            rm -f android/app/google-services.json && echo "Removed android/app/google-services.json"
+          fi
+
+  windows-desktop:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      - name: Restore Windows firebase config (optional)
+        if: secrets.WINDOWS_FIREBASE_CONFIG_JSON != ''
+        run: |
+          echo "Restoring windows/firebaseConfig.json"
+          echo "${{ secrets.WINDOWS_FIREBASE_CONFIG_JSON }}" | base64 --decode > windows/firebaseConfig.json
+
+      - name: Make check script executable
+        run: chmod +x tools/flutter/check_flutter_firebase_configs.sh || true
+
+      - name: Run firebase config checker
+        run: ./tools/flutter/check_flutter_firebase_configs.sh || true
+
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      - name: Build Windows
+        run: flutter build windows
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-build
+          path: build/windows/runner/Release/* || true
+
+      - name: Cleanup restored Windows config
+        if: always()
+        run: |
+          if [ -f windows/firebaseConfig.json ]; then
+            rm -f windows/firebaseConfig.json && echo "Removed windows/firebaseConfig.json"
+          fi
+
+  macos-ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      - name: Restore iOS GoogleService-Info.plist from secrets
+        if: secrets.IOS_GOOGLE_SERVICE_PLIST != ''
+        run: |
+          echo "Restoring ios/Runner/GoogleService-Info.plist"
+          echo "${{ secrets.IOS_GOOGLE_SERVICE_PLIST }}" | base64 --decode > ios/Runner/GoogleService-Info.plist
+
+      - name: Make check script executable
+        run: chmod +x tools/flutter/check_flutter_firebase_configs.sh || true
+
+      - name: Run firebase config checker
+        run: ./tools/flutter/check_flutter_firebase_configs.sh || true
+
+      - name: Flutter doctor
+        run: flutter doctor -v
+
+      - name: Build iOS (no codesign)
+        run: flutter build ios --no-codesign || true
+
+      - name: Upload iOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build
+          path: build/ios/iphoneos/* || true
+
+      - name: Cleanup restored iOS config
+        if: always()
+        run: |
+          if [ -f ios/Runner/GoogleService-Info.plist ]; then
+            rm -f ios/Runner/GoogleService-Info.plist && echo "Removed ios/Runner/GoogleService-Info.plist"
+          fi
+
+  android-integration:
+    runs-on: ubuntu-latest
+    needs: ubuntu-android
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+
+      - name: Install Android SDK components
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip lib32stdc++6 lib32z1 qemu-kvm
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline-tools.zip
+          unzip -q /tmp/cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools
+          mv $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools $ANDROID_SDK_ROOT/cmdline-tools/latest || true
+          export PATH="$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin"
+          yes | sdkmanager --sdk_root=$ANDROID_SDK_ROOT --licenses || true
+          sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-33" "system-images;android-33;google_apis;x86_64" "emulator"
+
+      - name: Create and start emulator
+        run: |
+          echo "no" | $ANDROID_SDK_ROOT/cmdline-tools/latest/bin/avdmanager create avd -n testAVD -k "system-images;android-33;google_apis;x86_64" --device "pixel_c" --force
+          $ANDROID_SDK_ROOT/emulator/emulator -avd testAVD -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect >/dev/null 2>&1 &
+          adb wait-for-device
+          for i in $(seq 1 60); do
+            if [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r\n')" = "1" ]; then
+              echo "Emulator booted"
+              break
+            fi
+            sleep 2
+          done
+
+      - name: Build debug APK for integration tests
+        run: flutter build apk --debug
+
+      - name: Install APK on emulator
+        run: |
+          adb install -r build/app/outputs/flutter-apk/app-debug.apk || true
+
+      - name: Run integration tests
+        run: |
+          flutter drive --driver=integration_test/driver.dart --target=integration_test/app_test.dart || true
+
+      - name: Collect integration artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-artifacts
+          path: integration_test_artifacts/** || true
+
+      - name: Run telemetry verification
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          chmod +x tools/flutter/verify_telemetry.sh || true
+          ./tools/flutter/verify_telemetry.sh || true
+
+      - name: Stop emulator
+        run: |
+          if adb devices | grep -q emulator; then
+            adb emu kill || true
+          fi
