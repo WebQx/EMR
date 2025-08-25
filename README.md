@@ -1,4 +1,4 @@
-# 🌐 WebQX™: Healthcare Platform
+# 🌐 WebQX: Healthcare Platform
 
 Empowering Patients and Supporting Providers. Free access for Medically Underserved Populations around the Globe.
 
@@ -6,7 +6,7 @@ Empowering Patients and Supporting Providers. Free access for Medically Underser
 
 ## 🚀 Overview
 
-WebQX™ is a modular healthcare stack supporting 12+ specialties, multilingual access, health equity, and global compliance (HIPAA, GDPR, LGPD). Its architecture enables scalable, customizable deployments for clinics and hospitals worldwide.
+WebQX is a modular healthcare stack supporting 12+ specialties, multilingual access, health equity, and global compliance (HIPAA, GDPR, LGPD). Its architecture enables scalable, customizable deployments for clinics and hospitals worldwide.
 
 ---
 
