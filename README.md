@@ -168,6 +168,6 @@ See [`LICENSE.md`](./LICENSE.md), [`nda-template.md`](./legal/nda-template.md), 
 
 ---
 
-Crafted with ❤️ by [@webqx-health](https://github.com/webqx-health)  
+Contact: [info@webqx.healthcare](https://github.com/webqx-health)  
 _“Care equity begins with code equity.”_
 
