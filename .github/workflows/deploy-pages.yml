@@ -194,6 +194,20 @@ jobs:
                 var newUrl = window.location.origin + '/webqx/login.html' + query + hash;
                 console.log('Redirecting to:', newUrl);
                 window.location.replace(newUrl);
+              } else if (path === '/auth/providers/login.html' || path === '/auth/providers/login') {
+                var newUrl = window.location.origin + '/webqx/auth/providers/login.html' + query + hash;
+                console.log('Redirecting provider login to:', newUrl);
+                window.location.replace(newUrl);
+              } else if (path.startsWith('/auth/')) {
+                // Handle any auth routes
+                var newUrl = window.location.origin + '/webqx' + path;
+                console.log('Redirecting auth route to:', newUrl);
+                window.location.replace(newUrl);
+              } else if (path.startsWith('/provider/')) {
+                // Handle provider routes
+                var newUrl = window.location.origin + '/webqx' + path;
+                console.log('Redirecting provider route to:', newUrl);
+                window.location.replace(newUrl);
               } else if (path === '/webqx' || path === '/webqx/') {
                 var newUrl = window.location.origin + '/webqx/index.html' + query + hash;
                 console.log('Redirecting to:', newUrl);
@@ -215,8 +229,11 @@ jobs:
                     <h1>🏥 WebQX Healthcare Platform</h1>
                     <h2>Page Not Found (404)</h2>
                     <p>The page you're looking for doesn't exist.</p>
-                    <p><a href="/webqx/" style="color: #007bff; text-decoration: none;">← Return to Main Portal</a></p>
-                    <p><a href="/webqx/login.html" style="color: #007bff; text-decoration: none;">🔒 Login Page</a></p>
+                    <p><strong>Try these links:</strong></p>
+                    <p><a href="/webqx/" style="color: #007bff; text-decoration: none;">🏠 Main Portal</a></p>
+                    <p><a href="/webqx/login.html" style="color: #007bff; text-decoration: none;">🔒 Patient Login</a></p>
+                    <p><a href="/webqx/auth/providers/login.html" style="color: #007bff; text-decoration: none;">�‍⚕️ Provider Login</a></p>
+                    <p><a href="/webqx/provider/" style="color: #007bff; text-decoration: none;">🏥 Provider Portal</a></p>
                   </div>
                 `;
               }
@@ -228,7 +245,7 @@ jobs:
               <p>Redirecting...</p>
               <noscript>
                 <p>Please enable JavaScript or visit:</p>
-                <p><a href="/webqx/">Main Portal</a> | <a href="/webqx/login.html">Login</a></p>
+                <p><a href="/webqx/">Main Portal</a> | <a href="/webqx/login.html">Patient Login</a> | <a href="/webqx/auth/providers/login.html">Provider Login</a></p>
               </noscript>
             </div>
           </body>
