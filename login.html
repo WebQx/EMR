@@ -271,6 +271,13 @@
                 <button type="button" class="link-button" id="mode-toggle">
                     Don't have an account? Create one
                 </button>
+                
+                <!-- Demo access button for GitHub Pages -->
+                <div id="demo-access" style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6;">
+                    <button type="button" class="link-button" id="demo-button" style="color: #28a745; font-weight: 600;">
+                        🎯 Quick Demo Access - No Registration Required
+                    </button>
+                </div>
             </div>
         </form>
 
@@ -301,6 +308,7 @@
         const submitButton = document.getElementById('submit-button');
         const buttonText = document.getElementById('button-text');
         const modeToggle = document.getElementById('mode-toggle');
+        const demoButton = document.getElementById('demo-button');
 
         // Simple client-side encryption using base64
         function encryptData(data) {
@@ -471,6 +479,41 @@
                     data[key] = value;
                 }
 
+                // For GitHub Pages demo, simulate successful authentication
+                if (window.location.hostname.includes('github.io')) {
+                    // Simulate server delay
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    if (isRegistrationMode) {
+                        // Registration successful
+                        showBanner('Account created successfully! Please sign in with your credentials.', 'success');
+                        toggleMode();
+                        authForm.reset();
+                    } else {
+                        // Login successful - create demo user
+                        const demoUser = {
+                            id: 'demo-user-' + Math.random().toString(36).substr(2, 9),
+                            name: data.firstName ? `${data.firstName} ${data.lastName}` : 'Demo User',
+                            email: data.email,
+                            accountStatus: 'Active',
+                            role: data.role || 'PATIENT'
+                        };
+                        
+                        showBanner('Login successful! Redirecting to portal...', 'success');
+                        
+                        // Store authentication for GitHub Pages demo
+                        localStorage.setItem('authToken', 'demo-token-12345');
+                        localStorage.setItem('user', JSON.stringify(demoUser));
+                        
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1500);
+                    }
+                    setLoading(false);
+                    return;
+                }
+
+                // Original server-based authentication (for local development)
                 // Encrypt password
                 data.password = encryptData(data.password);
 
@@ -496,8 +539,19 @@
                     } else {
                         // Login successful
                         showBanner('Login successful! Redirecting to portal...', 'success');
+                        
+                        // Store authentication for GitHub Pages demo
+                        localStorage.setItem('authToken', result.token || 'demo-token-12345');
+                        localStorage.setItem('user', JSON.stringify(result.user || {
+                            id: 'demo-user-1',
+                            name: data.firstName ? `${data.firstName} ${data.lastName}` : 'Demo User',
+                            email: data.email,
+                            accountStatus: 'Active',
+                            role: data.role || 'PATIENT'
+                        }));
+                        
                         setTimeout(() => {
-                            window.location.href = '/';
+                            window.location.href = 'index.html';
                         }, 1500);
                     }
                 } else {
@@ -526,9 +580,35 @@
             }
         }
 
+        // Demo access function
+        function accessDemo() {
+            setLoading(true);
+            showBanner('Setting up demo access...', 'success');
+            
+            // Create demo user
+            const demoUser = {
+                id: 'demo-user-1',
+                name: 'Demo Patient',
+                email: 'demo@webqx.com',
+                accountStatus: 'Active',
+                role: 'PATIENT'
+            };
+            
+            // Store authentication for demo
+            localStorage.setItem('authToken', 'demo-token-12345');
+            localStorage.setItem('user', JSON.stringify(demoUser));
+            
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1000);
+        }
+
         // Event listeners
         authForm.addEventListener('submit', handleSubmit);
         modeToggle.addEventListener('click', toggleMode);
+        if (demoButton) {
+            demoButton.addEventListener('click', accessDemo);
+        }
 
         // Clear errors when user starts typing
         document.querySelectorAll('input').forEach(input => {
@@ -544,18 +624,38 @@
         });
 
         // Check if user is already authenticated
-        fetch('/auth/verify', { credentials: 'include' })
-            .then(response => response.json())
-            .then(result => {
-                if (result.success && result.authenticated) {
-                    // User is already logged in, redirect to portal
-                    window.location.href = '/';
-                }
-            })
-            .catch(err => {
-                // Ignore errors for this check
-                console.log('Auth check failed:', err);
-            });
+        if (window.location.hostname.includes('github.io')) {
+            // Show demo access button for GitHub Pages
+            const demoAccess = document.getElementById('demo-access');
+            if (demoAccess) demoAccess.style.display = 'block';
+            
+            // For GitHub Pages, check localStorage for demo authentication
+            const authToken = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+            
+            if (authToken && user) {
+                // User is already logged in, redirect to portal
+                window.location.href = 'index.html';
+            }
+        } else {
+            // Hide demo access button for local development
+            const demoAccess = document.getElementById('demo-access');
+            if (demoAccess) demoAccess.style.display = 'none';
+            
+            // For local development, check server authentication
+            fetch('/auth/verify', { credentials: 'include' })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success && result.authenticated) {
+                        // User is already logged in, redirect to portal
+                        window.location.href = 'index.html';
+                    }
+                })
+                .catch(err => {
+                    // Ignore errors for this check
+                    console.log('Auth check failed:', err);
+                });
+        }
     </script>
 </body>
 </html>

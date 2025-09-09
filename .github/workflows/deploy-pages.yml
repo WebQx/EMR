@@ -162,21 +162,52 @@ jobs:
               // GitHub Pages redirect handler
               var path = window.location.pathname;
               var query = window.location.search;
+              var hash = window.location.hash;
+              
+              console.log('404 handler - current path:', path);
               
               // Handle common routes
               if (path === '/login' || path === '/webqx/login') {
-                window.location.href = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '') + '/login.html' + query;
+                var newUrl = window.location.origin + '/webqx/login.html' + query + hash;
+                console.log('Redirecting to:', newUrl);
+                window.location.replace(newUrl);
+              } else if (path === '/webqx' || path === '/webqx/') {
+                var newUrl = window.location.origin + '/webqx/index.html' + query + hash;
+                console.log('Redirecting to:', newUrl);
+                window.location.replace(newUrl);
               } else if (path.endsWith('/')) {
                 // Try adding index.html
-                window.location.href = window.location.href + 'index.html';
-              } else {
+                var newUrl = window.location.href + 'index.html';
+                console.log('Trying:', newUrl);
+                window.location.replace(newUrl);
+              } else if (!path.includes('.')) {
                 // Try adding .html extension
-                window.location.href = window.location.href + '.html';
+                var newUrl = window.location.href + '.html';
+                console.log('Trying:', newUrl);
+                window.location.replace(newUrl);
+              } else {
+                // Show a proper 404 page
+                document.body.innerHTML = `
+                  <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+                    <h1>🏥 WebQX Healthcare Platform</h1>
+                    <h2>Page Not Found (404)</h2>
+                    <p>The page you're looking for doesn't exist.</p>
+                    <p><a href="/webqx/" style="color: #007bff; text-decoration: none;">← Return to Main Portal</a></p>
+                    <p><a href="/webqx/login.html" style="color: #007bff; text-decoration: none;">🔒 Login Page</a></p>
+                  </div>
+                `;
               }
             </script>
           </head>
           <body>
-            <p>Redirecting...</p>
+            <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+              <h1>🏥 WebQX Healthcare Platform</h1>
+              <p>Redirecting...</p>
+              <noscript>
+                <p>Please enable JavaScript or visit:</p>
+                <p><a href="/webqx/">Main Portal</a> | <a href="/webqx/login.html">Login</a></p>
+              </noscript>
+            </div>
           </body>
           </html>
           EOF
