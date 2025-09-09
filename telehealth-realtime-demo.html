@@ -110,6 +110,39 @@
             0%, 60%, 100% { transform: translateY(0); }
             30% { transform: translateY(-10px); }
         }
+        
+        .transcription-pulse {
+            animation: transcriptionPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes transcriptionPulse {
+            0%, 100% { 
+                background: rgba(139, 92, 246, 0.3);
+                border-color: rgb(139, 92, 246);
+            }
+            50% { 
+                background: rgba(139, 92, 246, 0.5);
+                border-color: rgb(168, 85, 247);
+            }
+        }
+        
+        .waveform-bar {
+            transition: height 0.1s ease;
+            animation: waveAnimation 1.5s ease-in-out infinite;
+        }
+        
+        .waveform-bar:nth-child(odd) {
+            animation-delay: 0.1s;
+        }
+        
+        .waveform-bar:nth-child(even) {
+            animation-delay: 0.3s;
+        }
+        
+        @keyframes waveAnimation {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-gray-900 min-h-screen">
@@ -405,12 +438,72 @@
             <div class="bg-gray-800 rounded-xl overflow-hidden">
                 <div class="bg-gray-700 px-4 py-3 flex items-center justify-between">
                     <h3 class="text-white font-semibold">📝 Live Notes</h3>
-                    <button onclick="saveNotes()" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white text-sm">
-                        Save
-                    </button>
+                    <div class="flex items-center space-x-2">
+                        <button id="transcriptionBtn" onclick="toggleTranscription()" class="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-white text-sm flex items-center space-x-1">
+                            <span id="transcriptionIcon">🎤</span>
+                            <span id="transcriptionText">Start AI Transcription</span>
+                        </button>
+                        <button onclick="saveNotes()" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white text-sm">
+                            Save
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Transcription Controls -->
+                <div id="transcriptionControls" class="bg-gray-750 px-4 py-2 border-b border-gray-600 hidden">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-gray-400 text-sm">Language:</span>
+                                <select id="transcriptionLanguage" class="bg-gray-600 text-white px-2 py-1 rounded text-sm">
+                                    <option value="auto">Auto-detect</option>
+                                    <option value="en">English</option>
+                                    <option value="es">Spanish</option>
+                                    <option value="fr">French</option>
+                                    <option value="de">German</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-gray-400 text-sm">Medical Specialty:</span>
+                                <select id="medicalSpecialty" class="bg-gray-600 text-white px-2 py-1 rounded text-sm">
+                                    <option value="general">General Medicine</option>
+                                    <option value="cardiology">Cardiology</option>
+                                    <option value="emergency">Emergency Medicine</option>
+                                    <option value="pharmacy">Pharmacy</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="transcriptionStatus" class="flex items-center space-x-2">
+                            <div id="transcriptionIndicator" class="w-2 h-2 bg-gray-500 rounded-full"></div>
+                            <span class="text-gray-400 text-sm" id="transcriptionStatusText">Ready</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audio Visualizer for Transcription -->
+                <div id="transcriptionVisualizer" class="bg-gray-750 px-4 py-3 border-b border-gray-600 hidden">
+                    <div class="flex items-center justify-center space-x-1" id="audioWaveform">
+                        <!-- Audio bars will be generated dynamically -->
+                    </div>
                 </div>
                 
                 <div class="p-4">
+                    <!-- Live Transcription Display -->
+                    <div id="liveTranscription" class="mb-3 p-3 bg-blue-900 bg-opacity-30 rounded border-l-4 border-blue-500 hidden">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-blue-300 text-sm font-semibold">🎤 Live Transcription</h4>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-blue-300 text-xs" id="transcriptionConfidence"></span>
+                                <button onclick="insertTranscription()" class="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-white text-xs">
+                                    Insert into Notes
+                                </button>
+                            </div>
+                        </div>
+                        <div id="transcriptionText" class="text-white text-sm min-h-8 max-h-32 overflow-y-auto">
+                            <span class="text-gray-400 italic">Listening for speech...</span>
+                        </div>
+                    </div>
+
                     <textarea 
                         id="providerNotes" 
                         placeholder="Take real-time notes during consultation..."
@@ -486,6 +579,32 @@ Follow-up in 2 weeks.
         let audioContext = null;
         let analyser = null;
         let animationFrame = null;
+
+        // Transcription state
+        let isTranscribing = false;
+        let transcriptionStream = null;
+        let transcriptionAudioContext = null;
+        let transcriptionAnalyser = null;
+        let transcriptionAnimationFrame = null;
+        let mediaRecorder = null;
+        let recordingChunks = [];
+        let transcriptionInterval = null;
+        let currentTranscription = '';
+        let transcriptionHistory = [];
+
+        // Mock Whisper API responses for demonstration
+        const mockTranscriptions = [
+            "Patient reports chest pain that started this morning, rating 7 out of 10 on pain scale.",
+            "Blood pressure is elevated at 140 over 90, heart rate is 88 beats per minute.",
+            "Patient has a history of hypertension and takes lisinopril 10mg daily.",
+            "Recommending an EKG and chest X-ray to rule out cardiac issues.",
+            "Patient denies shortness of breath, nausea, or radiation of pain to arms.",
+            "Physical examination reveals clear lung sounds bilaterally.",
+            "Will start patient on sublingual nitroglycerin as needed for chest pain.",
+            "Follow-up appointment scheduled in one week to review test results.",
+            "Patient educated on when to seek emergency care for worsening symptoms.",
+            "Medication adherence discussed, patient reports taking medications as prescribed."
+        ];
 
         // Initialize session
         document.addEventListener('DOMContentLoaded', function() {
@@ -862,12 +981,335 @@ Follow-up in 2 weeks.
                 clearInterval(sessionTimer);
                 clearInterval(vitalsInterval);
                 
+                // Stop transcription if active
+                if (isTranscribing) {
+                    stopTranscription();
+                }
+                
                 // Show session summary
                 const sessionTime = document.getElementById('sessionTimer').textContent;
-                alert(`Session ended!\n\nDuration: ${sessionTime}\nNotes saved: Yes\nRecording: ${isRecording ? 'Saved' : 'Not recorded'}\nNext appointment scheduled.`);
+                alert(`Session ended!\n\nDuration: ${sessionTime}\nNotes saved: Yes\nRecording: ${isRecording ? 'Saved' : 'Not recorded'}\nTranscriptions: ${transcriptionHistory.length}\nNext appointment scheduled.`);
                 
                 // In real app, would redirect to session summary page
                 console.log('Session ended, redirecting to summary...');
+            }
+        }
+
+        // Real-time Transcription Functions
+        async function toggleTranscription() {
+            if (isTranscribing) {
+                stopTranscription();
+            } else {
+                await startTranscription();
+            }
+        }
+
+        async function startTranscription() {
+            try {
+                // Request microphone access
+                transcriptionStream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        sampleRate: 16000,
+                        channelCount: 1,
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+
+                isTranscribing = true;
+                
+                // Update UI
+                updateTranscriptionUI(true);
+                
+                // Start audio visualization
+                startTranscriptionVisualization();
+                
+                // Start recording in chunks for transcription
+                setupMediaRecorder();
+                
+                // Start periodic transcription
+                startPeriodicTranscription();
+                
+                addChatMessage('system', 'AI transcription started - conversation will be transcribed in real-time', 'System');
+                
+            } catch (error) {
+                console.error('Error starting transcription:', error);
+                addChatMessage('system', 'Could not start transcription. Please check microphone permissions.', 'System');
+            }
+        }
+
+        function stopTranscription() {
+            isTranscribing = false;
+            
+            // Stop all recording and analysis
+            if (transcriptionStream) {
+                transcriptionStream.getTracks().forEach(track => track.stop());
+                transcriptionStream = null;
+            }
+            
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+            
+            if (transcriptionInterval) {
+                clearInterval(transcriptionInterval);
+                transcriptionInterval = null;
+            }
+            
+            stopTranscriptionVisualization();
+            
+            // Update UI
+            updateTranscriptionUI(false);
+            
+            addChatMessage('system', `AI transcription stopped. Captured ${transcriptionHistory.length} segments.`, 'System');
+        }
+
+        function updateTranscriptionUI(isActive) {
+            const btn = document.getElementById('transcriptionBtn');
+            const icon = document.getElementById('transcriptionIcon');
+            const text = document.getElementById('transcriptionText');
+            const controls = document.getElementById('transcriptionControls');
+            const visualizer = document.getElementById('transcriptionVisualizer');
+            const liveTranscription = document.getElementById('liveTranscription');
+            const indicator = document.getElementById('transcriptionIndicator');
+            const statusText = document.getElementById('transcriptionStatusText');
+            
+            if (isActive) {
+                btn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
+                btn.classList.add('bg-red-600', 'hover:bg-red-700');
+                icon.textContent = '🛑';
+                text.textContent = 'Stop Transcription';
+                controls.classList.remove('hidden');
+                visualizer.classList.remove('hidden');
+                liveTranscription.classList.remove('hidden');
+                indicator.classList.remove('bg-gray-500');
+                indicator.classList.add('bg-red-500');
+                statusText.textContent = 'Recording';
+                
+                // Add pulsing animation
+                indicator.style.animation = 'pulse 1s infinite';
+            } else {
+                btn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                btn.classList.add('bg-purple-600', 'hover:bg-purple-700');
+                icon.textContent = '🎤';
+                text.textContent = 'Start AI Transcription';
+                controls.classList.add('hidden');
+                visualizer.classList.add('hidden');
+                liveTranscription.classList.add('hidden');
+                indicator.classList.remove('bg-red-500');
+                indicator.classList.add('bg-gray-500');
+                statusText.textContent = 'Ready';
+                indicator.style.animation = 'none';
+            }
+        }
+
+        function startTranscriptionVisualization() {
+            const waveform = document.getElementById('audioWaveform');
+            waveform.innerHTML = '';
+            
+            // Create audio bars
+            for (let i = 0; i < 15; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'w-1 bg-purple-500 rounded-full transition-all duration-100';
+                bar.style.height = '8px';
+                waveform.appendChild(bar);
+            }
+            
+            // Setup audio analysis
+            transcriptionAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+            transcriptionAnalyser = transcriptionAudioContext.createAnalyser();
+            const source = transcriptionAudioContext.createMediaStreamSource(transcriptionStream);
+            
+            transcriptionAnalyser.fftSize = 256;
+            const bufferLength = transcriptionAnalyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            source.connect(transcriptionAnalyser);
+            
+            function animate() {
+                if (!isTranscribing) return;
+                
+                transcriptionAnalyser.getByteFrequencyData(dataArray);
+                const bars = waveform.querySelectorAll('div');
+                
+                bars.forEach((bar, index) => {
+                    if (index < dataArray.length / 8) {
+                        const height = Math.max(8, (dataArray[index * 8] / 255) * 40);
+                        bar.style.height = `${height}px`;
+                    }
+                });
+                
+                transcriptionAnimationFrame = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        function stopTranscriptionVisualization() {
+            if (transcriptionAnimationFrame) {
+                cancelAnimationFrame(transcriptionAnimationFrame);
+                transcriptionAnimationFrame = null;
+            }
+            if (transcriptionAudioContext) {
+                transcriptionAudioContext.close();
+                transcriptionAudioContext = null;
+            }
+        }
+
+        function setupMediaRecorder() {
+            mediaRecorder = new MediaRecorder(transcriptionStream, {
+                mimeType: 'audio/webm;codecs=opus'
+            });
+            
+            recordingChunks = [];
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordingChunks.push(event.data);
+                }
+            };
+            
+            mediaRecorder.onstop = () => {
+                if (recordingChunks.length > 0) {
+                    const audioBlob = new Blob(recordingChunks, { type: 'audio/webm' });
+                    processAudioForTranscription(audioBlob);
+                    recordingChunks = [];
+                }
+            };
+        }
+
+        function startPeriodicTranscription() {
+            // Start recording immediately
+            if (mediaRecorder && mediaRecorder.state === 'inactive') {
+                mediaRecorder.start();
+            }
+            
+            // Set up interval to process audio chunks every 3 seconds
+            transcriptionInterval = setInterval(() => {
+                if (mediaRecorder && mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                    setTimeout(() => {
+                        if (isTranscribing && mediaRecorder) {
+                            setupMediaRecorder();
+                            mediaRecorder.start();
+                        }
+                    }, 100);
+                }
+            }, 3000);
+        }
+
+        async function processAudioForTranscription(audioBlob) {
+            try {
+                // Update status
+                document.getElementById('transcriptionStatusText').textContent = 'Processing...';
+                
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+                
+                // Mock transcription using Whisper-like responses
+                const randomTranscription = mockTranscriptions[Math.floor(Math.random() * mockTranscriptions.length)];
+                
+                // Add some variation to make it feel more realistic
+                const variations = [
+                    randomTranscription,
+                    randomTranscription.replace('Patient', 'The patient'),
+                    randomTranscription.replace('.', ', and appears comfortable.'),
+                    randomTranscription + ' Patient seems cooperative during examination.'
+                ];
+                
+                const finalTranscription = variations[Math.floor(Math.random() * variations.length)];
+                const confidence = 0.85 + Math.random() * 0.14; // 85-99% confidence
+                
+                // Update live transcription display
+                displayLiveTranscription(finalTranscription, confidence);
+                
+                // Add to history
+                transcriptionHistory.push({
+                    text: finalTranscription,
+                    confidence: confidence,
+                    timestamp: new Date(),
+                    language: document.getElementById('transcriptionLanguage').value,
+                    specialty: document.getElementById('medicalSpecialty').value
+                });
+                
+                // Update status back to recording
+                document.getElementById('transcriptionStatusText').textContent = 'Recording';
+                
+            } catch (error) {
+                console.error('Transcription error:', error);
+                document.getElementById('transcriptionStatusText').textContent = 'Error - Retrying';
+            }
+        }
+
+        function displayLiveTranscription(text, confidence) {
+            const transcriptionDiv = document.getElementById('transcriptionText');
+            const confidenceSpan = document.getElementById('transcriptionConfidence');
+            
+            // Update transcription text with typing effect
+            transcriptionDiv.innerHTML = '';
+            currentTranscription = text;
+            
+            let index = 0;
+            const typeInterval = setInterval(() => {
+                transcriptionDiv.textContent = text.substring(0, index + 1);
+                index++;
+                
+                if (index >= text.length) {
+                    clearInterval(typeInterval);
+                }
+            }, 20);
+            
+            // Update confidence
+            confidenceSpan.textContent = `${Math.round(confidence * 100)}% confidence`;
+            
+            // Add visual feedback
+            const liveTranscriptionDiv = document.getElementById('liveTranscription');
+            liveTranscriptionDiv.classList.add('border-green-500');
+            liveTranscriptionDiv.classList.remove('border-blue-500');
+            
+            setTimeout(() => {
+                liveTranscriptionDiv.classList.remove('border-green-500');
+                liveTranscriptionDiv.classList.add('border-blue-500');
+            }, 2000);
+        }
+
+        function insertTranscription() {
+            if (currentTranscription) {
+                const notesTextarea = document.getElementById('providerNotes');
+                const currentPosition = notesTextarea.selectionStart;
+                const currentValue = notesTextarea.value;
+                
+                // Insert transcription at cursor position
+                const newValue = currentValue.substring(0, currentPosition) + 
+                                '\n' + currentTranscription + '\n' + 
+                                currentValue.substring(currentPosition);
+                
+                notesTextarea.value = newValue;
+                
+                // Update cursor position
+                const newPosition = currentPosition + currentTranscription.length + 2;
+                notesTextarea.setSelectionRange(newPosition, newPosition);
+                notesTextarea.focus();
+                
+                // Clear current transcription
+                document.getElementById('transcriptionText').innerHTML = '<span class="text-gray-400 italic">Listening for speech...</span>';
+                currentTranscription = '';
+                
+                // Update word count
+                autoSaveNotes();
+                
+                // Show feedback
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = '✓ Inserted';
+                button.classList.add('bg-green-600');
+                button.classList.remove('bg-blue-600');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.classList.remove('bg-green-600');
+                    button.classList.add('bg-blue-600');
+                }, 2000);
             }
         }
     </script>
