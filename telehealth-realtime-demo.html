@@ -164,20 +164,21 @@
                 
                 <!-- Provider Video Feed -->
                 <div class="video-feed h-64 relative">
-                    <div class="absolute inset-4 bg-blue-600 bg-opacity-20 rounded-lg flex items-center justify-center">
+                    <video id="providerVideoElement" class="absolute inset-0 w-full h-full object-cover rounded-lg" autoplay muted style="display: none;"></video>
+                    <div id="providerVideoPlaceholder" class="absolute inset-4 bg-blue-600 bg-opacity-20 rounded-lg flex items-center justify-center">
                         <div class="text-center">
                             <div class="w-16 h-16 bg-blue-600 rounded-full mx-auto mb-2 flex items-center justify-center">
                                 <span class="text-white text-lg">👩‍⚕️</span>
                             </div>
                             <p class="text-white font-medium">Dr. Sarah Johnson</p>
-                            <p class="text-blue-200 text-sm">Video Active</p>
+                            <p class="text-blue-200 text-sm" id="providerVideoStatus">Click camera to enable video</p>
                         </div>
                     </div>
                     
                     <!-- Audio Waveform -->
                     <div class="absolute bottom-4 left-4 flex items-center space-x-2">
                         <span class="text-white text-sm">🎤</span>
-                        <div class="waveform" id="providerAudio">
+                        <div class="waveform" id="providerAudio" style="display: none;">
                             <div class="wave-bar"></div>
                             <div class="wave-bar"></div>
                             <div class="wave-bar"></div>
@@ -232,20 +233,21 @@
                 
                 <!-- Patient Video Feed -->
                 <div class="video-feed h-64 relative">
-                    <div class="absolute inset-4 bg-green-600 bg-opacity-20 rounded-lg flex items-center justify-center">
+                    <video id="patientVideoElement" class="absolute inset-0 w-full h-full object-cover rounded-lg" autoplay muted style="display: none;"></video>
+                    <div id="patientVideoPlaceholder" class="absolute inset-4 bg-green-600 bg-opacity-20 rounded-lg flex items-center justify-center">
                         <div class="text-center">
                             <div class="w-16 h-16 bg-green-600 rounded-full mx-auto mb-2 flex items-center justify-center">
                                 <span class="text-white text-lg">👨</span>
                             </div>
                             <p class="text-white font-medium">John Doe</p>
-                            <p class="text-green-200 text-sm">Video Active</p>
+                            <p class="text-green-200 text-sm" id="patientVideoStatus">Click camera to enable video</p>
                         </div>
                     </div>
                     
                     <!-- Audio Waveform -->
                     <div class="absolute bottom-4 left-4 flex items-center space-x-2">
                         <span class="text-white text-sm">🎤</span>
-                        <div class="waveform" id="patientAudio">
+                        <div class="waveform" id="patientAudio" style="display: none;">
                             <div class="wave-bar"></div>
                             <div class="wave-bar"></div>
                             <div class="wave-bar"></div>
@@ -477,6 +479,13 @@ Follow-up in 2 weeks.
         let isRecording = true;
         let chatHistory = [];
         let vitalsInterval;
+        
+        // Media streams for real camera/audio functionality
+        let currentVideoStream = null;
+        let currentAudioStream = null;
+        let audioContext = null;
+        let analyser = null;
+        let animationFrame = null;
 
         // Initialize session
         document.addEventListener('DOMContentLoaded', function() {
@@ -528,6 +537,50 @@ Follow-up in 2 weeks.
             }, 10000);
         }
 
+        // Audio analysis functions for real microphone input
+        function startAudioAnalysis(stream, waveformId) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(stream);
+            
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            source.connect(analyser);
+            
+            function animate() {
+                analyser.getByteFrequencyData(dataArray);
+                updateWaveform(dataArray, waveformId);
+                animationFrame = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+        
+        function updateWaveform(dataArray, waveformId) {
+            const waveform = document.getElementById(waveformId);
+            if (!waveform) return;
+            
+            const bars = waveform.querySelectorAll('.bar');
+            bars.forEach((bar, index) => {
+                if (index < dataArray.length / 4) {
+                    const height = (dataArray[index] / 255) * 100;
+                    bar.style.height = `${Math.max(height, 10)}%`;
+                }
+            });
+        }
+        
+        function stopAudioAnalysis() {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+                animationFrame = null;
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+        }
+
         function changeViewMode() {
             const mode = document.getElementById('viewMode').value;
             const dualView = document.getElementById('dualView');
@@ -537,7 +590,7 @@ Follow-up in 2 weeks.
             console.log(`Switched to ${mode} view`);
         }
 
-        function toggleMic(user) {
+        async function toggleMic(user) {
             const button = document.getElementById(`${user}Mic`);
             const isActive = button.classList.contains('bg-green-600');
             
@@ -546,30 +599,86 @@ Follow-up in 2 weeks.
                 button.classList.add('bg-red-600', 'hover:bg-red-700');
                 button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414 1.414L6.524 7.937A6 6 0 0018 10h2a8 8 0 00-13.364-5.958l-1.414-1.414a1 1 0 00-1.414 1.414l14.142 14.142a1 1 0 001.414-1.414z" clip-rule="evenodd"></path></svg>`;
                 
-                // Stop waveform animation
+                // Stop audio stream and waveform
+                if (currentAudioStream && user === 'patient') {
+                    currentAudioStream.getTracks().forEach(track => track.stop());
+                    currentAudioStream = null;
+                    stopAudioAnalysis();
+                }
                 document.getElementById(`${user}Audio`).style.display = 'none';
             } else {
                 button.classList.remove('bg-red-600', 'hover:bg-red-700');
                 button.classList.add('bg-green-600', 'hover:bg-green-700');
                 button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path></svg>`;
                 
-                // Show waveform animation
-                document.getElementById(`${user}Audio`).style.display = 'flex';
+                // Start audio stream for patient only (real microphone)
+                if (user === 'patient') {
+                    try {
+                        currentAudioStream = await navigator.mediaDevices.getUserMedia({ 
+                            video: false, 
+                            audio: true 
+                        });
+                        startAudioAnalysis(currentAudioStream, `${user}Audio`);
+                        document.getElementById(`${user}Audio`).style.display = 'flex';
+                    } catch (error) {
+                        console.error('Error accessing microphone:', error);
+                        addChatMessage('system', 'Could not access microphone. Please check permissions.', 'System');
+                        // Revert button state
+                        button.classList.add('bg-red-600', 'hover:bg-red-700');
+                        button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                        button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M13.477 14.89A6 6 0 715.11 6.524l8.367 8.368zm1.414 1.414L6.524 7.937A6 6 0 0018 10h2a8 8 0 00-13.364-5.958l-1.414-1.414a1 1 0 00-1.414 1.414l14.142 14.142a1 1 0 001.414-1.414z" clip-rule="evenodd"></path></svg>`;
+                    }
+                } else {
+                    // For provider, just show simulated waveform
+                    document.getElementById(`${user}Audio`).style.display = 'flex';
+                }
             }
         }
 
-        function toggleVideo(user) {
+        async function toggleVideo(user) {
             const button = document.getElementById(`${user}Video`);
             const isActive = button.classList.contains('bg-blue-600');
+            const videoElement = document.getElementById(user === 'provider' ? 'providerVideoElement' : 'patientVideoElement');
             
             if (isActive) {
+                // Turn off video
                 button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
                 button.classList.add('bg-gray-600', 'hover:bg-gray-700');
                 button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414L3.707 2.293zm2.159 4.034A2 2 0 014 8v6a2 2 0 002 2h6c.352 0 .675-.091.96-.252l-8.094-8.094zM15 12.94l.894.894A1 1 0 0017 13V7a1 1 0 00-1.447-.894L13 7.382V8a2 2 0 01-2 2h-.94l4.94 4.94z" clip-rule="evenodd"></path></svg>`;
+                
+                // Stop video stream
+                if (currentVideoStream && user === 'patient') {
+                    currentVideoStream.getTracks().forEach(track => track.stop());
+                    currentVideoStream = null;
+                }
+                videoElement.srcObject = null;
             } else {
+                // Turn on video
                 button.classList.remove('bg-gray-600', 'hover:bg-gray-700');
                 button.classList.add('bg-blue-600', 'hover:bg-blue-700');
                 button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path></svg>`;
+                
+                // Start video stream for patient only (real camera)
+                if (user === 'patient') {
+                    try {
+                        currentVideoStream = await navigator.mediaDevices.getUserMedia({ 
+                            video: true, 
+                            audio: false 
+                        });
+                        videoElement.srcObject = currentVideoStream;
+                        videoElement.play();
+                    } catch (error) {
+                        console.error('Error accessing camera:', error);
+                        addChatMessage('system', 'Could not access camera. Please check permissions.', 'System');
+                        // Revert button state
+                        button.classList.add('bg-gray-600', 'hover:bg-gray-700');
+                        button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                        button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414L3.707 2.293zm2.159 4.034A2 2 0 014 8v6a2 2 0 002 2h6c.352 0 .675-.091.96-.252l-8.094-8.094zM15 12.94l.894.894A1 1 0 0017 13V7a1 1 0 00-1.447-.894L13 7.382V8a2 2 0 01-2 2h-.94l4.94 4.94z" clip-rule="evenodd"></path></svg>`;
+                    }
+                } else {
+                    // For provider, just show placeholder (simulated)
+                    videoElement.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                }
             }
         }
 
