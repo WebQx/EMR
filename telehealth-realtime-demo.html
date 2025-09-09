@@ -561,7 +561,7 @@ Follow-up in 2 weeks.
             const waveform = document.getElementById(waveformId);
             if (!waveform) return;
             
-            const bars = waveform.querySelectorAll('.bar');
+            const bars = waveform.querySelectorAll('.wave-bar');
             bars.forEach((bar, index) => {
                 if (index < dataArray.length / 4) {
                     const height = (dataArray[index] / 255) * 100;
@@ -652,6 +652,9 @@ Follow-up in 2 weeks.
                     currentVideoStream = null;
                 }
                 videoElement.srcObject = null;
+                videoElement.style.display = 'none';
+                document.getElementById(`${user}VideoPlaceholder`).style.display = 'flex';
+                document.getElementById(`${user}VideoStatus`).textContent = 'Click camera to enable video';
             } else {
                 // Turn on video
                 button.classList.remove('bg-gray-600', 'hover:bg-gray-700');
@@ -666,6 +669,9 @@ Follow-up in 2 weeks.
                             audio: false 
                         });
                         videoElement.srcObject = currentVideoStream;
+                        videoElement.style.display = 'block';
+                        document.getElementById(`${user}VideoPlaceholder`).style.display = 'none';
+                        document.getElementById(`${user}VideoStatus`).textContent = 'Camera active';
                         videoElement.play();
                     } catch (error) {
                         console.error('Error accessing camera:', error);
@@ -678,6 +684,8 @@ Follow-up in 2 weeks.
                 } else {
                     // For provider, just show placeholder (simulated)
                     videoElement.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                    videoElement.style.display = 'block';
+                    document.getElementById(`${user}VideoPlaceholder`).style.display = 'none';
                 }
             }
         }
