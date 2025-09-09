@@ -299,7 +299,7 @@
             
             if (!token || !user) {
                 // No authentication, redirect to login
-                window.location.href = '/login';
+                window.location.href = 'login.html';
                 return;
             }
             
@@ -319,13 +319,13 @@
                     // Token is invalid, remove and redirect
                     localStorage.removeItem('authToken');
                     localStorage.removeItem('user');
-                    window.location.href = '/login';
+                    window.location.href = 'login.html';
                 }
             })
             .catch(error => {
                 console.error('Authentication check failed:', error);
                 // Network error, redirect to login to be safe
-                window.location.href = '/login';
+                window.location.href = 'login.html';
             });
         }
 
@@ -650,7 +650,7 @@
             localStorage.removeItem('user');
             
             // Redirect to login page
-            window.location.href = '/login';
+            window.location.href = 'login.html';
         }
     </script>
 </body>

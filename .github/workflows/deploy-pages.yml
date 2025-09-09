@@ -133,6 +133,52 @@ jobs:
               };
             });
           };
+
+          // Set up demo authentication for GitHub Pages
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('authToken', 'demo-token-12345');
+            localStorage.setItem('user', JSON.stringify({
+              id: 'demo-user-1',
+              name: 'Demo User',
+              email: 'demo@webqx.com',
+              accountStatus: 'Active'
+            }));
+          }
+
+          // GitHub Pages specific: Handle routing for login
+          if (window.location.pathname === '/login' || window.location.pathname === '/webqx/login') {
+            window.location.href = window.location.href.replace(/\/login$/, '/login.html');
+          }
+          EOF
+
+          # Create redirect HTML for /login route
+          cat > dist/404.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <title>WebQX Healthcare Platform</title>
+            <script>
+              // GitHub Pages redirect handler
+              var path = window.location.pathname;
+              var query = window.location.search;
+              
+              // Handle common routes
+              if (path === '/login' || path === '/webqx/login') {
+                window.location.href = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '') + '/login.html' + query;
+              } else if (path.endsWith('/')) {
+                // Try adding index.html
+                window.location.href = window.location.href + 'index.html';
+              } else {
+                // Try adding .html extension
+                window.location.href = window.location.href + '.html';
+              }
+            </script>
+          </head>
+          <body>
+            <p>Redirecting...</p>
+          </body>
+          </html>
           EOF
           
           # Update HTML files to include mock API for GitHub Pages

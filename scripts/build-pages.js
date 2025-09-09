@@ -178,7 +178,7 @@ window.fetch = function(url, options) {
     });
 };
 
-// Set up demo authentication
+// Set up demo authentication for GitHub Pages
 if (typeof localStorage !== 'undefined') {
     localStorage.setItem('authToken', 'demo-token-12345');
     localStorage.setItem('user', JSON.stringify({
@@ -187,6 +187,11 @@ if (typeof localStorage !== 'undefined') {
         email: 'demo@webqx.com',
         accountStatus: 'Active'
     }));
+}
+
+// GitHub Pages specific: Handle routing for login
+if (window.location.pathname === '/login' || window.location.pathname === '/webqx/login') {
+    window.location.href = window.location.href.replace(/\\/login$/, '/login.html');
 }
 `;
 
