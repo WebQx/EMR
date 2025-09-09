@@ -1,0 +1,69 @@
+<!-- 
+    WebQX Demo Page Template
+    Copy and paste this into any demo page for instant navigation
+-->
+
+<!-- Add this to the <head> section -->
+<!-- <script src="navigation-hub.js"></script> -->
+
+<!-- Or add individual components: -->
+<!-- <script src="enhanced-breadcrumbs.js"></script> -->
+<!-- <script src="back-to-home.js"></script> -->
+
+<!-- 
+    Quick Navigation Integration Guide:
+    
+    1. UNIVERSAL NAVIGATION (Recommended):
+       Add before closing </body> tag:
+       <script src="navigation-hub.js"></script>
+    
+    2. INDIVIDUAL COMPONENTS:
+       Add before closing </body> tag:
+       <script src="enhanced-breadcrumbs.js"></script>
+       <script src="back-to-home.js"></script>
+    
+    3. MINIMAL NAVIGATION:
+       Add this simple back button anywhere:
+       <a href="/" style="position: fixed; top: 20px; left: 20px; 
+          background: #4f9cff; color: white; padding: 10px; 
+          border-radius: 25px; text-decoration: none; z-index: 9999;">
+          🏠 Home
+       </a>
+    
+    4. FEATURES INCLUDED:
+       ✅ Fixed navigation pill (left side)
+       ✅ Breadcrumb navigation (top)
+       ✅ Session journey tracking
+       ✅ Global search (Ctrl+K)
+       ✅ Keyboard shortcuts
+       ✅ Exit intent detection
+       ✅ Mobile responsive
+       ✅ Context-aware tooltips
+    
+    5. KEYBOARD SHORTCUTS:
+       • Ctrl+K or Cmd+K: Open search
+       • Alt+H: Go to home
+       • Alt+B: Go back
+       • Escape: Close overlays
+    
+    6. CUSTOMIZATION:
+       Edit the navigation scripts to customize:
+       - Colors and styling
+       - Available shortcuts
+       - Search results
+       - Page mappings
+-->
+
+<style>
+/* Optional: Ensure proper spacing for navigation components */
+body {
+    padding-top: 45px !important; /* For breadcrumbs */
+    padding-left: 80px !important; /* For navigation pill */
+}
+
+@media (max-width: 768px) {
+    body {
+        padding-left: 20px !important;
+    }
+}
+</style>
