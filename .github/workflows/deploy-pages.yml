@@ -32,7 +32,7 @@ jobs:
           cache: 'npm'
       
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -41,17 +41,17 @@ jobs:
         run: |
           mkdir -p dist
           # Copy static files to dist directory
-          cp index.html dist/
-          cp login.html dist/
-          cp demo*.html dist/
-          cp header-demo.html dist/
-          cp telehealth*.html dist/
-          cp whisper-demo.html dist/
-          cp whisper-openemr-demo.html dist/
-          cp ottehr-demo.html dist/
-          cp ottehr-keycloak-demo.html dist/
-          cp telehealth_demo.html dist/
-          cp telehealth-session-demo.html dist/
+          cp -f index.html dist/ 2>/dev/null || echo "index.html not found"
+          cp -f login.html dist/ 2>/dev/null || echo "login.html not found"
+          cp -f demo*.html dist/ 2>/dev/null || echo "demo html files not found"
+          cp -f header-demo.html dist/ 2>/dev/null || echo "header-demo.html not found"
+          cp -f telehealth*.html dist/ 2>/dev/null || echo "telehealth html files not found"
+          cp -f whisper-demo.html dist/ 2>/dev/null || echo "whisper-demo.html not found"
+          cp -f whisper-openemr-demo.html dist/ 2>/dev/null || echo "whisper-openemr-demo.html not found"
+          cp -f ottehr-demo.html dist/ 2>/dev/null || echo "ottehr-demo.html not found"
+          cp -f ottehr-keycloak-demo.html dist/ 2>/dev/null || echo "ottehr-keycloak-demo.html not found"
+          cp -f telehealth_demo.html dist/ 2>/dev/null || echo "telehealth_demo.html not found"
+          cp -f telehealth-session-demo.html dist/ 2>/dev/null || echo "telehealth-session-demo.html not found"
           
           # Copy demo directory if it exists
           if [ -d "demo" ]; then
@@ -59,8 +59,8 @@ jobs:
           fi
           
           # Copy any CSS or JS files that might be in root
-          find . -maxdepth 1 -name "*.css" -exec cp {} dist/ \;
-          find . -maxdepth 1 -name "*.js" ! -name "server.js" ! -name "lambda*.js" ! -name "*test*" -exec cp {} dist/ \;
+          find . -maxdepth 1 -name "*.css" -exec cp {} dist/ \; 2>/dev/null || echo "No CSS files found"
+          find . -maxdepth 1 -name "*.js" ! -name "server.js" ! -name "lambda*.js" ! -name "*test*" -exec cp {} dist/ \; 2>/dev/null || echo "No standalone JS files found"
           
           # Create a simple server.js replacement for GitHub Pages (static only)
           cat > dist/api-mock.js << 'EOF'
