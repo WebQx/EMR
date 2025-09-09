@@ -85,6 +85,13 @@ jobs:
           find . -maxdepth 1 -name "*.css" -exec cp {} dist/ \; 2>/dev/null || echo "No CSS files found"
           find . -maxdepth 1 -name "*.js" ! -name "server.js" ! -name "lambda*.js" ! -name "*test*" -exec cp {} dist/ \; 2>/dev/null || echo "No standalone JS files found"
           
+          # Specifically copy navigation files
+          cp -f navigation-hub.js dist/ 2>/dev/null || echo "navigation-hub.js not found"
+          cp -f navigation-header.js dist/ 2>/dev/null || echo "navigation-header.js not found"
+          cp -f enhanced-breadcrumbs.js dist/ 2>/dev/null || echo "enhanced-breadcrumbs.js not found"
+          cp -f back-to-home.js dist/ 2>/dev/null || echo "back-to-home.js not found"
+          cp -f navigation-template.html dist/ 2>/dev/null || echo "navigation-template.html not found"
+          
           # Create a simple server.js replacement for GitHub Pages (static only)
           cat > dist/api-mock.js << 'EOF'
           // Mock API endpoints for GitHub Pages static deployment
