@@ -492,6 +492,19 @@ Follow-up in 2 weeks.
             startSessionTimer();
             startVitalsSimulation();
             simulateRealtimeActivity();
+            
+            // Test if getUserMedia is available
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                console.log('getUserMedia is available');
+            } else {
+                console.error('getUserMedia is not available');
+                addChatMessage('system', 'Camera/microphone access not available. Please use HTTPS.', 'System');
+            }
+            
+            // Add click listeners as backup to onclick attributes
+            document.getElementById('providerVideo').addEventListener('click', () => toggleVideo('provider'));
+            document.getElementById('patientVideo').addEventListener('click', () => toggleVideo('patient'));
+            document.getElementById('viewMode').addEventListener('change', changeViewMode);
         });
 
         function startSessionTimer() {
@@ -585,8 +598,24 @@ Follow-up in 2 weeks.
             const mode = document.getElementById('viewMode').value;
             const dualView = document.getElementById('dualView');
             
-            // For demo purposes, just show dual view
-            // In real implementation, you'd switch between different layouts
+            // Implement actual view switching
+            if (mode === 'provider') {
+                // Show only provider side
+                dualView.style.gridTemplateColumns = '1fr';
+                dualView.children[1].style.display = 'none'; // Hide patient side
+                dualView.children[0].style.display = 'block'; // Show provider side
+            } else if (mode === 'patient') {
+                // Show only patient side
+                dualView.style.gridTemplateColumns = '1fr';
+                dualView.children[0].style.display = 'none'; // Hide provider side
+                dualView.children[1].style.display = 'block'; // Show patient side
+            } else {
+                // Show dual view (default)
+                dualView.style.gridTemplateColumns = '1fr 1fr';
+                dualView.children[0].style.display = 'block'; // Show provider side
+                dualView.children[1].style.display = 'block'; // Show patient side
+            }
+            
             console.log(`Switched to ${mode} view`);
         }
 
@@ -636,9 +665,24 @@ Follow-up in 2 weeks.
         }
 
         async function toggleVideo(user) {
+            console.log(`toggleVideo called for user: ${user}`);
             const button = document.getElementById(`${user}Video`);
             const isActive = button.classList.contains('bg-blue-600');
             const videoElement = document.getElementById(user === 'provider' ? 'providerVideoElement' : 'patientVideoElement');
+            
+            console.log(`Button found:`, button);
+            console.log(`Video element found:`, videoElement);
+            console.log(`isActive:`, isActive);
+            
+            if (!button) {
+                console.error(`Button with id ${user}Video not found`);
+                return;
+            }
+            
+            if (!videoElement) {
+                console.error(`Video element not found for user ${user}`);
+                return;
+            }
             
             if (isActive) {
                 // Turn off video
@@ -685,7 +729,14 @@ Follow-up in 2 weeks.
                     // For provider, just show placeholder (simulated)
                     videoElement.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
                     videoElement.style.display = 'block';
-                    document.getElementById(`${user}VideoPlaceholder`).style.display = 'none';
+                    const placeholder = document.getElementById(`${user}VideoPlaceholder`);
+                    if (placeholder) {
+                        placeholder.style.display = 'none';
+                    }
+                    const status = document.getElementById(`${user}VideoStatus`);
+                    if (status) {
+                        status.textContent = 'Video active (simulated)';
+                    }
                 }
             }
         }
