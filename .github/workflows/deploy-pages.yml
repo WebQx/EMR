@@ -40,22 +40,45 @@ jobs:
       - name: Create static build
         run: |
           mkdir -p dist
-          # Copy static files to dist directory
+          # Copy main HTML files to dist directory
           cp -f index.html dist/ 2>/dev/null || echo "index.html not found"
           cp -f login.html dist/ 2>/dev/null || echo "login.html not found"
-          cp -f demo*.html dist/ 2>/dev/null || echo "demo html files not found"
+          cp -f demo.html dist/ 2>/dev/null || echo "demo.html not found"
+          cp -f demo-*.html dist/ 2>/dev/null || echo "demo html files not found"
           cp -f header-demo.html dist/ 2>/dev/null || echo "header-demo.html not found"
           cp -f telehealth*.html dist/ 2>/dev/null || echo "telehealth html files not found"
-          cp -f whisper-demo.html dist/ 2>/dev/null || echo "whisper-demo.html not found"
-          cp -f whisper-openemr-demo.html dist/ 2>/dev/null || echo "whisper-openemr-demo.html not found"
-          cp -f ottehr-demo.html dist/ 2>/dev/null || echo "ottehr-demo.html not found"
-          cp -f ottehr-keycloak-demo.html dist/ 2>/dev/null || echo "ottehr-keycloak-demo.html not found"
-          cp -f telehealth_demo.html dist/ 2>/dev/null || echo "telehealth_demo.html not found"
-          cp -f telehealth-session-demo.html dist/ 2>/dev/null || echo "telehealth-session-demo.html not found"
+          cp -f whisper-*.html dist/ 2>/dev/null || echo "whisper html files not found"
+          cp -f ottehr-*.html dist/ 2>/dev/null || echo "ottehr html files not found"
           
-          # Copy demo directory if it exists
+          # Copy directory structures with demos
           if [ -d "demo" ]; then
             cp -r demo dist/
+            echo "Copied demo directory"
+          fi
+          
+          if [ -d "provider" ]; then
+            cp -r provider dist/
+            echo "Copied provider directory"
+          fi
+          
+          if [ -d "patient-portal" ]; then
+            cp -r patient-portal dist/
+            echo "Copied patient-portal directory"
+          fi
+          
+          if [ -d "auth" ]; then
+            cp -r auth dist/
+            echo "Copied auth directory"
+          fi
+          
+          if [ -d "modules" ]; then
+            cp -r modules dist/
+            echo "Copied modules directory"
+          fi
+          
+          if [ -d "admin-console" ]; then
+            cp -r admin-console dist/
+            echo "Copied admin-console directory"
           fi
           
           # Copy any CSS or JS files that might be in root

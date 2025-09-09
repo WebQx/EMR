@@ -15,6 +15,7 @@ console.log('Building static site for GitHub Pages...');
 const htmlFiles = [
     'index.html',
     'login.html',
+    'demo.html',
     'demo-fhir-r4-appointment-booking.html',
     'demo-lab-results-simple.html',
     'demo-lab-results-viewer.html',
@@ -36,8 +37,60 @@ htmlFiles.forEach(file => {
     if (fs.existsSync(srcPath)) {
         fs.copyFileSync(srcPath, destPath);
         console.log(`Copied: ${file}`);
+    } else {
+        console.warn(`File not found: ${file}`);
     }
 });
+
+// Copy directories with HTML files
+const directoriesToCopy = [
+    'demo',
+    'provider',
+    'patient-portal',
+    'auth',
+    'modules',
+    'admin-console'
+];
+
+directoriesToCopy.forEach(dirName => {
+    const srcDir = path.join(__dirname, '..', dirName);
+    const destDir = path.join(distDir, dirName);
+    
+    if (fs.existsSync(srcDir)) {
+        copyDirectoryRecursive(srcDir, destDir);
+        console.log(`Copied directory: ${dirName}`);
+    } else {
+        console.log(`Directory not found: ${dirName}`);
+    }
+});
+
+// Function to copy directory recursively
+function copyDirectoryRecursive(src, dest) {
+    if (!fs.existsSync(dest)) {
+        fs.mkdirSync(dest, { recursive: true });
+    }
+    
+    const items = fs.readdirSync(src);
+    
+    items.forEach(item => {
+        const srcPath = path.join(src, item);
+        const destPath = path.join(dest, item);
+        const stat = fs.statSync(srcPath);
+        
+        if (stat.isDirectory()) {
+            // Skip node_modules, .git, and other build directories
+            if (!['node_modules', '.git', '__tests__', 'test', 'tests', '.vscode'].includes(item)) {
+                copyDirectoryRecursive(srcPath, destPath);
+            }
+        } else if (stat.isFile()) {
+            // Copy HTML, CSS, JS, and other web assets
+            const ext = path.extname(item).toLowerCase();
+            if (['.html', '.css', '.js', '.json', '.md', '.svg', '.png', '.jpg', '.jpeg', '.gif', '.ico'].includes(ext)) {
+                fs.copyFileSync(srcPath, destPath);
+            }
+        }
+    });
+}
 
 // Copy demo directory if it exists
 const demoDir = path.join(__dirname, '..', 'demo');

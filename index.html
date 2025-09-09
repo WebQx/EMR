@@ -3,187 +3,614 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebQX™ Patient Portal – Essentials Canvas</title>
+    <title>WebQX™ Healthcare Platform - Interactive Demo Hub</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        * {
             margin: 0;
             padding: 0;
-            background-color: #f9f9f9;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             color: #333;
         }
+        
         .container {
-            max-width: 900px;
-            margin: 20px auto;
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 20px;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        h1 {
+        
+        .header {
             text-align: center;
+            color: white;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        h2 {
-            margin-top: 30px;
+        
+        .header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .demo-category {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .demo-category:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .category-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .category-icon {
+            font-size: 2.5rem;
+            margin-right: 15px;
+        }
+        
+        .category-title {
+            font-size: 1.5rem;
+            font-weight: 600;
             color: #2c3e50;
         }
-        ul {
+        
+        .demo-list {
             list-style: none;
-            padding: 0;
         }
-        ul li {
-            margin: 10px 0;
+        
+        .demo-item {
+            margin-bottom: 15px;
         }
-        .section {
-            padding: 15px 10px;
-            border-top: 1px solid #ccc;
-        }
-        .section:first-child {
-            border-top: none;
-        }
-        .loading {
-            color: #007bff;
-            font-style: italic;
-        }
-        .error {
-            color: #dc3545;
-            font-weight: bold;
-        }
-        .success {
-            color: #28a745;
-            font-weight: bold;
-        }
-        .patient-info {
-            background: #e3f2fd;
+        
+        .demo-link {
+            display: flex;
+            align-items: center;
             padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
-        }
-        .appointment-card {
             background: #f8f9fa;
-            border-left: 4px solid #007bff;
-            padding: 12px;
-            margin: 8px 0;
-            border-radius: 4px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
         }
-        .appointment-card.pending {
-            border-left-color: #ffc107;
+        
+        .demo-link:hover {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            transform: translateX(10px);
         }
-        .appointment-card.booked {
-            border-left-color: #28a745;
+        
+        .demo-link .icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            min-width: 30px;
         }
-        .btn {
-            background: #007bff;
+        
+        .demo-details {
+            flex: 1;
+        }
+        
+        .demo-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .demo-description {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.4;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .status-live {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status-demo {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .status-beta {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .quick-access {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quick-access h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            font-size: 1.8rem;
+        }
+        
+        .quick-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .quick-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .quick-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .quick-btn .icon {
+            margin-right: 8px;
+            font-size: 1.2rem;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            opacity: 0.8;
+            margin-top: 40px;
+            padding: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .demo-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .quick-btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+        
+        .auth-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .user-info {
+            display: inline-flex;
+            align-items: center;
+            background: #e8f5e8;
+            padding: 10px 20px;
+            border-radius: 25px;
+            margin-bottom: 15px;
+        }
+        
+        .logout-btn {
+            background: #dc3545;
             color: white;
             border: none;
             padding: 8px 16px;
-            border-radius: 4px;
+            border-radius: 20px;
             cursor: pointer;
-            margin: 5px;
-        }
-        .btn:hover {
-            background: #0056b3;
-        }
-        .btn-secondary {
-            background: #6c757d;
-        }
-        .btn-secondary:hover {
-            background: #545b62;
-        }
-        .form-group {
-            margin: 10px 0;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .lang-selector {
-            text-align: right;
-            margin-bottom: 20px;
-        }
-        .dynamic-content {
-            min-height: 50px;
-        }
-        .status-indicator {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-        .status-healthy {
-            background-color: #28a745;
-        }
-        .status-warning {
-            background-color: #ffc107;
-        }
-        .status-error {
-            background-color: #dc3545;
-        }
-        
-        /* Loading screen styles */
-        .loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #f9f9f9;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
-        }
-        
-        .loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #007bff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .loading-text {
-            color: #666;
-            font-size: 16px;
-            text-align: center;
+            margin-left: 15px;
         }
     </style>
 </head>
 <body>
-    <!-- Loading screen -->
-    <div id="loading-screen" class="loading-screen">
-        <div class="loading-spinner"></div>
-        <div class="loading-text">
-            <div>🏥 WebQX™ Healthcare Platform</div>
-            <div style="margin-top: 10px; font-size: 14px;">Loading secure patient portal...</div>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 WebQX™ Healthcare Platform</h1>
+            <p>Complete Healthcare Ecosystem - Interactive Demo Hub</p>
+            <p style="font-size: 1rem; opacity: 0.8;">Explore all modules, portals, and integrations</p>
+        </div>
+        
+        <div class="auth-section" id="auth-section">
+            <div class="user-info" id="user-info">
+                <span>👤 <strong id="user-name">Demo User</strong> - <span id="user-role">Patient</span></span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+            <p style="color: #666; font-size: 0.9rem;">🔒 Authenticated demo session with full access to all modules</p>
+        </div>
+
+        <div class="quick-access">
+            <h2>🚀 Quick Access - Popular Demos</h2>
+            <div class="quick-buttons">
+                <a href="login.html" class="quick-btn">
+                    <span class="icon">🔐</span>
+                    Login & Authentication
+                </a>
+                <a href="provider/dashboard/index.html" class="quick-btn">
+                    <span class="icon">👨‍⚕️</span>
+                    Provider Portal
+                </a>
+                <a href="telehealth-demo.html" class="quick-btn">
+                    <span class="icon">📹</span>
+                    Telehealth Demo
+                </a>
+                <a href="demo-fhir-r4-appointment-booking.html" class="quick-btn">
+                    <span class="icon">📅</span>
+                    FHIR Appointments
+                </a>
+                <a href="whisper-demo.html" class="quick-btn">
+                    <span class="icon">🎤</span>
+                    AI Whisper Service
+                </a>
+                <a href="demo-lab-results-viewer.html" class="quick-btn">
+                    <span class="icon">🧪</span>
+                    Lab Results
+                </a>
+            </div>
+        </div>
+
+        <div class="demo-grid">
+            <!-- Patient Portal Category -->
+            <div class="demo-category">
+                <div class="category-header">
+                    <div class="category-icon">👥</div>
+                    <div class="category-title">Patient Portal & Services</div>
+                </div>
+                <ul class="demo-list">
+                    <li class="demo-item">
+                        <a href="patient-portal/telehealth-session.html" class="demo-link">
+                            <span class="icon">🎥</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Patient Telehealth Session</div>
+                                <div class="demo-description">Full telehealth experience with video, chat, and EHR integration</div>
+                            </div>
+                            <span class="status-badge status-live">Live</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="demo-fhir-r4-appointment-booking.html" class="demo-link">
+                            <span class="icon">📅</span>
+                            <div class="demo-details">
+                                <div class="demo-name">FHIR R4 Appointment Booking</div>
+                                <div class="demo-description">Standards-compliant appointment scheduling system</div>
+                            </div>
+                            <span class="status-badge status-live">Live</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="demo-lab-results-viewer.html" class="demo-link">
+                            <span class="icon">🧪</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Lab Results Viewer</div>
+                                <div class="demo-description">Interactive lab results with charts and trends</div>
+                            </div>
+                            <span class="status-badge status-live">Live</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="demo-lab-results-simple.html" class="demo-link">
+                            <span class="icon">📊</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Simple Lab Results</div>
+                                <div class="demo-description">Streamlined lab results interface</div>
+                            </div>
+                            <span class="status-badge status-demo">Demo</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="demo/PharmacyLocator-demo.html" class="demo-link">
+                            <span class="icon">💊</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Pharmacy Locator</div>
+                                <div class="demo-description">Find nearby pharmacies with prescription support</div>
+                            </div>
+                            <span class="status-badge status-demo">Demo</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Provider Portal Category -->
+            <div class="demo-category">
+                <div class="category-header">
+                    <div class="category-icon">👨‍⚕️</div>
+                    <div class="category-title">Provider Portal & Tools</div>
+                </div>
+                <ul class="demo-list">
+                    <li class="demo-item">
+                        <a href="provider/dashboard/index.html" class="demo-link">
+                            <span class="icon">🏥</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Provider Dashboard</div>
+                                <div class="demo-description">Complete provider portal with patient management</div>
+                            </div>
+                            <span class="status-badge status-live">Live</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="provider/telehealth-scheduling.html" class="demo-link">
+                            <span class="icon">📅</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Provider Telehealth Scheduling</div>
+                                <div class="demo-description">Provider-side telehealth appointment management</div>
+                            </div>
+                            <span class="status-badge status-live">Live</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="auth/providers/login.html" class="demo-link">
+                            <span class="icon">🔐</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Provider Authentication</div>
+                                <div class="demo-description">Secure provider login with MFA support</div>
+                            </div>
+                            <span class="status-badge status-live">Live</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Telehealth & Communication -->
+            <div class="demo-category">
+                <div class="category-header">
+                    <div class="category-icon">📹</div>
+                    <div class="category-title">Telehealth & Communication</div>
+                </div>
+                <ul class="demo-list">
+                    <li class="demo-item">
+                        <a href="telehealth-demo.html" class="demo-link">
+                            <span class="icon">🎥</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Full Telehealth Demo</div>
+                                <div class="demo-description">Complete telehealth solution with video conferencing</div>
+                            </div>
+                            <span class="status-badge status-live">Live</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="telehealth_demo.html" class="demo-link">
+                            <span class="icon">📱</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Mobile Telehealth</div>
+                                <div class="demo-description">Mobile-optimized telehealth interface</div>
+                            </div>
+                            <span class="status-badge status-demo">Demo</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="telehealth-session-demo.html" class="demo-link">
+                            <span class="icon">🩺</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Telehealth Session</div>
+                                <div class="demo-description">In-session telehealth experience</div>
+                            </div>
+                            <span class="status-badge status-demo">Demo</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- AI & Integration Services -->
+            <div class="demo-category">
+                <div class="category-header">
+                    <div class="category-icon">🤖</div>
+                    <div class="category-title">AI & Integration Services</div>
+                </div>
+                <ul class="demo-list">
+                    <li class="demo-item">
+                        <a href="whisper-demo.html" class="demo-link">
+                            <span class="icon">🎤</span>
+                            <div class="demo-details">
+                                <div class="demo-name">AI Whisper Service</div>
+                                <div class="demo-description">Speech-to-text for medical documentation</div>
+                            </div>
+                            <span class="status-badge status-live">Live</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="whisper-openemr-demo.html" class="demo-link">
+                            <span class="icon">🔗</span>
+                            <div class="demo-details">
+                                <div class="demo-name">OpenEMR Whisper Integration</div>
+                                <div class="demo-description">AI transcription integrated with OpenEMR</div>
+                            </div>
+                            <span class="status-badge status-beta">Beta</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="ottehr-demo.html" class="demo-link">
+                            <span class="icon">🏥</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Ottehr Integration</div>
+                                <div class="demo-description">Ottehr EHR platform integration demo</div>
+                            </div>
+                            <span class="status-badge status-demo">Demo</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="ottehr-keycloak-demo.html" class="demo-link">
+                            <span class="icon">🔐</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Ottehr + Keycloak SSO</div>
+                                <div class="demo-description">Single sign-on with Ottehr and Keycloak</div>
+                            </div>
+                            <span class="status-badge status-beta">Beta</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Specialty Modules -->
+            <div class="demo-category">
+                <div class="category-header">
+                    <div class="category-icon">🧬</div>
+                    <div class="category-title">Specialty Modules</div>
+                </div>
+                <ul class="demo-list">
+                    <li class="demo-item">
+                        <a href="demo.html" class="demo-link">
+                            <span class="icon">🎯</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Specialty Picker</div>
+                                <div class="demo-description">Interactive specialty selection component</div>
+                            </div>
+                            <span class="status-badge status-live">Live</span>
+                        </a>
+                    </li>
+                    <li class="demo-item">
+                        <a href="header-demo.html" class="demo-link">
+                            <span class="icon">🧩</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Header Components</div>
+                                <div class="demo-description">Reusable header and navigation components</div>
+                            </div>
+                            <span class="status-badge status-demo">Demo</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Authentication & Security -->
+            <div class="demo-category">
+                <div class="category-header">
+                    <div class="category-icon">🔒</div>
+                    <div class="category-title">Authentication & Security</div>
+                </div>
+                <ul class="demo-list">
+                    <li class="demo-item">
+                        <a href="login.html" class="demo-link">
+                            <span class="icon">🔐</span>
+                            <div class="demo-details">
+                                <div class="demo-name">Patient Login Portal</div>
+                                <div class="demo-description">Secure patient authentication with demo access</div>
+                            </div>
+                            <span class="status-badge status-live">Live</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2025 WebQX™ Healthcare Platform - Complete Healthcare Ecosystem</p>
+            <p style="font-size: 0.9rem; margin-top: 10px;">
+                🔗 <strong>GitHub:</strong> <a href="https://github.com/WebQx/webqx" style="color: white;">WebQx/webqx</a> | 
+                📚 <strong>Documentation:</strong> Available in /docs/ | 
+                🚀 <strong>Status:</strong> Demo Environment
+            </p>
         </div>
     </div>
 
-    <div class="container">
+    <script src="api-mock.js"></script>
+    <script>
+        // Initialize demo environment
+        document.addEventListener('DOMContentLoaded', function() {
+            setupDemoEnvironment();
+        });
+
+        function setupDemoEnvironment() {
+            // Set up demo authentication if not exists
+            let authToken = localStorage.getItem('authToken');
+            let user = localStorage.getItem('user');
+            
+            if (!authToken || !user) {
+                // Auto-setup demo user
+                const demoUser = {
+                    id: 'demo-user-1',
+                    name: 'Demo User',
+                    email: 'demo@webqx.com',
+                    accountStatus: 'Active',
+                    role: 'PATIENT'
+                };
+                
+                localStorage.setItem('authToken', 'demo-token-12345');
+                localStorage.setItem('user', JSON.stringify(demoUser));
+                
+                user = JSON.stringify(demoUser);
+            }
+            
+            // Display user info
+            const userData = JSON.parse(user);
+            document.getElementById('user-name').textContent = userData.name;
+            document.getElementById('user-role').textContent = userData.role;
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout from the demo?')) {
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('user');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Add analytics for demo usage
+        document.querySelectorAll('.demo-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                const demoName = this.querySelector('.demo-name').textContent;
+                console.log(`Demo accessed: ${demoName}`);
+                // You can add analytics tracking here
+            });
+        });
+    </script>
+</body>
+</html>
         <div class="lang-selector">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
