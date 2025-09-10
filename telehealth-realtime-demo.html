@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebQX™ Real-Time Telehealth Demo - Updated</title>
+    <title>WebQX™ Real-Time Telehealth Demo</title>
     <style>
         /* Reset and base styles */
         * {
@@ -19,53 +19,6 @@
             color: white;
             display: flex;
             flex-direction: column;
-        }
-        
-        /* Video feed styles */
-        .video-feed {
-            background: linear-gradient(45deg, #1a1a2e, #16213e);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .video-feed::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: radial-gradient(ellipse at center, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
-            animation: videoNoise 2s infinite;
-        }
-        
-        @keyframes videoNoise {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; }
-        }
-        
-        .vital-sign {
-            animation: pulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        
-        .chat-message {
-            animation: slideIn 0.3s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
         
         /* Header styles */
@@ -123,13 +76,11 @@
             gap: 16px;
         }
         
-        .view-selector {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            padding: 8px 12px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            cursor: pointer;
+        .session-timer {
+            font-family: monospace;
+            color: #10b981;
+            font-size: 18px;
+            font-weight: bold;
         }
         
         .btn-primary {
@@ -164,17 +115,26 @@
             transform: translateY(-2px);
         }
         
-        /* Main interface */
-        .main-interface {
+        /* Main layout */
+        .main-container {
             flex: 1;
-            padding: 24px;
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
+            padding: 20px;
         }
         
-        .dual-view {
+        .video-section {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .video-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            height: 100%;
+            gap: 20px;
+            flex: 1;
         }
         
         .video-panel {
@@ -183,6 +143,8 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         
         .panel-header {
@@ -193,7 +155,7 @@
             justify-content: space-between;
         }
         
-        .panel-header-left {
+        .user-info {
             display: flex;
             align-items: center;
             gap: 12px;
@@ -209,33 +171,39 @@
             justify-content: center;
             font-size: 14px;
             font-weight: bold;
+            color: white;
         }
         
-        .user-info h3 {
+        .user-details h3 {
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 2px;
         }
         
-        .user-info p {
+        .user-details p {
             font-size: 12px;
             opacity: 0.8;
         }
         
-        .video-container {
-            position: relative;
-            height: 300px;
-            background: linear-gradient(45deg, #1a1a2e, #16213e);
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
         }
         
-        .video-element {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 0 0 16px 16px;
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+        
+        .video-container {
+            flex: 1;
+            position: relative;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            min-height: 300px;
         }
         
         .video-placeholder {
@@ -253,7 +221,7 @@
             text-align: center;
         }
         
-        .video-placeholder-icon {
+        .video-icon {
             width: 64px;
             height: 64px;
             background: #0d9488;
@@ -262,6 +230,7 @@
             align-items: center;
             justify-content: center;
             margin-bottom: 12px;
+            font-size: 32px;
         }
         
         .video-controls {
@@ -269,7 +238,6 @@
             bottom: 16px;
             left: 16px;
             display: flex;
-            align-items: center;
             gap: 8px;
         }
         
@@ -284,6 +252,7 @@
             justify-content: center;
             cursor: pointer;
             transition: all 0.3s ease;
+            color: white;
         }
         
         .control-btn:hover {
@@ -294,71 +263,32 @@
             background: #0d9488;
         }
         
-        .panel-footer {
-            padding: 16px;
-            background: rgba(0, 0, 0, 0.1);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .footer-content {
+        /* Sidebar */
+        .sidebar {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 20px;
         }
         
-        .connection-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-        }
-        
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-        }
-        
-        .status-dot.connected {
-            background: #10b981;
-        }
-        
-        .status-dot.connecting {
-            background: #f59e0b;
-            animation: pulse 1s infinite;
-        }
-        
-        .status-dot.disconnected {
-            background: #ef4444;
-        }
-        
-        .quality-indicator {
-            font-size: 12px;
-            opacity: 0.8;
-        }
-        
-        /* Chat sidebar */
-        .chat-sidebar {
-            width: 320px;
+        .chat-panel, .vitals-panel {
             background: rgba(0, 0, 0, 0.2);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
-            display: flex;
-            flex-direction: column;
+            overflow: hidden;
         }
         
-        .chat-header {
+        .panel-title {
             padding: 16px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             font-weight: 600;
+            font-size: 16px;
         }
         
         .chat-messages {
-            flex: 1;
-            padding: 16px;
+            height: 200px;
             overflow-y: auto;
-            max-height: 400px;
+            padding: 16px;
         }
         
         .message {
@@ -366,7 +296,6 @@
             padding: 8px 12px;
             border-radius: 12px;
             font-size: 14px;
-            animation: slideIn 0.3s ease-out;
         }
         
         .message.provider {
@@ -389,14 +318,11 @@
         .chat-input {
             padding: 16px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .input-group {
             display: flex;
             gap: 8px;
         }
         
-        .chat-input-field {
+        .chat-input input {
             flex: 1;
             padding: 8px 12px;
             background: rgba(255, 255, 255, 0.1);
@@ -406,7 +332,7 @@
             font-size: 14px;
         }
         
-        .chat-input-field::placeholder {
+        .chat-input input::placeholder {
             color: rgba(255, 255, 255, 0.6);
         }
         
@@ -420,24 +346,11 @@
             font-weight: 600;
         }
         
-        .send-btn:hover {
-            background: #0891b2;
-        }
-        
-        /* Vitals panel */
-        .vitals-panel {
-            background: rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 20px;
-        }
-        
         .vitals-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-            margin-top: 16px;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 16px;
         }
         
         .vital-card {
@@ -446,11 +359,10 @@
             border-radius: 12px;
             padding: 16px;
             text-align: center;
-            animation: pulse 2s ease-in-out infinite;
         }
         
         .vital-value {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             color: #7dd3fc;
             margin-bottom: 4px;
@@ -464,33 +376,70 @@
         .vital-trend {
             font-size: 10px;
             margin-top: 4px;
-        }
-        
-        .trend-up {
-            color: #ef4444;
-        }
-        
-        .trend-down {
             color: #10b981;
         }
         
-        .trend-stable {
-            color: #f59e0b;
+        /* Control bar */
+        .control-bar {
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
         }
         
-        /* Responsive design */
+        .main-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .control-button {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+        
+        .control-button:hover {
+            background: rgba(13, 148, 136, 0.6);
+        }
+        
+        .control-button.active {
+            background: #0d9488;
+        }
+        
+        .control-button.end-call {
+            background: #dc2626;
+        }
+        
+        .control-button.end-call:hover {
+            background: #b91c1c;
+        }
+        
+        /* Responsive */
         @media (max-width: 1024px) {
-            .dual-view {
+            .main-container {
                 grid-template-columns: 1fr;
                 gap: 16px;
             }
             
-            .chat-sidebar {
-                width: 100%;
+            .video-grid {
+                grid-template-columns: 1fr;
             }
             
-            .main-interface {
-                padding: 16px;
+            .sidebar {
+                flex-direction: row;
             }
         }
         
@@ -500,185 +449,13 @@
                 gap: 12px;
             }
             
-            .header-right {
-                flex-wrap: wrap;
-                justify-content: center;
+            .sidebar {
+                flex-direction: column;
             }
             
-            .video-container {
-                height: 200px;
+            .control-bar {
+                padding: 12px 16px;
             }
-        }
-        
-        /* View mode styles */
-        .single-view {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-        
-        .picture-in-picture {
-            position: relative;
-        }
-        
-        .pip-overlay {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 200px;
-            height: 150px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 12px;
-            overflow: hidden;
-            z-index: 10;
-        }
-        
-        /* Animation utilities */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .slide-up {
-            animation: slideUp 0.3s ease-out;
-        }
-        
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* Hidden utility */
-        .hidden {
-            display: none !important;
-        }
-        
-        /* Loading states */
-        .loading {
-            opacity: 0.7;
-            pointer-events: none;
-        }
-        
-        .spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-            }
-        }
-        
-        .recording-indicator {
-            animation: blink 1s infinite;
-        }
-        
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0.3; }
-        }
-        
-        .waveform {
-            display: flex;
-            align-items: center;
-            gap: 2px;
-        }
-        
-        .wave-bar {
-            width: 3px;
-            background: #10b981;
-            border-radius: 2px;
-            animation: wave 1.5s ease-in-out infinite;
-        }
-        
-        .wave-bar:nth-child(1) { height: 10px; animation-delay: 0s; }
-        .wave-bar:nth-child(2) { height: 20px; animation-delay: 0.1s; }
-        .wave-bar:nth-child(3) { height: 15px; animation-delay: 0.2s; }
-        .wave-bar:nth-child(4) { height: 25px; animation-delay: 0.3s; }
-        .wave-bar:nth-child(5) { height: 18px; animation-delay: 0.4s; }
-        .wave-bar:nth-child(6) { height: 12px; animation-delay: 0.5s; }
-        .wave-bar:nth-child(7) { height: 22px; animation-delay: 0.6s; }
-        .wave-bar:nth-child(8) { height: 16px; animation-delay: 0.7s; }
-        
-        @keyframes wave {
-            0%, 100% { height: 10px; opacity: 0.5; }
-            50% { height: 100%; opacity: 1; }
-        }
-        
-        .typing-indicator {
-            display: flex;
-            gap: 4px;
-            padding: 10px;
-        }
-        
-        .typing-dot {
-            width: 8px;
-            height: 8px;
-            background: #6b7280;
-            border-radius: 50%;
-            animation: typing 1.4s ease-in-out infinite;
-        }
-        
-        .typing-dot:nth-child(1) { animation-delay: 0s; }
-        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
-        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-        
-        @keyframes typing {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-10px); }
-        }
-        
-        .transcription-pulse {
-            animation: transcriptionPulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes transcriptionPulse {
-            0%, 100% { 
-                background: rgba(139, 92, 246, 0.3);
-                border-color: rgb(139, 92, 246);
-            }
-            50% { 
-                background: rgba(139, 92, 246, 0.5);
-                border-color: rgb(168, 85, 247);
-            }
-        }
-        
-        .waveform-bar {
-            transition: height 0.1s ease;
-            animation: waveAnimation 1.5s ease-in-out infinite;
-        }
-        
-        .waveform-bar:nth-child(odd) {
-            animation-delay: 0.1s;
-        }
-        
-        .waveform-bar:nth-child(even) {
-            animation-delay: 0.3s;
-        }
-        
-        @keyframes waveAnimation {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
         }
     </style>
 </head>
@@ -694,732 +471,270 @@
                 </div>
             </div>
             <div class="header-right">
-                <div id="sessionTimer" style="font-family: monospace; color: #10b981;">00:00:00</div>
+                <div id="sessionTimer" class="session-timer">00:00</div>
                 <button onclick="toggleFullscreen()" class="btn-primary">
                     📺 Fullscreen
                 </button>
-                <select id="viewMode" class="view-selector" onchange="changeViewMode()">
-                    <option value="dual">Dual View</option>
-                    <option value="provider">Provider Focus</option>
-                    <option value="patient">Patient Focus</option>
-                    <option value="pip">Picture-in-Picture</option>
-                </select>
                 <button onclick="endSession()" class="btn-danger">
                     End Session
                 </button>
             </div>
         </div>
     </header>
-                    <option value="dual">Dual View</option>
-                    <option value="provider">Provider View</option>
-                    <option value="patient">Patient View</option>
-                </select>
-                
-                <!-- End Session -->
-                <button onclick="endSession()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
-                    End Session
-                </button>
-            </div>
-        </div>
-    </header>
 
-    <!-- Main Video Interface -->
-    <div class="flex-1 p-6" id="mainInterface">
-        <!-- Dual View Mode -->
-        <div id="dualView" class="grid grid-cols-2 gap-6 h-full">
-            <!-- Provider Side -->
-            <div class="bg-gray-800 rounded-xl overflow-hidden">
-                <div class="bg-blue-900 px-4 py-2 flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                            <span class="text-white text-sm font-semibold">DR</span>
-                        </div>
-                        <div>
-                            <h3 class="text-white font-semibold">Dr. Sarah Johnson</h3>
-                            <p class="text-blue-200 text-sm">Internal Medicine</p>
-                        </div>
-                    </div>
-                    <div class="text-green-400 text-sm">🟢 Online</div>
-                </div>
-                
-                <!-- Provider Video Feed -->
-                <div class="video-feed h-64 relative">
-                    <video id="providerVideoElement" class="absolute inset-0 w-full h-full object-cover rounded-lg" autoplay muted style="display: none;"></video>
-                    <div id="providerVideoPlaceholder" class="absolute inset-4 bg-blue-600 bg-opacity-20 rounded-lg flex items-center justify-center">
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-blue-600 rounded-full mx-auto mb-2 flex items-center justify-center">
-                                <span class="text-white text-lg">👩‍⚕️</span>
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Video Section -->
+        <div class="video-section">
+            <div class="video-grid">
+                <!-- Provider Video -->
+                <div class="video-panel">
+                    <div class="panel-header">
+                        <div class="user-info">
+                            <div class="user-avatar">DR</div>
+                            <div class="user-details">
+                                <h3>Dr. Sarah Wilson</h3>
+                                <p>Internal Medicine</p>
                             </div>
-                            <p class="text-white font-medium">Dr. Sarah Johnson</p>
-                            <p class="text-blue-200 text-sm" id="providerVideoStatus">Click camera to enable video</p>
+                        </div>
+                        <div class="connection-status">
+                            <div class="status-dot"></div>
+                            <span>Connected</span>
                         </div>
                     </div>
-                    
-                    <!-- Audio Waveform -->
-                    <div class="absolute bottom-4 left-4 flex items-center space-x-2">
-                        <span class="text-white text-sm">🎤</span>
-                        <div class="waveform" id="providerAudio" style="display: none;">
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
+                    <div class="video-container">
+                        <div class="video-placeholder">
+                            <div class="video-icon">👩‍⚕️</div>
+                            <h4>Dr. Sarah Wilson</h4>
+                            <p>Video connected</p>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Provider Controls -->
-                <div class="p-4 bg-gray-750 border-t border-gray-600">
-                    <div class="flex items-center justify-between">
-                        <div class="flex space-x-2">
-                            <button id="providerMic" onclick="toggleMic('provider')" class="bg-green-600 hover:bg-green-700 p-2 rounded">
-                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path>
-                                </svg>
+                        <div class="video-controls">
+                            <button class="control-btn active" onclick="toggleAudio('provider')">
+                                🎤
                             </button>
-                            <button id="providerVideo" onclick="toggleVideo('provider')" class="bg-blue-600 hover:bg-blue-700 p-2 rounded">
-                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path>
-                                </svg>
-                            </button>
-                            <button onclick="shareScreen('provider')" class="bg-purple-600 hover:bg-purple-700 p-2 rounded">
-                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v4a1 1 0 01-2 0V5H5v10h4a1 1 0 110 2H4a1 1 0 01-1-1V4zm7.707 4.293a1 1 0 00-1.414 1.414L11 11.414V9a1 1 0 112 0v2.414l1.707-1.707a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3z" clip-rule="evenodd"></path>
-                                </svg>
+                            <button class="control-btn active" onclick="toggleVideo('provider')">
+                                📹
                             </button>
                         </div>
-                        <div class="text-white text-sm">Provider Controls</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Patient Side -->
-            <div class="bg-gray-800 rounded-xl overflow-hidden">
-                <div class="bg-green-900 px-4 py-2 flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
-                            <span class="text-white text-sm font-semibold">JD</span>
-                        </div>
-                        <div>
-                            <h3 class="text-white font-semibold">John Doe</h3>
-                            <p class="text-green-200 text-sm">Patient ID: P001234</p>
-                        </div>
-                    </div>
-                    <div class="text-green-400 text-sm">🟢 Connected</div>
-                </div>
-                
-                <!-- Patient Video Feed -->
-                <div class="video-feed h-64 relative">
-                    <video id="patientVideoElement" class="absolute inset-0 w-full h-full object-cover rounded-lg" autoplay muted style="display: none;"></video>
-                    <div id="patientVideoPlaceholder" class="absolute inset-4 bg-green-600 bg-opacity-20 rounded-lg flex items-center justify-center">
-                        <div class="text-center">
-                            <div class="w-16 h-16 bg-green-600 rounded-full mx-auto mb-2 flex items-center justify-center">
-                                <span class="text-white text-lg">👨</span>
+                <!-- Patient Video -->
+                <div class="video-panel">
+                    <div class="panel-header">
+                        <div class="user-info">
+                            <div class="user-avatar" style="background: #0891b2;">JD</div>
+                            <div class="user-details">
+                                <h3>John Doe</h3>
+                                <p>Patient - Age 45</p>
                             </div>
-                            <p class="text-white font-medium">John Doe</p>
-                            <p class="text-green-200 text-sm" id="patientVideoStatus">Click camera to enable video</p>
+                        </div>
+                        <div class="connection-status">
+                            <div class="status-dot"></div>
+                            <span>Connected</span>
                         </div>
                     </div>
-                    
-                    <!-- Audio Waveform -->
-                    <div class="absolute bottom-4 left-4 flex items-center space-x-2">
-                        <span class="text-white text-sm">🎤</span>
-                        <div class="waveform" id="patientAudio" style="display: none;">
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
-                            <div class="wave-bar"></div>
+                    <div class="video-container">
+                        <div class="video-placeholder">
+                            <div class="video-icon" style="background: #0891b2;">👨</div>
+                            <h4>John Doe</h4>
+                            <p>Video connected</p>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Patient Controls -->
-                <div class="p-4 bg-gray-750 border-t border-gray-600">
-                    <div class="flex items-center justify-between">
-                        <div class="flex space-x-2">
-                            <button id="patientMic" onclick="toggleMic('patient')" class="bg-green-600 hover:bg-green-700 p-2 rounded">
-                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path>
-                                </svg>
+                        <div class="video-controls">
+                            <button class="control-btn active" onclick="toggleAudio('patient')">
+                                🎤
                             </button>
-                            <button id="patientVideo" onclick="toggleVideo('patient')" class="bg-blue-600 hover:bg-blue-700 p-2 rounded">
-                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path>
-                                </svg>
-                            </button>
-                            <button onclick="requestHelp()" class="bg-yellow-600 hover:bg-yellow-700 p-2 rounded">
-                                <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path>
-                                </svg>
+                            <button class="control-btn active" onclick="toggleVideo('patient')">
+                                📹
                             </button>
                         </div>
-                        <div class="text-white text-sm">Patient Controls</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Side Panel -->
-        <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Real-Time Chat -->
-            <div class="bg-gray-800 rounded-xl overflow-hidden">
-                <div class="bg-gray-700 px-4 py-3 flex items-center justify-between">
-                    <h3 class="text-white font-semibold">💬 Live Chat</h3>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                        <span class="text-green-400 text-sm">Active</span>
-                    </div>
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <!-- Chat Panel -->
+            <div class="chat-panel">
+                <div class="panel-title">💬 Session Chat</div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message system">Session started</div>
+                    <div class="message provider"><strong>Dr. Wilson:</strong> Hello John! How are you feeling today?</div>
+                    <div class="message patient"><strong>You:</strong> Hi Dr. Wilson, I'm doing better, thank you.</div>
                 </div>
-                
-                <div id="chatMessages" class="p-4 h-64 overflow-y-auto space-y-3">
-                    <div class="chat-message">
-                        <div class="flex items-start space-x-2">
-                            <div class="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-xs text-white">DR</div>
-                            <div class="flex-1">
-                                <div class="bg-blue-600 text-white p-2 rounded-lg text-sm">
-                                    Hello John! How are you feeling today?
-                                </div>
-                                <div class="text-gray-400 text-xs mt-1">Dr. Johnson • 2:30 PM</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="chat-message">
-                        <div class="flex items-start space-x-2 flex-row-reverse">
-                            <div class="w-6 h-6 bg-green-600 rounded-full flex items-center justify-center text-xs text-white">JD</div>
-                            <div class="flex-1">
-                                <div class="bg-green-600 text-white p-2 rounded-lg text-sm text-right">
-                                    Hi Dr. Johnson! I'm feeling much better today. The medication seems to be working.
-                                </div>
-                                <div class="text-gray-400 text-xs mt-1 text-right">John • 2:31 PM</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div id="typingIndicator" class="hidden">
-                        <div class="flex items-center space-x-2">
-                            <div class="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-xs text-white">DR</div>
-                            <div class="typing-indicator">
-                                <div class="typing-dot"></div>
-                                <div class="typing-dot"></div>
-                                <div class="typing-dot"></div>
-                            </div>
-                            <span class="text-gray-400 text-sm">Dr. Johnson is typing...</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="border-t border-gray-600 p-4">
-                    <div class="flex space-x-2">
-                        <input 
-                            id="chatInput" 
-                            type="text" 
-                            placeholder="Type your message..." 
-                            class="flex-1 bg-gray-700 text-white px-3 py-2 rounded"
-                            onkeypress="handleChatKeypress(event)"
-                        >
-                        <button onclick="sendMessage()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-white">
-                            Send
-                        </button>
-                    </div>
+                <div class="chat-input">
+                    <input type="text" placeholder="Type a message..." id="chatInput" onkeypress="handleChatKeypress(event)">
+                    <button class="send-btn" onclick="sendMessage()">Send</button>
                 </div>
             </div>
 
-            <!-- Live Vital Signs -->
-            <div class="bg-gray-800 rounded-xl overflow-hidden">
-                <div class="bg-gray-700 px-4 py-3">
-                    <h3 class="text-white font-semibold">💓 Live Vitals</h3>
-                </div>
-                
-                <div class="p-4 space-y-4">
-                    <div class="vital-sign bg-red-900 bg-opacity-30 p-3 rounded-lg">
-                        <div class="flex items-center justify-between">
-                            <span class="text-red-300">Heart Rate</span>
-                            <span class="text-red-200 font-mono text-lg" id="heartRate">72 BPM</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
-                            <div class="bg-red-500 h-2 rounded-full" style="width: 72%"></div>
-                        </div>
+            <!-- Vitals Panel -->
+            <div class="vitals-panel">
+                <div class="panel-title">📊 Live Vitals</div>
+                <div class="vitals-grid">
+                    <div class="vital-card">
+                        <div class="vital-value" id="bloodPressure">120/80</div>
+                        <div class="vital-label">Blood Pressure</div>
+                        <div class="vital-trend">Normal</div>
                     </div>
-                    
-                    <div class="vital-sign bg-blue-900 bg-opacity-30 p-3 rounded-lg">
-                        <div class="flex items-center justify-between">
-                            <span class="text-blue-300">Blood Pressure</span>
-                            <span class="text-blue-200 font-mono text-lg" id="bloodPressure">120/80</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
-                            <div class="bg-blue-500 h-2 rounded-full" style="width: 65%"></div>
-                        </div>
+                    <div class="vital-card">
+                        <div class="vital-value" id="heartRate">72</div>
+                        <div class="vital-label">Heart Rate</div>
+                        <div class="vital-trend">Normal</div>
                     </div>
-                    
-                    <div class="vital-sign bg-green-900 bg-opacity-30 p-3 rounded-lg">
-                        <div class="flex items-center justify-between">
-                            <span class="text-green-300">Oxygen Sat</span>
-                            <span class="text-green-200 font-mono text-lg" id="oxygenSat">98%</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
-                            <div class="bg-green-500 h-2 rounded-full" style="width: 98%"></div>
-                        </div>
+                    <div class="vital-card">
+                        <div class="vital-value" id="temperature">98.6°F</div>
+                        <div class="vital-label">Temperature</div>
+                        <div class="vital-trend">Normal</div>
                     </div>
-                    
-                    <div class="vital-sign bg-yellow-900 bg-opacity-30 p-3 rounded-lg">
-                        <div class="flex items-center justify-between">
-                            <span class="text-yellow-300">Temperature</span>
-                            <span class="text-yellow-200 font-mono text-lg" id="temperature">98.6°F</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-2 mt-2">
-                            <div class="bg-yellow-500 h-2 rounded-full" style="width: 55%"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Provider Notes -->
-            <div class="bg-gray-800 rounded-xl overflow-hidden">
-                <div class="bg-gray-700 px-4 py-3 flex items-center justify-between">
-                    <h3 class="text-white font-semibold">📝 Live Notes</h3>
-                    <div class="flex items-center space-x-2">
-                        <button id="transcriptionBtn" onclick="toggleTranscription()" class="bg-purple-600 hover:bg-purple-700 px-3 py-1 rounded text-white text-sm flex items-center space-x-1">
-                            <span id="transcriptionIcon">🎤</span>
-                            <span id="transcriptionText">Start AI Transcription</span>
-                        </button>
-                        <button onclick="saveNotes()" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-white text-sm">
-                            Save
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Transcription Controls -->
-                <div id="transcriptionControls" class="bg-gray-750 px-4 py-2 border-b border-gray-600 hidden">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-gray-400 text-sm">Language:</span>
-                                <select id="transcriptionLanguage" class="bg-gray-600 text-white px-2 py-1 rounded text-sm">
-                                    <option value="auto">Auto-detect</option>
-                                    <option value="en">English</option>
-                                    <option value="es">Spanish</option>
-                                    <option value="fr">French</option>
-                                    <option value="de">German</option>
-                                </select>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-gray-400 text-sm">Medical Specialty:</span>
-                                <select id="medicalSpecialty" class="bg-gray-600 text-white px-2 py-1 rounded text-sm">
-                                    <option value="general">General Medicine</option>
-                                    <option value="cardiology">Cardiology</option>
-                                    <option value="emergency">Emergency Medicine</option>
-                                    <option value="pharmacy">Pharmacy</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div id="transcriptionStatus" class="flex items-center space-x-2">
-                            <div id="transcriptionIndicator" class="w-2 h-2 bg-gray-500 rounded-full"></div>
-                            <span class="text-gray-400 text-sm" id="transcriptionStatusText">Ready</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Audio Visualizer for Transcription -->
-                <div id="transcriptionVisualizer" class="bg-gray-750 px-4 py-3 border-b border-gray-600 hidden">
-                    <div class="flex items-center justify-center space-x-1" id="audioWaveform">
-                        <!-- Audio bars will be generated dynamically -->
-                    </div>
-                </div>
-                
-                <div class="p-4">
-                    <!-- Live Transcription Display -->
-                    <div id="liveTranscription" class="mb-3 p-3 bg-blue-900 bg-opacity-30 rounded border-l-4 border-blue-500 hidden">
-                        <div class="flex items-center justify-between mb-2">
-                            <h4 class="text-blue-300 text-sm font-semibold">🎤 Live Transcription</h4>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-blue-300 text-xs" id="transcriptionConfidence"></span>
-                                <button onclick="insertTranscription()" class="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-white text-xs">
-                                    Insert into Notes
-                                </button>
-                            </div>
-                        </div>
-                        <div id="transcriptionText" class="text-white text-sm min-h-8 max-h-32 overflow-y-auto">
-                            <span class="text-gray-400 italic">Listening for speech...</span>
-                        </div>
-                    </div>
-
-                    <textarea 
-                        id="providerNotes" 
-                        placeholder="Take real-time notes during consultation..."
-                        class="w-full h-48 bg-gray-700 text-white p-3 rounded resize-none"
-                        oninput="autoSaveNotes()"
-                    >Patient appears alert and responsive.
-Vitals stable within normal range.
-Reports improvement with current medication.
-No immediate concerns noted.
-
-Follow-up in 2 weeks.
-</textarea>
-                    
-                    <div class="mt-3 flex items-center justify-between text-sm">
-                        <span class="text-gray-400" id="noteStatus">Auto-saved 5 seconds ago</span>
-                        <span class="text-gray-400" id="wordCount">28 words</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Shared Screen Area -->
-        <div id="sharedScreen" class="mt-6 bg-gray-800 rounded-xl overflow-hidden hidden">
-            <div class="bg-purple-900 px-4 py-3 flex items-center justify-between">
-                <h3 class="text-white font-semibold">📺 Shared Content</h3>
-                <button onclick="stopSharing()" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-white text-sm">
-                    Stop Sharing
-                </button>
-            </div>
-            
-            <div class="p-6 text-center">
-                <div class="bg-white rounded-lg p-8 max-w-2xl mx-auto">
-                    <h4 class="text-gray-800 text-xl font-bold mb-4">📊 Lab Results - John Doe</h4>
-                    <div class="grid grid-cols-2 gap-4 text-left">
-                        <div>
-                            <strong>Complete Blood Count:</strong>
-                            <ul class="mt-2 space-y-1 text-sm">
-                                <li>• WBC: 7,200/μL ✅</li>
-                                <li>• RBC: 4.8 M/μL ✅</li>
-                                <li>• Hemoglobin: 14.2 g/dL ✅</li>
-                                <li>• Platelets: 280,000/μL ✅</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <strong>Basic Metabolic Panel:</strong>
-                            <ul class="mt-2 space-y-1 text-sm">
-                                <li>• Glucose: 95 mg/dL ✅</li>
-                                <li>• Sodium: 140 mEq/L ✅</li>
-                                <li>• Potassium: 4.2 mEq/L ✅</li>
-                                <li>• Creatinine: 0.9 mg/dL ✅</li>
-                            </ul>
-                        </div>
-                    </div>
-                    <div class="mt-4 p-3 bg-green-100 rounded">
-                        <strong class="text-green-800">All values within normal range</strong>
+                    <div class="vital-card">
+                        <div class="vital-value" id="oxygenSat">98%</div>
+                        <div class="vital-label">O2 Saturation</div>
+                        <div class="vital-trend">Normal</div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Control Bar -->
+    <div class="control-bar">
+        <div class="main-controls">
+            <button id="micBtn" class="control-button active" onclick="toggleMicrophone()">
+                🎤
+            </button>
+            <button id="videoBtn" class="control-button active" onclick="toggleCamera()">
+                📹
+            </button>
+            <button class="control-button" onclick="shareScreen()">
+                📺
+            </button>
+            <button class="control-button" onclick="toggleChat()">
+                💬
+            </button>
+            <button class="control-button" onclick="toggleVitals()">
+                📊
+            </button>
+            <button class="control-button end-call" onclick="endSession()">
+                📞
+            </button>
+        </div>
+    </div>
+
     <script>
-        // Session management
-        let sessionStartTime = Date.now();
-        let sessionTimer;
-        let isRecording = true;
-        let chatHistory = [];
-        let vitalsInterval;
-        
-        // Media streams for real camera/audio functionality
-        let currentVideoStream = null;
-        let currentAudioStream = null;
-        let audioContext = null;
-        let analyser = null;
-        let animationFrame = null;
+        // Global state
+        let sessionStartTime = null;
+        let sessionTimer = null;
 
-        // Transcription state
-        let isTranscribing = false;
-        let transcriptionStream = null;
-        let transcriptionAudioContext = null;
-        let transcriptionAnalyser = null;
-        let transcriptionAnimationFrame = null;
-        let mediaRecorder = null;
-        let recordingChunks = [];
-        let transcriptionInterval = null;
-        let currentTranscription = '';
-        let transcriptionHistory = [];
-
-        // Mock Whisper API responses for demonstration
-        const mockTranscriptions = [
-            "Patient reports chest pain that started this morning, rating 7 out of 10 on pain scale.",
-            "Blood pressure is elevated at 140 over 90, heart rate is 88 beats per minute.",
-            "Patient has a history of hypertension and takes lisinopril 10mg daily.",
-            "Recommending an EKG and chest X-ray to rule out cardiac issues.",
-            "Patient denies shortness of breath, nausea, or radiation of pain to arms.",
-            "Physical examination reveals clear lung sounds bilaterally.",
-            "Will start patient on sublingual nitroglycerin as needed for chest pain.",
-            "Follow-up appointment scheduled in one week to review test results.",
-            "Patient educated on when to seek emergency care for worsening symptoms.",
-            "Medication adherence discussed, patient reports taking medications as prescribed."
-        ];
-
-        // Initialize session
+        // Initialize demo
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('WebQX Telehealth Demo Initialized');
             startSessionTimer();
-            startVitalsSimulation();
-            simulateRealtimeActivity();
-            
-            // Test if getUserMedia is available
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                console.log('getUserMedia is available');
-            } else {
-                console.error('getUserMedia is not available');
-                addChatMessage('system', 'Camera/microphone access not available. Please use HTTPS.', 'System');
-            }
-            
-            // Add click listeners as backup to onclick attributes
-            document.getElementById('providerVideo').addEventListener('click', () => toggleVideo('provider'));
-            document.getElementById('patientVideo').addEventListener('click', () => toggleVideo('patient'));
-            document.getElementById('viewMode').addEventListener('change', changeViewMode);
+            setupRealTimeUpdates();
         });
 
+        // Session Timer
         function startSessionTimer() {
-            sessionTimer = setInterval(() => {
-                const elapsed = Date.now() - sessionStartTime;
-                const hours = Math.floor(elapsed / 3600000);
-                const minutes = Math.floor((elapsed % 3600000) / 60000);
-                const seconds = Math.floor((elapsed % 60000) / 1000);
-                
+            sessionStartTime = new Date();
+            sessionTimer = setInterval(updateSessionTimer, 1000);
+        }
+
+        function updateSessionTimer() {
+            if (sessionStartTime) {
+                const now = new Date();
+                const elapsed = Math.floor((now - sessionStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
                 document.getElementById('sessionTimer').textContent = 
-                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            }, 1000);
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
         }
 
-        function startVitalsSimulation() {
-            vitalsInterval = setInterval(() => {
-                // Simulate realistic vital sign fluctuations
-                const heartRate = 70 + Math.floor(Math.random() * 10);
-                const systolic = 118 + Math.floor(Math.random() * 8);
-                const diastolic = 78 + Math.floor(Math.random() * 6);
-                const oxygenSat = 97 + Math.floor(Math.random() * 3);
-                const temp = 98.4 + (Math.random() * 0.6);
-
-                document.getElementById('heartRate').textContent = `${heartRate} BPM`;
-                document.getElementById('bloodPressure').textContent = `${systolic}/${diastolic}`;
-                document.getElementById('oxygenSat').textContent = `${oxygenSat}%`;
-                document.getElementById('temperature').textContent = `${temp.toFixed(1)}°F`;
-            }, 3000);
+        // Audio/Video Controls
+        function toggleMicrophone() {
+            const btn = document.getElementById('micBtn');
+            btn.classList.toggle('active');
+            const isActive = btn.classList.contains('active');
+            btn.textContent = isActive ? '🎤' : '🔇';
+            showNotification(`Microphone ${isActive ? 'enabled' : 'muted'}`);
         }
 
-        function simulateRealtimeActivity() {
-            // Simulate random chat messages
-            setTimeout(() => {
-                addChatMessage('provider', "Let's review your lab results together.", 'Dr. Johnson');
-                
+        function toggleCamera() {
+            const btn = document.getElementById('videoBtn');
+            btn.classList.toggle('active');
+            const isActive = btn.classList.contains('active');
+            btn.textContent = isActive ? '📹' : '📷';
+            showNotification(`Camera ${isActive ? 'enabled' : 'disabled'}`);
+        }
+
+        function toggleAudio(participant) {
+            showNotification(`${participant} audio toggled`);
+        }
+
+        function toggleVideo(participant) {
+            showNotification(`${participant} video toggled`);
+        }
+
+        function shareScreen() {
+            showNotification('Screen sharing started');
+        }
+
+        function toggleChat() {
+            showNotification('Chat toggled');
+        }
+
+        function toggleVitals() {
+            showNotification('Vitals panel toggled');
+        }
+
+        function endSession() {
+            if (confirm('Are you sure you want to end this session?')) {
+                showNotification('Session ended');
                 setTimeout(() => {
-                    showTyping();
-                    setTimeout(() => {
-                        hideTyping();
-                        addChatMessage('patient', "Thank you, I'm ready to see them.", 'John');
-                    }, 2000);
-                }, 3000);
-            }, 10000);
-        }
-
-        // Audio analysis functions for real microphone input
-        function startAudioAnalysis(stream, waveformId) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioContext.createAnalyser();
-            const source = audioContext.createMediaStreamSource(stream);
-            
-            analyser.fftSize = 256;
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            
-            source.connect(analyser);
-            
-            function animate() {
-                analyser.getByteFrequencyData(dataArray);
-                updateWaveform(dataArray, waveformId);
-                animationFrame = requestAnimationFrame(animate);
-            }
-            animate();
-        }
-        
-        function updateWaveform(dataArray, waveformId) {
-            const waveform = document.getElementById(waveformId);
-            if (!waveform) return;
-            
-            const bars = waveform.querySelectorAll('.wave-bar');
-            bars.forEach((bar, index) => {
-                if (index < dataArray.length / 4) {
-                    const height = (dataArray[index] / 255) * 100;
-                    bar.style.height = `${Math.max(height, 10)}%`;
-                }
-            });
-        }
-        
-        function stopAudioAnalysis() {
-            if (animationFrame) {
-                cancelAnimationFrame(animationFrame);
-                animationFrame = null;
-            }
-            if (audioContext) {
-                audioContext.close();
-                audioContext = null;
+                    window.location.href = 'index.html';
+                }, 2000);
             }
         }
 
-        function changeViewMode() {
-            const mode = document.getElementById('viewMode').value;
-            const dualView = document.getElementById('dualView');
-            
-            // Implement actual view switching
-            if (mode === 'provider') {
-                // Show only provider side
-                dualView.style.gridTemplateColumns = '1fr';
-                dualView.children[1].style.display = 'none'; // Hide patient side
-                dualView.children[0].style.display = 'block'; // Show provider side
-            } else if (mode === 'patient') {
-                // Show only patient side
-                dualView.style.gridTemplateColumns = '1fr';
-                dualView.children[0].style.display = 'none'; // Hide provider side
-                dualView.children[1].style.display = 'block'; // Show patient side
+        function toggleFullscreen() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
             } else {
-                // Show dual view (default)
-                dualView.style.gridTemplateColumns = '1fr 1fr';
-                dualView.children[0].style.display = 'block'; // Show provider side
-                dualView.children[1].style.display = 'block'; // Show patient side
+                document.documentElement.requestFullscreen();
             }
-            
-            console.log(`Switched to ${mode} view`);
         }
 
-        async function toggleMic(user) {
-            const button = document.getElementById(`${user}Mic`);
-            const isActive = button.classList.contains('bg-green-600');
+        // Chat Functions
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
             
-            if (isActive) {
-                button.classList.remove('bg-green-600', 'hover:bg-green-700');
-                button.classList.add('bg-red-600', 'hover:bg-red-700');
-                button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414 1.414L6.524 7.937A6 6 0 0018 10h2a8 8 0 00-13.364-5.958l-1.414-1.414a1 1 0 00-1.414 1.414l14.142 14.142a1 1 0 001.414-1.414z" clip-rule="evenodd"></path></svg>`;
+            if (message) {
+                addMessage('patient', 'You', message);
+                input.value = '';
                 
-                // Stop audio stream and waveform
-                if (currentAudioStream && user === 'patient') {
-                    currentAudioStream.getTracks().forEach(track => track.stop());
-                    currentAudioStream = null;
-                    stopAudioAnalysis();
-                }
-                document.getElementById(`${user}Audio`).style.display = 'none';
-            } else {
-                button.classList.remove('bg-red-600', 'hover:bg-red-700');
-                button.classList.add('bg-green-600', 'hover:bg-green-700');
-                button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd"></path></svg>`;
-                
-                // Start audio stream for patient only (real microphone)
-                if (user === 'patient') {
-                    try {
-                        currentAudioStream = await navigator.mediaDevices.getUserMedia({ 
-                            video: false, 
-                            audio: true 
-                        });
-                        startAudioAnalysis(currentAudioStream, `${user}Audio`);
-                        document.getElementById(`${user}Audio`).style.display = 'flex';
-                    } catch (error) {
-                        console.error('Error accessing microphone:', error);
-                        addChatMessage('system', 'Could not access microphone. Please check permissions.', 'System');
-                        // Revert button state
-                        button.classList.add('bg-red-600', 'hover:bg-red-700');
-                        button.classList.remove('bg-green-600', 'hover:bg-green-700');
-                        button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M13.477 14.89A6 6 0 715.11 6.524l8.367 8.368zm1.414 1.414L6.524 7.937A6 6 0 0018 10h2a8 8 0 00-13.364-5.958l-1.414-1.414a1 1 0 00-1.414 1.414l14.142 14.142a1 1 0 001.414-1.414z" clip-rule="evenodd"></path></svg>`;
-                    }
-                } else {
-                    // For provider, just show simulated waveform
-                    document.getElementById(`${user}Audio`).style.display = 'flex';
-                }
+                // Simulate provider response
+                setTimeout(() => {
+                    const responses = [
+                        'Thank you for letting me know.',
+                        'I understand. How are you feeling about that?',
+                        'That\'s great to hear!',
+                        'Let me make a note of that.'
+                    ];
+                    const response = responses[Math.floor(Math.random() * responses.length)];
+                    addMessage('provider', 'Dr. Wilson', response);
+                }, 1000 + Math.random() * 2000);
             }
         }
 
-        async function toggleVideo(user) {
-            console.log(`toggleVideo called for user: ${user}`);
-            const button = document.getElementById(`${user}Video`);
-            const isActive = button.classList.contains('bg-blue-600');
-            const videoElement = document.getElementById(user === 'provider' ? 'providerVideoElement' : 'patientVideoElement');
-            
-            console.log(`Button found:`, button);
-            console.log(`Video element found:`, videoElement);
-            console.log(`isActive:`, isActive);
-            
-            if (!button) {
-                console.error(`Button with id ${user}Video not found`);
-                return;
-            }
-            
-            if (!videoElement) {
-                console.error(`Video element not found for user ${user}`);
-                return;
-            }
-            
-            if (isActive) {
-                // Turn off video
-                button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                button.classList.add('bg-gray-600', 'hover:bg-gray-700');
-                button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414L3.707 2.293zm2.159 4.034A2 2 0 014 8v6a2 2 0 002 2h6c.352 0 .675-.091.96-.252l-8.094-8.094zM15 12.94l.894.894A1 1 0 0017 13V7a1 1 0 00-1.447-.894L13 7.382V8a2 2 0 01-2 2h-.94l4.94 4.94z" clip-rule="evenodd"></path></svg>`;
-                
-                // Stop video stream
-                if (currentVideoStream && user === 'patient') {
-                    currentVideoStream.getTracks().forEach(track => track.stop());
-                    currentVideoStream = null;
-                }
-                videoElement.srcObject = null;
-                videoElement.style.display = 'none';
-                document.getElementById(`${user}VideoPlaceholder`).style.display = 'flex';
-                document.getElementById(`${user}VideoStatus`).textContent = 'Click camera to enable video';
-            } else {
-                // Turn on video
-                button.classList.remove('bg-gray-600', 'hover:bg-gray-700');
-                button.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path></svg>`;
-                
-                // Start video stream for patient only (real camera)
-                if (user === 'patient') {
-                    try {
-                        currentVideoStream = await navigator.mediaDevices.getUserMedia({ 
-                            video: true, 
-                            audio: false 
-                        });
-                        videoElement.srcObject = currentVideoStream;
-                        videoElement.style.display = 'block';
-                        document.getElementById(`${user}VideoPlaceholder`).style.display = 'none';
-                        document.getElementById(`${user}VideoStatus`).textContent = 'Camera active';
-                        videoElement.play();
-                    } catch (error) {
-                        console.error('Error accessing camera:', error);
-                        addChatMessage('system', 'Could not access camera. Please check permissions.', 'System');
-                        // Revert button state
-                        button.classList.add('bg-gray-600', 'hover:bg-gray-700');
-                        button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                        button.innerHTML = `<svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414L3.707 2.293zm2.159 4.034A2 2 0 014 8v6a2 2 0 002 2h6c.352 0 .675-.091.96-.252l-8.094-8.094zM15 12.94l.894.894A1 1 0 0017 13V7a1 1 0 00-1.447-.894L13 7.382V8a2 2 0 01-2 2h-.94l4.94 4.94z" clip-rule="evenodd"></path></svg>`;
-                    }
-                } else {
-                    // For provider, just show placeholder (simulated)
-                    videoElement.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                    videoElement.style.display = 'block';
-                    const placeholder = document.getElementById(`${user}VideoPlaceholder`);
-                    if (placeholder) {
-                        placeholder.style.display = 'none';
-                    }
-                    const status = document.getElementById(`${user}VideoStatus`);
-                    if (status) {
-                        status.textContent = 'Video active (simulated)';
-                    }
-                }
-            }
-        }
-
-        function shareScreen(user) {
-            document.getElementById('sharedScreen').classList.remove('hidden');
-            addChatMessage('system', `${user === 'provider' ? 'Dr. Johnson' : 'John'} is sharing their screen`, 'System');
-        }
-
-        function stopSharing() {
-            document.getElementById('sharedScreen').classList.add('hidden');
-            addChatMessage('system', 'Screen sharing stopped', 'System');
-        }
-
-        function requestHelp() {
-            addChatMessage('system', 'John has requested technical assistance', 'System');
-            addChatMessage('provider', "I see you need help. Let me assist you with that.", 'Dr. Johnson');
+        function addMessage(sender, name, message) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            messageDiv.innerHTML = `<strong>${name}:</strong> ${message}`;
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
         function handleChatKeypress(event) {
@@ -1428,441 +743,51 @@ Follow-up in 2 weeks.
             }
         }
 
-        function sendMessage() {
-            const input = document.getElementById('chatInput');
-            const message = input.value.trim();
-            
-            if (message) {
-                addChatMessage('patient', message, 'John');
-                input.value = '';
-                
-                // Simulate provider response
-                setTimeout(() => {
-                    showTyping();
-                    setTimeout(() => {
-                        hideTyping();
-                        const responses = [
-                            "I understand. Let me check that for you.",
-                            "That's good to hear. Any other concerns?",
-                            "Thank you for that information.",
-                            "Let's discuss this further.",
-                            "I'll make a note of that in your file."
-                        ];
-                        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-                        addChatMessage('provider', randomResponse, 'Dr. Johnson');
-                    }, 2000);
-                }, 1000);
-            }
+        // Real-time Updates
+        function setupRealTimeUpdates() {
+            setInterval(() => {
+                updateVitals();
+            }, 5000);
         }
 
-        function addChatMessage(sender, message, name) {
-            const chatMessages = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'chat-message';
+        function updateVitals() {
+            // Simulate realistic vital sign variations
+            const heartRate = 68 + Math.floor(Math.random() * 8);
+            const systolic = 115 + Math.floor(Math.random() * 10);
+            const diastolic = 75 + Math.floor(Math.random() * 10);
+            const temperature = (98.1 + Math.random() * 1).toFixed(1);
+            const oxygenSat = 97 + Math.floor(Math.random() * 3);
             
-            const time = new Date().toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: true 
-            });
-            
-            let bgColor, initials;
-            if (sender === 'provider') {
-                bgColor = 'bg-blue-600';
-                initials = 'DR';
-            } else if (sender === 'patient') {
-                bgColor = 'bg-green-600';
-                initials = 'JD';
-            } else {
-                bgColor = 'bg-gray-600';
-                initials = 'SYS';
-            }
-            
-            const alignClass = sender === 'patient' ? 'flex-row-reverse' : '';
-            const textAlign = sender === 'patient' ? 'text-right' : '';
-            
-            messageDiv.innerHTML = `
-                <div class="flex items-start space-x-2 ${alignClass}">
-                    <div class="w-6 h-6 ${bgColor} rounded-full flex items-center justify-center text-xs text-white">${initials}</div>
-                    <div class="flex-1">
-                        <div class="${bgColor} text-white p-2 rounded-lg text-sm ${textAlign}">
-                            ${message}
-                        </div>
-                        <div class="text-gray-400 text-xs mt-1 ${textAlign}">${name} • ${time}</div>
-                    </div>
-                </div>
+            document.getElementById('heartRate').textContent = heartRate;
+            document.getElementById('bloodPressure').textContent = `${systolic}/${diastolic}`;
+            document.getElementById('temperature').textContent = `${temperature}°F`;
+            document.getElementById('oxygenSat').textContent = `${oxygenSat}%`;
+        }
+
+        // Notification System
+        function showNotification(message) {
+            // Simple notification for demo
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                z-index: 1000;
+                animation: slideIn 0.3s ease;
             `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
             
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function showTyping() {
-            document.getElementById('typingIndicator').classList.remove('hidden');
-            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
-        }
-
-        function hideTyping() {
-            document.getElementById('typingIndicator').classList.add('hidden');
-        }
-
-        function autoSaveNotes() {
-            const notes = document.getElementById('providerNotes').value;
-            const words = notes.trim().split(/\s+/).length;
-            
-            document.getElementById('wordCount').textContent = `${words} words`;
-            document.getElementById('noteStatus').textContent = 'Auto-saved just now';
-        }
-
-        function saveNotes() {
-            const notes = document.getElementById('providerNotes').value;
-            console.log('Saving notes:', notes);
-            document.getElementById('noteStatus').textContent = 'Manually saved';
-            
-            // Show success notification
-            alert('Session notes saved successfully!');
-        }
-
-        function endSession() {
-            if (confirm('Are you sure you want to end this telehealth session?')) {
-                clearInterval(sessionTimer);
-                clearInterval(vitalsInterval);
-                
-                // Stop transcription if active
-                if (isTranscribing) {
-                    stopTranscription();
-                }
-                
-                // Show session summary
-                const sessionTime = document.getElementById('sessionTimer').textContent;
-                alert(`Session ended!\n\nDuration: ${sessionTime}\nNotes saved: Yes\nRecording: ${isRecording ? 'Saved' : 'Not recorded'}\nTranscriptions: ${transcriptionHistory.length}\nNext appointment scheduled.`);
-                
-                // In real app, would redirect to session summary page
-                console.log('Session ended, redirecting to summary...');
-            }
-        }
-
-        // Real-time Transcription Functions
-        async function toggleTranscription() {
-            if (isTranscribing) {
-                stopTranscription();
-            } else {
-                await startTranscription();
-            }
-        }
-
-        async function startTranscription() {
-            try {
-                // Request microphone access
-                transcriptionStream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: {
-                        sampleRate: 16000,
-                        channelCount: 1,
-                        echoCancellation: true,
-                        noiseSuppression: true,
-                        autoGainControl: true
-                    }
-                });
-
-                isTranscribing = true;
-                
-                // Update UI
-                updateTranscriptionUI(true);
-                
-                // Start audio visualization
-                startTranscriptionVisualization();
-                
-                // Start recording in chunks for transcription
-                setupMediaRecorder();
-                
-                // Start periodic transcription
-                startPeriodicTranscription();
-                
-                addChatMessage('system', 'AI transcription started - conversation will be transcribed in real-time', 'System');
-                
-            } catch (error) {
-                console.error('Error starting transcription:', error);
-                addChatMessage('system', 'Could not start transcription. Please check microphone permissions.', 'System');
-            }
-        }
-
-        function stopTranscription() {
-            isTranscribing = false;
-            
-            // Stop all recording and analysis
-            if (transcriptionStream) {
-                transcriptionStream.getTracks().forEach(track => track.stop());
-                transcriptionStream = null;
-            }
-            
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-            }
-            
-            if (transcriptionInterval) {
-                clearInterval(transcriptionInterval);
-                transcriptionInterval = null;
-            }
-            
-            stopTranscriptionVisualization();
-            
-            // Update UI
-            updateTranscriptionUI(false);
-            
-            addChatMessage('system', `AI transcription stopped. Captured ${transcriptionHistory.length} segments.`, 'System');
-        }
-
-        function updateTranscriptionUI(isActive) {
-            const btn = document.getElementById('transcriptionBtn');
-            const icon = document.getElementById('transcriptionIcon');
-            const text = document.getElementById('transcriptionText');
-            const controls = document.getElementById('transcriptionControls');
-            const visualizer = document.getElementById('transcriptionVisualizer');
-            const liveTranscription = document.getElementById('liveTranscription');
-            const indicator = document.getElementById('transcriptionIndicator');
-            const statusText = document.getElementById('transcriptionStatusText');
-            
-            if (isActive) {
-                btn.classList.remove('bg-purple-600', 'hover:bg-purple-700');
-                btn.classList.add('bg-red-600', 'hover:bg-red-700');
-                icon.textContent = '🛑';
-                text.textContent = 'Stop Transcription';
-                controls.classList.remove('hidden');
-                visualizer.classList.remove('hidden');
-                liveTranscription.classList.remove('hidden');
-                indicator.classList.remove('bg-gray-500');
-                indicator.classList.add('bg-red-500');
-                statusText.textContent = 'Recording';
-                
-                // Add pulsing animation
-                indicator.style.animation = 'pulse 1s infinite';
-            } else {
-                btn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                btn.classList.add('bg-purple-600', 'hover:bg-purple-700');
-                icon.textContent = '🎤';
-                text.textContent = 'Start AI Transcription';
-                controls.classList.add('hidden');
-                visualizer.classList.add('hidden');
-                liveTranscription.classList.add('hidden');
-                indicator.classList.remove('bg-red-500');
-                indicator.classList.add('bg-gray-500');
-                statusText.textContent = 'Ready';
-                indicator.style.animation = 'none';
-            }
-        }
-
-        function startTranscriptionVisualization() {
-            const waveform = document.getElementById('audioWaveform');
-            waveform.innerHTML = '';
-            
-            // Create audio bars
-            for (let i = 0; i < 15; i++) {
-                const bar = document.createElement('div');
-                bar.className = 'w-1 bg-purple-500 rounded-full transition-all duration-100';
-                bar.style.height = '8px';
-                waveform.appendChild(bar);
-            }
-            
-            // Setup audio analysis
-            transcriptionAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-            transcriptionAnalyser = transcriptionAudioContext.createAnalyser();
-            const source = transcriptionAudioContext.createMediaStreamSource(transcriptionStream);
-            
-            transcriptionAnalyser.fftSize = 256;
-            const bufferLength = transcriptionAnalyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            
-            source.connect(transcriptionAnalyser);
-            
-            function animate() {
-                if (!isTranscribing) return;
-                
-                transcriptionAnalyser.getByteFrequencyData(dataArray);
-                const bars = waveform.querySelectorAll('div');
-                
-                bars.forEach((bar, index) => {
-                    if (index < dataArray.length / 8) {
-                        const height = Math.max(8, (dataArray[index * 8] / 255) * 40);
-                        bar.style.height = `${height}px`;
-                    }
-                });
-                
-                transcriptionAnimationFrame = requestAnimationFrame(animate);
-            }
-            animate();
-        }
-
-        function stopTranscriptionVisualization() {
-            if (transcriptionAnimationFrame) {
-                cancelAnimationFrame(transcriptionAnimationFrame);
-                transcriptionAnimationFrame = null;
-            }
-            if (transcriptionAudioContext) {
-                transcriptionAudioContext.close();
-                transcriptionAudioContext = null;
-            }
-        }
-
-        function setupMediaRecorder() {
-            mediaRecorder = new MediaRecorder(transcriptionStream, {
-                mimeType: 'audio/webm;codecs=opus'
-            });
-            
-            recordingChunks = [];
-            
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    recordingChunks.push(event.data);
-                }
-            };
-            
-            mediaRecorder.onstop = () => {
-                if (recordingChunks.length > 0) {
-                    const audioBlob = new Blob(recordingChunks, { type: 'audio/webm' });
-                    processAudioForTranscription(audioBlob);
-                    recordingChunks = [];
-                }
-            };
-        }
-
-        function startPeriodicTranscription() {
-            // Start recording immediately
-            if (mediaRecorder && mediaRecorder.state === 'inactive') {
-                mediaRecorder.start();
-            }
-            
-            // Set up interval to process audio chunks every 3 seconds
-            transcriptionInterval = setInterval(() => {
-                if (mediaRecorder && mediaRecorder.state === 'recording') {
-                    mediaRecorder.stop();
-                    setTimeout(() => {
-                        if (isTranscribing && mediaRecorder) {
-                            setupMediaRecorder();
-                            mediaRecorder.start();
-                        }
-                    }, 100);
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
                 }
             }, 3000);
         }
-
-        async function processAudioForTranscription(audioBlob) {
-            try {
-                // Update status
-                document.getElementById('transcriptionStatusText').textContent = 'Processing...';
-                
-                // Simulate API call delay
-                await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
-                
-                // Mock transcription using Whisper-like responses
-                const randomTranscription = mockTranscriptions[Math.floor(Math.random() * mockTranscriptions.length)];
-                
-                // Add some variation to make it feel more realistic
-                const variations = [
-                    randomTranscription,
-                    randomTranscription.replace('Patient', 'The patient'),
-                    randomTranscription.replace('.', ', and appears comfortable.'),
-                    randomTranscription + ' Patient seems cooperative during examination.'
-                ];
-                
-                const finalTranscription = variations[Math.floor(Math.random() * variations.length)];
-                const confidence = 0.85 + Math.random() * 0.14; // 85-99% confidence
-                
-                // Update live transcription display
-                displayLiveTranscription(finalTranscription, confidence);
-                
-                // Add to history
-                transcriptionHistory.push({
-                    text: finalTranscription,
-                    confidence: confidence,
-                    timestamp: new Date(),
-                    language: document.getElementById('transcriptionLanguage').value,
-                    specialty: document.getElementById('medicalSpecialty').value
-                });
-                
-                // Update status back to recording
-                document.getElementById('transcriptionStatusText').textContent = 'Recording';
-                
-            } catch (error) {
-                console.error('Transcription error:', error);
-                document.getElementById('transcriptionStatusText').textContent = 'Error - Retrying';
-            }
-        }
-
-        function displayLiveTranscription(text, confidence) {
-            const transcriptionDiv = document.getElementById('transcriptionText');
-            const confidenceSpan = document.getElementById('transcriptionConfidence');
-            
-            // Update transcription text with typing effect
-            transcriptionDiv.innerHTML = '';
-            currentTranscription = text;
-            
-            let index = 0;
-            const typeInterval = setInterval(() => {
-                transcriptionDiv.textContent = text.substring(0, index + 1);
-                index++;
-                
-                if (index >= text.length) {
-                    clearInterval(typeInterval);
-                }
-            }, 20);
-            
-            // Update confidence
-            confidenceSpan.textContent = `${Math.round(confidence * 100)}% confidence`;
-            
-            // Add visual feedback
-            const liveTranscriptionDiv = document.getElementById('liveTranscription');
-            liveTranscriptionDiv.classList.add('border-green-500');
-            liveTranscriptionDiv.classList.remove('border-blue-500');
-            
-            setTimeout(() => {
-                liveTranscriptionDiv.classList.remove('border-green-500');
-                liveTranscriptionDiv.classList.add('border-blue-500');
-            }, 2000);
-        }
-
-        function insertTranscription() {
-            if (currentTranscription) {
-                const notesTextarea = document.getElementById('providerNotes');
-                const currentPosition = notesTextarea.selectionStart;
-                const currentValue = notesTextarea.value;
-                
-                // Insert transcription at cursor position
-                const newValue = currentValue.substring(0, currentPosition) + 
-                                '\n' + currentTranscription + '\n' + 
-                                currentValue.substring(currentPosition);
-                
-                notesTextarea.value = newValue;
-                
-                // Update cursor position
-                const newPosition = currentPosition + currentTranscription.length + 2;
-                notesTextarea.setSelectionRange(newPosition, newPosition);
-                notesTextarea.focus();
-                
-                // Clear current transcription
-                document.getElementById('transcriptionText').innerHTML = '<span class="text-gray-400 italic">Listening for speech...</span>';
-                currentTranscription = '';
-                
-                // Update word count
-                autoSaveNotes();
-                
-                // Show feedback
-                const button = event.target;
-                const originalText = button.textContent;
-                button.textContent = '✓ Inserted';
-                button.classList.add('bg-green-600');
-                button.classList.remove('bg-blue-600');
-                
-                setTimeout(() => {
-                    button.textContent = originalText;
-                    button.classList.remove('bg-green-600');
-                    button.classList.add('bg-blue-600');
-                }, 2000);
-            }
-        }
     </script>
-    
-    <!-- Navigation Components -->
-    <script src="enhanced-breadcrumbs.js"></script>
-    <script src="back-to-home.js"></script>
 </body>
 </html>
