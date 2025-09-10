@@ -206,6 +206,124 @@
             min-height: 300px;
         }
         
+        .video-element {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .video-placeholder {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            bottom: 16px;
+            background: rgba(13, 148, 136, 0.2);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .audio-level {
+            position: absolute;
+            bottom: 60px;
+            left: 16px;
+            display: flex;
+            align-items: end;
+            gap: 2px;
+            height: 30px;
+        }
+        
+        .audio-bar {
+            width: 4px;
+            background: #10b981;
+            border-radius: 2px;
+            transition: height 0.1s ease;
+        }
+        
+        .audio-bar:nth-child(1) { height: 10%; animation-delay: 0s; }
+        .audio-bar:nth-child(2) { height: 20%; animation-delay: 0.1s; }
+        .audio-bar:nth-child(3) { height: 30%; animation-delay: 0.2s; }
+        .audio-bar:nth-child(4) { height: 20%; animation-delay: 0.3s; }
+        .audio-bar:nth-child(5) { height: 10%; animation-delay: 0.4s; }
+        
+        .audio-level.active .audio-bar {
+            animation: audioWave 0.5s ease-in-out infinite alternate;
+        }
+        
+        @keyframes audioWave {
+            0% { height: 10%; }
+            100% { height: 90%; }
+        }
+        
+        /* Transcription panel */
+        .transcription-panel {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+        
+        .transcription-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        .transcription-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .transcription-dot {
+            width: 8px;
+            height: 8px;
+            background: #8b5cf6;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+        
+        .transcription-content {
+            min-height: 80px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .transcription-entry {
+            margin-bottom: 8px;
+            padding: 4px 0;
+        }
+        
+        .transcription-speaker {
+            font-weight: bold;
+            color: #8b5cf6;
+        }
+        
+        .transcription-text {
+            margin-left: 8px;
+        }
+        
+        .transcription-interim {
+            opacity: 0.7;
+            font-style: italic;
+        }
+        
         .video-placeholder {
             position: absolute;
             top: 16px;
@@ -503,18 +621,27 @@
                         </div>
                     </div>
                     <div class="video-container">
-                        <div class="video-placeholder">
+                        <video id="providerVideo" class="video-element" autoplay muted style="display: none;"></video>
+                        <div class="video-placeholder" id="providerPlaceholder">
                             <div class="video-icon">👩‍⚕️</div>
                             <h4>Dr. Sarah Wilson</h4>
-                            <p>Video connected</p>
+                            <p id="providerStatus">Click camera to enable video</p>
                         </div>
                         <div class="video-controls">
-                            <button class="control-btn active" onclick="toggleAudio('provider')">
+                            <button class="control-btn active" id="providerMicBtn" onclick="toggleAudio('provider')">
                                 🎤
                             </button>
-                            <button class="control-btn active" onclick="toggleVideo('provider')">
+                            <button class="control-btn active" id="providerVideoBtn" onclick="toggleVideo('provider')">
                                 📹
                             </button>
+                        </div>
+                        <!-- Audio visualization -->
+                        <div id="providerAudioLevel" class="audio-level" style="display: none;">
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
                         </div>
                     </div>
                 </div>
@@ -535,18 +662,27 @@
                         </div>
                     </div>
                     <div class="video-container">
-                        <div class="video-placeholder">
+                        <video id="patientVideo" class="video-element" autoplay muted style="display: none;"></video>
+                        <div class="video-placeholder" id="patientPlaceholder">
                             <div class="video-icon" style="background: #0891b2;">👨</div>
                             <h4>John Doe</h4>
-                            <p>Video connected</p>
+                            <p id="patientStatus">Click camera to enable video</p>
                         </div>
                         <div class="video-controls">
-                            <button class="control-btn active" onclick="toggleAudio('patient')">
+                            <button class="control-btn active" id="patientMicBtn" onclick="toggleAudio('patient')">
                                 🎤
                             </button>
-                            <button class="control-btn active" onclick="toggleVideo('patient')">
+                            <button class="control-btn active" id="patientVideoBtn" onclick="toggleVideo('patient')">
                                 📹
                             </button>
+                        </div>
+                        <!-- Audio visualization -->
+                        <div id="patientAudioLevel" class="audio-level" style="display: none;">
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
+                            <div class="audio-bar"></div>
                         </div>
                     </div>
                 </div>
@@ -595,6 +731,27 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Transcription Panel -->
+            <div class="transcription-panel">
+                <div class="transcription-header">
+                    <h3>🎙️ Live Transcription</h3>
+                    <div class="transcription-status">
+                        <div class="transcription-dot"></div>
+                        <span id="transcriptionStatus">Listening...</span>
+                    </div>
+                </div>
+                <div class="transcription-content" id="transcriptionContent">
+                    <div class="transcription-entry">
+                        <span class="transcription-speaker">Dr. Wilson:</span>
+                        <span class="transcription-text">Hello John, how are you feeling today?</span>
+                    </div>
+                    <div class="transcription-entry">
+                        <span class="transcription-speaker">Patient:</span>
+                        <span class="transcription-text">Hi Dr. Wilson, I'm feeling much better, thank you.</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -616,6 +773,9 @@
             <button class="control-button" onclick="toggleVitals()">
                 📊
             </button>
+            <button class="control-button" id="transcribeBtn" onclick="toggleTranscription()">
+                🎙️
+            </button>
             <button class="control-button end-call" onclick="endSession()">
                 📞
             </button>
@@ -626,13 +786,298 @@
         // Global state
         let sessionStartTime = null;
         let sessionTimer = null;
+        let localStream = null;
+        let remoteStream = null;
+        let mediaRecorder = null;
+        let recognition = null;
+        let isTranscribing = false;
+        let audioContext = null;
+        let analyser = null;
 
         // Initialize demo
         document.addEventListener('DOMContentLoaded', function() {
             console.log('WebQX Telehealth Demo Initialized');
             startSessionTimer();
             setupRealTimeUpdates();
+            initializeMediaDevices();
+            initializeSpeechRecognition();
         });
+
+        // Media Devices Initialization
+        async function initializeMediaDevices() {
+            try {
+                // Request camera and microphone permissions
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true, 
+                    audio: true 
+                });
+                
+                // Show user's video in patient panel (simulating patient view)
+                const patientVideo = document.getElementById('patientVideo');
+                patientVideo.srcObject = localStream;
+                patientVideo.style.display = 'block';
+                document.getElementById('patientPlaceholder').style.display = 'none';
+                document.getElementById('patientStatus').textContent = 'Video active';
+                
+                // Setup audio visualization
+                setupAudioVisualization();
+                
+                // Simulate provider video connection after 2 seconds
+                setTimeout(() => {
+                    simulateProviderVideo();
+                }, 2000);
+                
+                showNotification('Camera and microphone initialized successfully!', 'success');
+            } catch (error) {
+                console.error('Error accessing media devices:', error);
+                showNotification('Unable to access camera/microphone. Using demo mode.', 'warning');
+                // Fall back to demo mode
+                simulateDemoMode();
+            }
+        }
+
+        function simulateProviderVideo() {
+            // Create a simulated video for provider (in real app, this would be remote stream)
+            const providerVideo = document.getElementById('providerVideo');
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw a simple animated background for provider
+            function drawProviderFrame() {
+                const time = Date.now() / 1000;
+                ctx.fillStyle = `hsl(${(time * 30) % 360}, 50%, 30%)`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw doctor avatar
+                ctx.fillStyle = '#0d9488';
+                ctx.fillRect(canvas.width/2 - 50, canvas.height/2 - 50, 100, 100);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = '30px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('👩‍⚕️', canvas.width/2, canvas.height/2 + 10);
+                
+                requestAnimationFrame(drawProviderFrame);
+            }
+            drawProviderFrame();
+            
+            // Convert canvas to video stream
+            const stream = canvas.captureStream(30);
+            providerVideo.srcObject = stream;
+            providerVideo.style.display = 'block';
+            document.getElementById('providerPlaceholder').style.display = 'none';
+            document.getElementById('providerStatus').textContent = 'Video connected';
+        }
+
+        function simulateDemoMode() {
+            // Show demo placeholders
+            document.getElementById('providerStatus').textContent = 'Demo mode - No camera';
+            document.getElementById('patientStatus').textContent = 'Demo mode - No camera';
+            
+            // Simulate audio levels
+            setInterval(() => {
+                if (Math.random() > 0.7) {
+                    showAudioLevel('provider');
+                }
+                if (Math.random() > 0.8) {
+                    showAudioLevel('patient');
+                }
+            }, 500);
+        }
+
+        function setupAudioVisualization() {
+            if (!localStream) return;
+            
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            const source = audioContext.createMediaStreamSource(localStream);
+            source.connect(analyser);
+            
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            function updateAudioLevel() {
+                analyser.getByteFrequencyData(dataArray);
+                const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+                
+                if (average > 10) {
+                    showAudioLevel('patient');
+                }
+                
+                requestAnimationFrame(updateAudioLevel);
+            }
+            updateAudioLevel();
+        }
+
+        function showAudioLevel(participant) {
+            const audioLevel = document.getElementById(`${participant}AudioLevel`);
+            if (audioLevel) {
+                audioLevel.style.display = 'flex';
+                audioLevel.classList.add('active');
+                
+                setTimeout(() => {
+                    audioLevel.classList.remove('active');
+                    setTimeout(() => {
+                        audioLevel.style.display = 'none';
+                    }, 500);
+                }, 300);
+            }
+        }
+
+        // Speech Recognition
+        function initializeSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = function() {
+                    isTranscribing = true;
+                    document.getElementById('transcriptionStatus').textContent = 'Listening...';
+                    showNotification('Speech transcription started', 'info');
+                };
+                
+                recognition.onresult = function(event) {
+                    let interimTranscript = '';
+                    let finalTranscript = '';
+                    
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            finalTranscript += event.results[i][0].transcript;
+                        } else {
+                            interimTranscript += event.results[i][0].transcript;
+                        }
+                    }
+                    
+                    if (finalTranscript) {
+                        addTranscriptionEntry('Patient', finalTranscript);
+                        
+                        // Simulate provider response
+                        setTimeout(() => {
+                            const responses = [
+                                "I understand your concern.",
+                                "That's good to hear.",
+                                "Let me make a note of that.",
+                                "How long have you been experiencing this?",
+                                "Any other symptoms?"
+                            ];
+                            const response = responses[Math.floor(Math.random() * responses.length)];
+                            addTranscriptionEntry('Dr. Wilson', response);
+                        }, 1000 + Math.random() * 2000);
+                    }
+                    
+                    // Show interim results
+                    if (interimTranscript) {
+                        updateInterimTranscription(interimTranscript);
+                    }
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    document.getElementById('transcriptionStatus').textContent = 'Error occurred';
+                    showNotification('Transcription error: ' + event.error, 'error');
+                };
+                
+                recognition.onend = function() {
+                    if (isTranscribing) {
+                        recognition.start(); // Restart recognition
+                    }
+                };
+                
+                // Start transcription
+                startTranscription();
+            } else {
+                document.getElementById('transcriptionStatus').textContent = 'Not supported';
+                showNotification('Speech recognition not supported in this browser', 'warning');
+                // Simulate transcription for demo
+                simulateTranscription();
+            }
+        }
+
+        function startTranscription() {
+            if (recognition && !isTranscribing) {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.error('Error starting speech recognition:', error);
+                    simulateTranscription();
+                }
+            }
+        }
+
+        function stopTranscription() {
+            if (recognition && isTranscribing) {
+                isTranscribing = false;
+                recognition.stop();
+                document.getElementById('transcriptionStatus').textContent = 'Stopped';
+            }
+        }
+
+        function addTranscriptionEntry(speaker, text) {
+            const content = document.getElementById('transcriptionContent');
+            const entry = document.createElement('div');
+            entry.className = 'transcription-entry';
+            entry.innerHTML = `
+                <span class="transcription-speaker">${speaker}:</span>
+                <span class="transcription-text">${text}</span>
+            `;
+            content.appendChild(entry);
+            content.scrollTop = content.scrollHeight;
+        }
+
+        function updateInterimTranscription(text) {
+            // Remove previous interim result
+            const existing = document.querySelector('.transcription-interim');
+            if (existing) existing.remove();
+            
+            // Add new interim result
+            const content = document.getElementById('transcriptionContent');
+            const entry = document.createElement('div');
+            entry.className = 'transcription-entry transcription-interim';
+            entry.innerHTML = `
+                <span class="transcription-speaker">Patient:</span>
+                <span class="transcription-text">${text}</span>
+            `;
+            content.appendChild(entry);
+            content.scrollTop = content.scrollHeight;
+        }
+
+        function simulateTranscription() {
+            // Simulate live transcription for demo purposes
+            const phrases = [
+                "I've been feeling much better since our last session.",
+                "The medication you prescribed is working well.",
+                "I have a question about my diet.",
+                "When should I schedule my next appointment?",
+                "Thank you for all your help, doctor."
+            ];
+            
+            let phraseIndex = 0;
+            setInterval(() => {
+                if (phraseIndex < phrases.length) {
+                    addTranscriptionEntry('Patient', phrases[phraseIndex]);
+                    phraseIndex++;
+                    
+                    // Provider response
+                    setTimeout(() => {
+                        const responses = [
+                            "That's excellent news!",
+                            "I'm glad to hear that.",
+                            "Of course, let's discuss that.",
+                            "Let's schedule that for next week.",
+                            "You're very welcome!"
+                        ];
+                        addTranscriptionEntry('Dr. Wilson', responses[Math.min(phraseIndex - 1, responses.length - 1)]);
+                    }, 2000);
+                }
+            }, 8000);
+        }
 
         // Session Timer
         function startSessionTimer() {
@@ -656,24 +1101,76 @@
             const btn = document.getElementById('micBtn');
             btn.classList.toggle('active');
             const isActive = btn.classList.contains('active');
+            
+            if (localStream) {
+                const audioTracks = localStream.getAudioTracks();
+                audioTracks.forEach(track => {
+                    track.enabled = isActive;
+                });
+            }
+            
             btn.textContent = isActive ? '🎤' : '🔇';
             showNotification(`Microphone ${isActive ? 'enabled' : 'muted'}`);
+            
+            // Toggle transcription
+            if (isActive) {
+                startTranscription();
+            } else {
+                stopTranscription();
+            }
         }
 
         function toggleCamera() {
             const btn = document.getElementById('videoBtn');
             btn.classList.toggle('active');
             const isActive = btn.classList.contains('active');
+            
+            if (localStream) {
+                const videoTracks = localStream.getVideoTracks();
+                videoTracks.forEach(track => {
+                    track.enabled = isActive;
+                });
+            }
+            
             btn.textContent = isActive ? '📹' : '📷';
             showNotification(`Camera ${isActive ? 'enabled' : 'disabled'}`);
         }
 
         function toggleAudio(participant) {
-            showNotification(`${participant} audio toggled`);
+            const btn = document.getElementById(`${participant}MicBtn`);
+            btn.classList.toggle('active');
+            const isActive = btn.classList.contains('active');
+            
+            if (participant === 'patient' && localStream) {
+                const audioTracks = localStream.getAudioTracks();
+                audioTracks.forEach(track => {
+                    track.enabled = isActive;
+                });
+            }
+            
+            btn.textContent = isActive ? '🎤' : '🔇';
+            showNotification(`${participant} audio ${isActive ? 'enabled' : 'muted'}`);
+            
+            // Show audio level simulation
+            if (isActive) {
+                showAudioLevel(participant);
+            }
         }
 
         function toggleVideo(participant) {
-            showNotification(`${participant} video toggled`);
+            const btn = document.getElementById(`${participant}VideoBtn`);
+            btn.classList.toggle('active');
+            const isActive = btn.classList.contains('active');
+            
+            if (participant === 'patient' && localStream) {
+                const videoTracks = localStream.getVideoTracks();
+                videoTracks.forEach(track => {
+                    track.enabled = isActive;
+                });
+            }
+            
+            btn.textContent = isActive ? '📹' : '📷';
+            showNotification(`${participant} video ${isActive ? 'enabled' : 'disabled'}`);
         }
 
         function shareScreen() {
@@ -686,6 +1183,22 @@
 
         function toggleVitals() {
             showNotification('Vitals panel toggled');
+        }
+
+        function toggleTranscription() {
+            const btn = document.getElementById('transcribeBtn');
+            
+            if (isTranscribing) {
+                stopTranscription();
+                btn.classList.remove('active');
+                btn.style.background = 'rgba(255, 255, 255, 0.1)';
+                showNotification('Transcription stopped', 'warning');
+            } else {
+                startTranscription();
+                btn.classList.add('active');
+                btn.style.background = '#8b5cf6';
+                showNotification('Transcription started', 'success');
+            }
         }
 
         function endSession() {
@@ -765,28 +1278,44 @@
         }
 
         // Notification System
-        function showNotification(message) {
-            // Simple notification for demo
+        function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
+            const colors = {
+                'success': '#10b981',
+                'warning': '#f59e0b', 
+                'error': '#ef4444',
+                'info': '#3b82f6'
+            };
+            
             notification.style.cssText = `
                 position: fixed;
                 top: 20px;
                 right: 20px;
-                background: rgba(0, 0, 0, 0.8);
+                background: rgba(0, 0, 0, 0.9);
                 color: white;
                 padding: 12px 20px;
                 border-radius: 8px;
+                border-left: 4px solid ${colors[type] || colors.info};
                 z-index: 1000;
                 animation: slideIn 0.3s ease;
+                backdrop-filter: blur(10px);
+                max-width: 300px;
             `;
-            notification.textContent = message;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">×</button>
+                </div>
+            `;
+            
             document.body.appendChild(notification);
             
             setTimeout(() => {
                 if (notification.parentElement) {
                     notification.remove();
                 }
-            }, 3000);
+            }, 5000);
         }
     </script>
 </body>
