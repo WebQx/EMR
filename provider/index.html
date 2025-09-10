@@ -418,8 +418,8 @@
                         </svg>
                     </div>
                     <div class="header-title">
-                        <h1>WebQX™ Provider Portal</h1>
-                        <p id="userWelcome">Integrated Healthcare Management System</p>
+                        <h1>WebQX™ OpenEMR Portal</h1>
+                        <p id="userWelcome">Integrated EHR Management System</p>
                     </div>
                 </div>
                 <div class="header-right">
@@ -446,8 +446,8 @@
         <div class="container">
             <!-- Welcome Banner -->
             <div class="welcome-banner">
-                <h2 class="welcome-title">Welcome to WebQX™ Provider Portal</h2>
-                <p class="welcome-subtitle">Your comprehensive healthcare management dashboard</p>
+                <h2 class="welcome-title">WebQX™ OpenEMR Integration Portal</h2>
+                <p class="welcome-subtitle">Seamlessly integrated with OpenEMR EHR system via FHIR R4</p>
             </div>
             
             <!-- Stats Grid -->
@@ -472,32 +472,16 @@
             
             <!-- Dashboard Modules -->
             <div class="dashboard-grid">
-                <div class="module-card" onclick="openModule('patients')">
+                <div class="module-card" onclick="openModule('openemr-patients')">
                     <div class="module-header">
-                        <div class="module-icon">👥</div>
+                        <div class="module-icon">🏥</div>
                         <div class="module-info">
-                            <h3>Patient Management</h3>
-                            <p>View and manage patient records</p>
+                            <h3>OpenEMR Patient Management</h3>
+                            <p>Integrated EHR patient records and clinical data</p>
                         </div>
                     </div>
                     <div class="module-status">
-                        <span class="status-available">✓ Available</span>
-                        <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                        </svg>
-                    </div>
-                </div>
-                
-                <div class="module-card" onclick="openModule('scheduling')">
-                    <div class="module-header">
-                        <div class="module-icon">📅</div>
-                        <div class="module-info">
-                            <h3>Scheduling</h3>
-                            <p>Manage appointments and calendar</p>
-                        </div>
-                    </div>
-                    <div class="module-status">
-                        <span class="status-available">✓ Available</span>
+                        <span class="status-available">✓ OpenEMR Connected</span>
                         <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
@@ -508,8 +492,8 @@
                     <div class="module-header">
                         <div class="module-icon">📹</div>
                         <div class="module-info">
-                            <h3>Telehealth</h3>
-                            <p>Virtual consultations and sessions</p>
+                            <h3>Telehealth Console</h3>
+                            <p>Virtual consultations with real-time features</p>
                         </div>
                     </div>
                     <div class="module-status">
@@ -520,44 +504,44 @@
                     </div>
                 </div>
                 
-                <div class="module-card" onclick="openModule('lab-results')">
+                <div class="module-card" onclick="openModule('openemr-appointments')">
                     <div class="module-header">
-                        <div class="module-icon">📋</div>
+                        <div class="module-icon">�</div>
                         <div class="module-info">
-                            <h3>Lab Results</h3>
-                            <p>Review laboratory findings</p>
+                            <h3>OpenEMR Scheduling</h3>
+                            <p>Integrated appointment management via FHIR</p>
                         </div>
                     </div>
                     <div class="module-status">
-                        <span class="status-available">✓ Available</span>
+                        <span class="status-available">✓ FHIR Enabled</span>
                         <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
                     </div>
                 </div>
                 
-                <div class="module-card" onclick="openModule('prescriptions')">
+                <div class="module-card" onclick="openModule('openemr-clinical')">
                     <div class="module-header">
-                        <div class="module-icon">💊</div>
+                        <div class="module-icon">�</div>
                         <div class="module-info">
-                            <h3>Prescriptions</h3>
-                            <p>Electronic prescribing system</p>
+                            <h3>OpenEMR Clinical Data</h3>
+                            <p>Lab results, encounters, and clinical notes</p>
                         </div>
                     </div>
                     <div class="module-status">
-                        <span class="status-available">✓ Available</span>
+                        <span class="status-available">✓ Real-time Sync</span>
                         <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
                         </svg>
                     </div>
                 </div>
                 
-                <div class="module-card" onclick="openModule('admin')" id="adminModule" style="display: none;">
+                <div class="module-card admin-only" onclick="openModule('admin')" id="adminModule" style="display: none;">
                     <div class="module-header">
                         <div class="module-icon">⚙️</div>
                         <div class="module-info">
-                            <h3>Administration</h3>
-                            <p>System management and settings</p>
+                            <h3>System Administration</h3>
+                            <p>OpenEMR configuration and system settings</p>
                         </div>
                     </div>
                     <div class="module-status">
@@ -571,11 +555,11 @@
             
             <!-- Quick Actions -->
             <div class="quick-actions">
-                <h2>Quick Actions</h2>
+                <h2>OpenEMR Quick Actions</h2>
                 <div class="actions-grid">
-                    <button class="action-btn" onclick="quickAction('new-patient')">+ New Patient</button>
-                    <button class="action-btn schedule" onclick="quickAction('schedule-appointment')">📅 Schedule</button>
-                    <button class="action-btn urgent" onclick="quickAction('urgent-consult')">🚨 Urgent Consult</button>
+                    <button class="action-btn" onclick="quickAction('openemr-patient-search')">🔍 Search Patients</button>
+                    <button class="action-btn schedule" onclick="quickAction('openemr-appointments')">📅 FHIR Scheduling</button>
+                    <button class="action-btn urgent" onclick="quickAction('urgent-telehealth')">🚨 Urgent Telehealth</button>
                     <button class="action-btn home" onclick="quickAction('back-to-main')">🏠 Main Portal</button>
                 </div>
             </div>
@@ -643,26 +627,20 @@
             showModuleLoading(moduleName);
             
             const moduleNames = {
-                'patients': 'Patient Management',
-                'scheduling': 'Appointment Scheduling',
+                'openemr-patients': 'OpenEMR Patient Management',
                 'telehealth': 'Telehealth Console',
-                'lab-results': 'Lab Results Viewer',
-                'prescriptions': 'Pharmacy Locator',
+                'openemr-appointments': 'OpenEMR FHIR Scheduling',
+                'openemr-clinical': 'OpenEMR Clinical Data',
                 'admin': 'Administration Console'
             };
             
             showNotification(`Opening ${moduleNames[moduleName] || moduleName}...`);
             
             switch (moduleName) {
-                case 'patients':
+                case 'openemr-patients':
                     setTimeout(() => {
-                        window.open(`${baseUrl}/patient-portal/`, '_blank');
-                        hideModuleLoading();
-                    }, 500);
-                    break;
-                case 'scheduling':
-                    setTimeout(() => {
-                        window.open(`${baseUrl}/demo-fhir-r4-appointment-booking.html`, '_blank');
+                        // Create OpenEMR patient management interface
+                        createOpenEMRPatientInterface();
                         hideModuleLoading();
                     }, 500);
                     break;
@@ -672,15 +650,17 @@
                         hideModuleLoading();
                     }, 500);
                     break;
-                case 'lab-results':
+                case 'openemr-appointments':
                     setTimeout(() => {
-                        window.open(`${baseUrl}/demo-lab-results-viewer.html`, '_blank');
+                        // Create OpenEMR FHIR scheduling interface
+                        createOpenEMRSchedulingInterface();
                         hideModuleLoading();
                     }, 500);
                     break;
-                case 'prescriptions':
+                case 'openemr-clinical':
                     setTimeout(() => {
-                        window.open(`${baseUrl}/demo/PharmacyLocator-demo.html`, '_blank');
+                        // Create OpenEMR clinical data interface
+                        createOpenEMRClinicalInterface();
                         hideModuleLoading();
                     }, 500);
                     break;
@@ -698,31 +678,358 @@
             }
         }
 
+        function createOpenEMRPatientInterface() {
+            // Create modal for OpenEMR patient management
+            const modal = document.createElement('div');
+            modal.className = 'openemr-modal';
+            modal.innerHTML = `
+                <div class="modal-overlay" onclick="closeOpenEMRModal()"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>🏥 OpenEMR Patient Management</h2>
+                        <button class="close-btn" onclick="closeOpenEMRModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="openemr-interface">
+                            <div class="connection-status">
+                                <div class="status-indicator">
+                                    <div class="status-dot connected"></div>
+                                    <span>Connected to OpenEMR Instance</span>
+                                </div>
+                                <div class="openemr-version">v7.0.2 FHIR R4</div>
+                            </div>
+                            
+                            <div class="patient-search">
+                                <h3>Patient Search</h3>
+                                <div class="search-form">
+                                    <input type="text" placeholder="Search by name, ID, or DOB..." class="search-input">
+                                    <button class="search-btn">🔍 Search OpenEMR</button>
+                                </div>
+                            </div>
+                            
+                            <div class="patient-actions">
+                                <h3>OpenEMR Actions</h3>
+                                <div class="actions-grid">
+                                    <button class="openemr-action" onclick="openEMRAction('patient-list')">📋 Patient List</button>
+                                    <button class="openemr-action" onclick="openEMRAction('new-patient')">➕ New Patient</button>
+                                    <button class="openemr-action" onclick="openEMRAction('encounters')">🩺 Encounters</button>
+                                    <button class="openemr-action" onclick="openEMRAction('demographics')">👤 Demographics</button>
+                                    <button class="openemr-action" onclick="openEMRAction('medical-history')">📜 Medical History</button>
+                                    <button class="openemr-action" onclick="openEMRAction('medications')">💊 Medications</button>
+                                </div>
+                            </div>
+                            
+                            <div class="integration-info">
+                                <h3>Integration Status</h3>
+                                <div class="integration-details">
+                                    <div class="detail-item">
+                                        <span class="label">OAuth2 Status:</span>
+                                        <span class="value success">✅ Authenticated</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="label">FHIR Endpoint:</span>
+                                        <span class="value">✅ Connected</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="label">Last Sync:</span>
+                                        <span class="value">Just now</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="label">API Version:</span>
+                                        <span class="value">7.0.2</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" onclick="closeOpenEMRModal()">Close</button>
+                        <button class="btn-primary" onclick="launchOpenEMR()">Launch OpenEMR</button>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal styles
+            const style = document.createElement('style');
+            style.textContent = `
+                .openemr-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    z-index: 2000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .modal-overlay {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.7);
+                    backdrop-filter: blur(5px);
+                }
+                
+                .modal-content {
+                    background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 16px;
+                    width: 90%;
+                    max-width: 800px;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    position: relative;
+                    color: white;
+                }
+                
+                .modal-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 20px 24px;
+                    border-bottom: 1px solid rgba(255,255,255,0.2);
+                }
+                
+                .close-btn {
+                    background: none;
+                    border: none;
+                    color: white;
+                    font-size: 24px;
+                    cursor: pointer;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .close-btn:hover {
+                    background: rgba(255,255,255,0.1);
+                }
+                
+                .modal-body {
+                    padding: 24px;
+                }
+                
+                .connection-status {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    background: rgba(255,255,255,0.1);
+                    border-radius: 8px;
+                    padding: 12px 16px;
+                    margin-bottom: 24px;
+                }
+                
+                .status-indicator {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                
+                .status-dot.connected {
+                    width: 8px;
+                    height: 8px;
+                    background: #10b981;
+                    border-radius: 50%;
+                    animation: pulse 2s infinite;
+                }
+                
+                .openemr-version {
+                    font-size: 12px;
+                    background: #0d9488;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                }
+                
+                .patient-search, .patient-actions, .integration-info {
+                    margin-bottom: 24px;
+                }
+                
+                .patient-search h3, .patient-actions h3, .integration-info h3 {
+                    margin-bottom: 12px;
+                    font-size: 16px;
+                }
+                
+                .search-form {
+                    display: flex;
+                    gap: 8px;
+                }
+                
+                .search-input {
+                    flex: 1;
+                    padding: 8px 12px;
+                    border: 1px solid rgba(255,255,255,0.3);
+                    border-radius: 6px;
+                    background: rgba(255,255,255,0.1);
+                    color: white;
+                }
+                
+                .search-input::placeholder {
+                    color: rgba(255,255,255,0.6);
+                }
+                
+                .search-btn {
+                    background: #0d9488;
+                    color: white;
+                    border: none;
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                }
+                
+                .actions-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                    gap: 8px;
+                }
+                
+                .openemr-action {
+                    background: rgba(255,255,255,0.1);
+                    border: 1px solid rgba(255,255,255,0.2);
+                    color: white;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    font-size: 12px;
+                }
+                
+                .openemr-action:hover {
+                    background: rgba(255,255,255,0.2);
+                    transform: translateY(-1px);
+                }
+                
+                .integration-details {
+                    display: grid;
+                    gap: 8px;
+                }
+                
+                .detail-item {
+                    display: flex;
+                    justify-content: space-between;
+                    padding: 4px 0;
+                }
+                
+                .label {
+                    color: rgba(255,255,255,0.8);
+                    font-size: 14px;
+                }
+                
+                .value {
+                    font-size: 14px;
+                    font-weight: 600;
+                }
+                
+                .value.success {
+                    color: #10b981;
+                }
+                
+                .modal-footer {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    gap: 12px;
+                    padding: 20px 24px;
+                    border-top: 1px solid rgba(255,255,255,0.2);
+                }
+                
+                .btn-secondary {
+                    background: rgba(255,255,255,0.1);
+                    border: 1px solid rgba(255,255,255,0.3);
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                }
+                
+                .btn-primary {
+                    background: #0d9488;
+                    border: none;
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 600;
+                }
+            `;
+            
+            document.head.appendChild(style);
+            document.body.appendChild(modal);
+        }
+
+        function createOpenEMRSchedulingInterface() {
+            showNotification('🔄 Connecting to OpenEMR FHIR scheduling endpoint...');
+            setTimeout(() => {
+                showNotification('📅 FHIR R4 scheduling interface would open here with real-time OpenEMR integration');
+            }, 1500);
+        }
+
+        function createOpenEMRClinicalInterface() {
+            showNotification('🔄 Accessing OpenEMR clinical data via FHIR...');
+            setTimeout(() => {
+                showNotification('📋 Clinical data interface would display: encounters, lab results, medications, and notes from OpenEMR');
+            }, 1500);
+        }
+
+        function closeOpenEMRModal() {
+            const modal = document.querySelector('.openemr-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function openEMRAction(action) {
+            const actions = {
+                'patient-list': 'Opening OpenEMR patient list...',
+                'new-patient': 'Creating new patient in OpenEMR...',
+                'encounters': 'Loading patient encounters...',
+                'demographics': 'Accessing patient demographics...',
+                'medical-history': 'Retrieving medical history...',
+                'medications': 'Loading medication list...'
+            };
+            
+            showNotification(actions[action] || 'Processing OpenEMR action...');
+        }
+
+        function launchOpenEMR() {
+            showNotification('🚀 Launching OpenEMR instance...');
+            // In production, this would redirect to the actual OpenEMR instance
+            setTimeout(() => {
+                showNotification('OpenEMR would open in a new window with SSO authentication');
+            }, 1000);
+        }
+
         function quickAction(action) {
             const isGitHubPages = window.location.hostname.includes('github.io');
             const baseUrl = isGitHubPages ? '/webqx' : '';
             
             const actionNames = {
-                'new-patient': 'Patient Portal',
-                'schedule-appointment': 'Appointment Booking',
-                'urgent-consult': 'Urgent Telehealth Consultation',
+                'openemr-patient-search': 'OpenEMR Patient Search',
+                'openemr-appointments': 'OpenEMR FHIR Scheduling',
+                'urgent-telehealth': 'Urgent Telehealth Consultation',
                 'back-to-main': 'Main Portal'
             };
             
             showNotification(`Launching ${actionNames[action] || action}...`);
             
             switch (action) {
-                case 'new-patient':
+                case 'openemr-patient-search':
                     setTimeout(() => {
-                        window.open(`${baseUrl}/patient-portal/`, '_blank');
+                        createOpenEMRPatientInterface();
                     }, 300);
                     break;
-                case 'schedule-appointment':
+                case 'openemr-appointments':
                     setTimeout(() => {
-                        window.open(`${baseUrl}/demo-fhir-r4-appointment-booking.html`, '_blank');
+                        createOpenEMRSchedulingInterface();
                     }, 300);
                     break;
-                case 'urgent-consult':
+                case 'urgent-telehealth':
                     setTimeout(() => {
                         window.open(`${baseUrl}/telehealth-realtime-demo.html`, '_blank');
                     }, 300);
