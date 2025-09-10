@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Provider Portal Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
+            color: white;
+            text-align: center;
+            padding: 50px;
+        }
+        .test-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>🏥 Provider Portal Test</h1>
+        <p>✅ This test page is working correctly</p>
+        <p>📅 Time: <span id="time"></span></p>
+        <p>🌐 URL: <span id="url"></span></p>
+        <br>
+        <a href="index.html" style="color: #7dd3fc; text-decoration: underline;">← Back to Provider Portal</a>
+    </div>
+    
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString();
+        document.getElementById('url').textContent = window.location.href;
+    </script>
+</body>
+</html>
