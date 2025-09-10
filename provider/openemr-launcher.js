@@ -28,7 +28,7 @@ class OpenEMRLauncher {
                 'user/Practitioner.read'
             ],
             fhirBaseUrl: null,
-            apiVersion: '4.4.0' // Updated to match demo.openemr.io
+            apiVersion: '7.0.2'
         };
         
         this.tokens = null;
@@ -48,8 +48,25 @@ class OpenEMRLauncher {
             await this.waitForConfig();
             this.initializeConfig();
             console.log('✅ OpenEMR Launcher configuration ready');
+            
+            // Auto-initialize if in demo mode
+            if (this.isDemoMode()) {
+                console.log('🎭 Demo mode detected, auto-initializing...');
+                setTimeout(() => {
+                    this.initialize().then(result => {
+                        console.log('🚀 Demo initialization complete:', result);
+                    }).catch(error => {
+                        console.warn('⚠️ Demo initialization failed:', error);
+                    });
+                }, 1000);
+            }
         } catch (error) {
             console.warn('⚠️ Config initialization failed, using defaults:', error);
+            // Still try to initialize in demo mode
+            if (this.isDemoMode()) {
+                console.log('🎭 Fallback: Initializing with default demo configuration');
+                this.isInitialized = true;
+            }
         }
     }
 
