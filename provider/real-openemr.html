@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebQX™ - Real OpenEMR Integration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .integration-status {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .status-item {
+            text-align: center;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-connected { background: #10b981; }
+        .status-disconnected { background: #ef4444; }
+        .status-checking { background: #f59e0b; animation: pulse 2s infinite; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .launch-controls {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .control-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        
+        .control-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .control-button {
+            background: linear-gradient(135deg, #059669, #0d9488);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .control-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .control-button:disabled {
+            background: #6b7280;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .openemr-container {
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            margin: 20px 0;
+            overflow: hidden;
+            min-height: 600px;
+            color: #333;
+        }
+        
+        .github-info {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .github-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .github-stat {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 6px;
+        }
+        
+        .log-panel {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .mode-selector {
+            margin: 15px 0;
+        }
+        
+        .mode-selector select {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            padding: 8px;
+            width: 100%;
+        }
+        
+        .mode-selector option {
+            background: #1f2937;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 WebQX™ OpenEMR Integration</h1>
+            <p>Real OpenEMR connectivity for healthcare providers</p>
+        </div>
+
+        <div class="integration-status">
+            <h3>🔗 Connection Status</h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <div><span id="connection-status" class="status-indicator status-checking"></span>OpenEMR Connection</div>
+                    <div id="connection-details">Checking...</div>
+                </div>
+                <div class="status-item">
+                    <div><span id="fhir-status" class="status-indicator status-checking"></span>FHIR API</div>
+                    <div id="fhir-details">Checking...</div>
+                </div>
+                <div class="status-item">
+                    <div><span id="auth-status" class="status-indicator status-checking"></span>Authentication</div>
+                    <div id="auth-details">Checking...</div>
+                </div>
+                <div class="status-item">
+                    <div><span id="version-status" class="status-indicator status-checking"></span>Version</div>
+                    <div id="version-details">Detecting...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="launch-controls">
+            <h3>🚀 OpenEMR Modules</h3>
+            <p>Launch different OpenEMR modules in various modes</p>
+            
+            <div class="controls-grid">
+                <div class="control-card">
+                    <h4>📊 Dashboard</h4>
+                    <p>Main OpenEMR dashboard with overview</p>
+                    <div class="mode-selector">
+                        <select id="dashboard-mode">
+                            <option value="embed">Embed in Page</option>
+                            <option value="iframe">Full Iframe</option>
+                            <option value="window">New Window</option>
+                            <option value="redirect">Redirect</option>
+                        </select>
+                    </div>
+                    <button class="control-button" onclick="launchModule('dashboard')">Launch Dashboard</button>
+                </div>
+
+                <div class="control-card">
+                    <h4>👥 Patient Management</h4>
+                    <p>Search, view, and manage patient records</p>
+                    <div class="mode-selector">
+                        <select id="patients-mode">
+                            <option value="embed">Embed in Page</option>
+                            <option value="iframe">Full Iframe</option>
+                            <option value="window">New Window</option>
+                            <option value="redirect">Redirect</option>
+                        </select>
+                    </div>
+                    <button class="control-button" onclick="launchModule('patients')">Launch Patients</button>
+                </div>
+
+                <div class="control-card">
+                    <h4>📅 Calendar & Appointments</h4>
+                    <p>Schedule and manage appointments</p>
+                    <div class="mode-selector">
+                        <select id="calendar-mode">
+                            <option value="embed">Embed in Page</option>
+                            <option value="iframe">Full Iframe</option>
+                            <option value="window">New Window</option>
+                            <option value="redirect">Redirect</option>
+                        </select>
+                    </div>
+                    <button class="control-button" onclick="launchModule('calendar')">Launch Calendar</button>
+                </div>
+
+                <div class="control-card">
+                    <h4>💬 Messages</h4>
+                    <p>Internal messaging system</p>
+                    <div class="mode-selector">
+                        <select id="messages-mode">
+                            <option value="embed">Embed in Page</option>
+                            <option value="iframe">Full Iframe</option>
+                            <option value="window">New Window</option>
+                            <option value="redirect">Redirect</option>
+                        </select>
+                    </div>
+                    <button class="control-button" onclick="launchModule('messages')">Launch Messages</button>
+                </div>
+
+                <div class="control-card">
+                    <h4>📋 Reports</h4>
+                    <p>Generate and view clinical reports</p>
+                    <div class="mode-selector">
+                        <select id="reports-mode">
+                            <option value="embed">Embed in Page</option>
+                            <option value="iframe">Full Iframe</option>
+                            <option value="window">New Window</option>
+                            <option value="redirect">Redirect</option>
+                        </select>
+                    </div>
+                    <button class="control-button" onclick="launchModule('reports')">Launch Reports</button>
+                </div>
+
+                <div class="control-card">
+                    <h4>⚙️ Administration</h4>
+                    <p>System administration and settings</p>
+                    <div class="mode-selector">
+                        <select id="administration-mode">
+                            <option value="embed">Embed in Page</option>
+                            <option value="iframe">Full Iframe</option>
+                            <option value="window">New Window</option>
+                            <option value="redirect">Redirect</option>
+                        </select>
+                    </div>
+                    <button class="control-button" onclick="launchModule('administration')">Launch Admin</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- OpenEMR will be embedded here -->
+        <div id="openemr-main-container" class="openemr-container" style="display: none;">
+            <!-- OpenEMR content will be loaded here -->
+        </div>
+
+        <div class="github-info">
+            <h3>📦 OpenEMR Project Information</h3>
+            <p>Real-time data from the OpenEMR GitHub repository</p>
+            <div class="github-stats">
+                <div class="github-stat">
+                    <div>⭐ Stars</div>
+                    <div id="github-stars">Loading...</div>
+                </div>
+                <div class="github-stat">
+                    <div>🔀 Forks</div>
+                    <div id="github-forks">Loading...</div>
+                </div>
+                <div class="github-stat">
+                    <div>🏷️ Latest Release</div>
+                    <div id="github-release">Loading...</div>
+                </div>
+                <div class="github-stat">
+                    <div>📅 Last Update</div>
+                    <div id="github-updated">Loading...</div>
+                </div>
+            </div>
+            <button class="control-button" onclick="window.open('https://github.com/openemr/openemr', '_blank')" style="margin-top: 15px;">
+                View on GitHub
+            </button>
+        </div>
+
+        <div class="log-panel" id="activity-log">
+            [System] Initializing OpenEMR integration...\n
+        </div>
+    </div>
+
+    <!-- Load the real OpenEMR integration -->
+    <script src="./real-openemr-integration.js"></script>
+
+    <script>
+        // Integration UI Management
+        function log(message, type = 'info') {
+            const logPanel = document.getElementById('activity-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logLine = `[${timestamp}] ${message}\n`;
+            logPanel.textContent += logLine;
+            logPanel.scrollTop = logPanel.scrollHeight;
+            console.log(`[OpenEMR] ${message}`);
+        }
+
+        function updateStatus(elementId, status, details = '') {
+            const statusElement = document.getElementById(elementId);
+            const detailsElement = document.getElementById(elementId.replace('-status', '-details'));
+            
+            if (statusElement) {
+                statusElement.className = `status-indicator status-${status}`;
+            }
+            if (detailsElement && details) {
+                detailsElement.textContent = details;
+            }
+        }
+
+        function launchModule(module) {
+            const modeSelect = document.getElementById(`${module}-mode`);
+            const mode = modeSelect ? modeSelect.value : 'embed';
+            
+            log(`Launching OpenEMR module: ${module} in ${mode} mode`);
+            
+            if (window.realOpenEMR) {
+                const container = document.getElementById('openemr-main-container');
+                container.style.display = 'block';
+                container.scrollIntoView({ behavior: 'smooth' });
+                
+                window.realOpenEMR.launchOpenEMR({
+                    mode: mode,
+                    module: module,
+                    containerId: 'openemr-main-container'
+                }).then(result => {
+                    if (result.success) {
+                        log(`✅ Successfully launched ${module} in ${mode} mode`);
+                    } else {
+                        log(`❌ Failed to launch ${module}: ${result.error || 'Unknown error'}`);
+                    }
+                }).catch(error => {
+                    log(`❌ Launch error: ${error.message}`);
+                });
+            } else {
+                log(`❌ OpenEMR integration not available`);
+            }
+        }
+
+        // Monitor OpenEMR integration status
+        function monitorIntegrationStatus() {
+            if (window.realOpenEMR) {
+                const integration = window.realOpenEMR;
+                
+                // Update connection status
+                if (integration.isConnected && integration.currentInstance) {
+                    updateStatus('connection-status', 'connected', `Connected to ${integration.currentInstance.url}`);
+                    updateStatus('version-status', 'connected', `v${integration.currentInstance.version || 'Unknown'}`);
+                    
+                    if (integration.currentInstance.capabilities.fhir) {
+                        updateStatus('fhir-status', 'connected', 'FHIR R4 Available');
+                    } else {
+                        updateStatus('fhir-status', 'disconnected', 'FHIR Not Available');
+                    }
+                    
+                    updateStatus('auth-status', 'connected', 'Ready');
+                    
+                    log(`✅ Connected to OpenEMR instance: ${integration.currentInstance.url}`);
+                } else {
+                    updateStatus('connection-status', 'disconnected', 'Not Connected');
+                    updateStatus('fhir-status', 'disconnected', 'N/A');
+                    updateStatus('auth-status', 'disconnected', 'N/A');
+                    updateStatus('version-status', 'disconnected', 'N/A');
+                }
+                
+                // Update GitHub info
+                if (integration.githubIntegration) {
+                    const github = integration.githubIntegration;
+                    document.getElementById('github-stars').textContent = github.repository.stargazers_count || 'N/A';
+                    document.getElementById('github-forks').textContent = github.repository.forks_count || 'N/A';
+                    
+                    if (github.releases && github.releases.length > 0) {
+                        document.getElementById('github-release').textContent = github.releases[0].tag_name;
+                    }
+                    
+                    const lastUpdate = new Date(github.repository.updated_at);
+                    document.getElementById('github-updated').textContent = lastUpdate.toLocaleDateString();
+                }
+            }
+        }
+
+        // Initialize monitoring
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🏥 OpenEMR Integration UI loaded');
+            
+            // Monitor status every 2 seconds
+            setInterval(monitorIntegrationStatus, 2000);
+            
+            // Initial status check
+            setTimeout(monitorIntegrationStatus, 1000);
+        });
+
+        // Global error handler
+        window.addEventListener('error', (event) => {
+            log(`💥 Error: ${event.error?.message || event.message}`);
+        });
+    </script>
+</body>
+</html>
