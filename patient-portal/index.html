@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebQX™ Patient Portal - Healthcare Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .portal-card {
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        }
+        
+        .portal-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.1) 100%);
+        }
+        
+        .status-indicator {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .notification-badge {
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-5px); }
+            60% { transform: translateY(-3px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
+    <!-- Header -->
+    <header class="glass border-b border-white border-opacity-20">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-white text-xl font-bold">WebQX™ Patient Portal</h1>
+                        <p class="text-blue-200 text-sm" id="userWelcome">Welcome back, Demo Patient</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Status Indicator -->
+                    <div class="flex items-center space-x-2">
+                        <div class="status-indicator w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span class="text-green-300 text-sm">Secure Connection</span>
+                    </div>
+                    
+                    <!-- Emergency Button -->
+                    <button onclick="emergencyContact()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+                        <span>🚨</span>
+                        <span>Emergency</span>
+                    </button>
+                    
+                    <!-- User Menu -->
+                    <div class="flex items-center space-x-2 bg-white bg-opacity-10 rounded-lg px-3 py-2">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-sm font-semibold" id="userInitials">DP</span>
+                        </div>
+                        <span class="text-white text-sm" id="userRole">Patient</span>
+                        <button onclick="logout()" class="text-red-300 hover:text-red-200 ml-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass rounded-xl p-6 text-center">
+                <div class="text-3xl font-bold text-white mb-2">2</div>
+                <div class="text-blue-200 text-sm">Upcoming Appointments</div>
+                <div class="notification-badge w-2 h-2 bg-red-500 rounded-full absolute top-2 right-2"></div>
+            </div>
+            <div class="glass rounded-xl p-6 text-center">
+                <div class="text-3xl font-bold text-white mb-2">3</div>
+                <div class="text-green-200 text-sm">Active Prescriptions</div>
+            </div>
+            <div class="glass rounded-xl p-6 text-center">
+                <div class="text-3xl font-bold text-white mb-2">1</div>
+                <div class="text-yellow-200 text-sm">New Messages</div>
+                <div class="notification-badge w-2 h-2 bg-yellow-500 rounded-full absolute top-2 right-2"></div>
+            </div>
+            <div class="glass rounded-xl p-6 text-center">
+                <div class="text-3xl font-bold text-white mb-2">98%</div>
+                <div class="text-purple-200 text-sm">Health Score</div>
+            </div>
+        </div>
+
+        <!-- Portal Services Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Appointments -->
+            <div class="portal-card glass rounded-xl p-6 cursor-pointer" onclick="openModule('appointments')">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-white text-lg font-semibold">Appointments</h3>
+                        <p class="text-blue-200 text-sm">Schedule & manage visits</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-green-300 text-sm">✓ Available</span>
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-xs text-gray-300">
+                    • Next: Dr. Smith - Tomorrow 2:00 PM<br>
+                    • Annual Checkup - Friday 10:00 AM
+                </div>
+            </div>
+
+            <!-- Medical Records -->
+            <div class="portal-card glass rounded-xl p-6 cursor-pointer" onclick="openModule('medical-records')">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2v1a2 2 0 002 2h4a2 2 0 002-2V3a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-white text-lg font-semibold">Medical Records</h3>
+                        <p class="text-blue-200 text-sm">View your health history</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-green-300 text-sm">✓ Available</span>
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-xs text-gray-300">
+                    • Lab Results (2 new)<br>
+                    • Immunization Records<br>
+                    • Medical History
+                </div>
+            </div>
+
+            <!-- Prescriptions -->
+            <div class="portal-card glass rounded-xl p-6 cursor-pointer" onclick="openModule('prescriptions')">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-white text-lg font-semibold">Prescriptions</h3>
+                        <p class="text-blue-200 text-sm">Manage medications</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-green-300 text-sm">✓ Available</span>
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-xs text-gray-300">
+                    • 3 Active prescriptions<br>
+                    • 1 Ready for pickup<br>
+                    • Refill reminders
+                </div>
+            </div>
+
+            <!-- Telehealth -->
+            <div class="portal-card glass rounded-xl p-6 cursor-pointer" onclick="openModule('telehealth')">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-white text-lg font-semibold">General Telehealth</h3>
+                        <p class="text-blue-200 text-sm">Virtual consultations</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-green-300 text-sm">✓ Available</span>
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-xs text-gray-300">
+                    • Schedule virtual visits<br>
+                    • Join ongoing sessions<br>
+                    • Video consultations
+                </div>
+            </div>
+
+            <!-- Mental Health -->
+            <div class="portal-card glass rounded-xl p-6 cursor-pointer" onclick="openModule('mental-health')">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-pink-600 rounded-lg flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-white text-lg font-semibold">Mental Health Services</h3>
+                        <p class="text-blue-200 text-sm">Telepsychiatry & counseling</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-green-300 text-sm">✓ Available</span>
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-xs text-gray-300">
+                    • Psychiatric consultations<br>
+                    • Therapy sessions<br>
+                    • Crisis support available
+                </div>
+            </div>
+
+            <!-- Messages -->
+            <div class="portal-card glass rounded-xl p-6 cursor-pointer" onclick="openModule('messages')">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-yellow-600 rounded-lg flex items-center justify-center mr-4">
+                        <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-white text-lg font-semibold">Messages</h3>
+                        <p class="text-blue-200 text-sm">Secure communication</p>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-green-300 text-sm">✓ Available</span>
+                    <div class="notification-badge w-2 h-2 bg-red-500 rounded-full"></div>
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-xs text-gray-300">
+                    • 1 New message from Dr. Smith<br>
+                    • Lab results notification<br>
+                    • Appointment reminders
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="mt-8 glass rounded-xl p-6">
+            <h2 class="text-white text-xl font-semibold mb-4">Recent Activity</h2>
+            <div class="space-y-3">
+                <div class="flex items-center justify-between py-2 border-b border-gray-600">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs">🧪</span>
+                        </div>
+                        <div>
+                            <p class="text-white text-sm">Lab results received from Quest Diagnostics</p>
+                            <p class="text-gray-400 text-xs">2 hours ago</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-600">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs">📅</span>
+                        </div>
+                        <div>
+                            <p class="text-white text-sm">Appointment confirmed with Dr. Smith</p>
+                            <p class="text-gray-400 text-xs">1 day ago</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center">
+                            <span class="text-white text-xs">💊</span>
+                        </div>
+                        <div>
+                            <p class="text-white text-sm">Prescription refill processed</p>
+                            <p class="text-gray-400 text-xs">3 days ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-8 glass rounded-xl p-6">
+            <h2 class="text-white text-xl font-semibold mb-4">Quick Actions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <button onclick="quickAction('appointment')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all">
+                    📅 Book Appointment
+                </button>
+                <button onclick="quickAction('refill')" class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-all">
+                    💊 Request Refill
+                </button>
+                <button onclick="quickAction('message')" class="bg-yellow-600 hover:bg-yellow-700 text-white font-semibold py-3 px-4 rounded-lg transition-all">
+                    ✉️ Send Message
+                </button>
+                <button onclick="quickAction('telehealth')" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-all">
+                    🎥 Start Video Call
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize portal
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUserData();
+            updateStats();
+        });
+
+        function loadUserData() {
+            // Get user data from localStorage/sessionStorage
+            const userData = JSON.parse(localStorage.getItem('patientUser') || sessionStorage.getItem('patientUser') || '{}');
+            
+            if (userData.name) {
+                document.getElementById('userWelcome').textContent = `Welcome back, ${userData.name}`;
+                
+                // Get initials
+                const initials = userData.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                document.getElementById('userInitials').textContent = initials;
+            }
+        }
+
+        function updateStats() {
+            // Simulate real-time updates
+            setInterval(() => {
+                // Random small updates to make it feel live
+                const elements = document.querySelectorAll('.text-3xl');
+                elements.forEach(el => {
+                    if (Math.random() < 0.05) { // 5% chance to update
+                        const current = parseInt(el.textContent);
+                        if (current > 0) {
+                            const change = Math.random() < 0.7 ? 0 : (Math.random() < 0.5 ? -1 : 1);
+                            el.textContent = Math.max(0, current + change);
+                        }
+                    }
+                });
+            }, 30000); // Update every 30 seconds
+        }
+
+        function openModule(moduleName) {
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            const baseUrl = isGitHubPages ? '/webqx' : '';
+            
+            switch (moduleName) {
+                case 'appointments':
+                    window.open(`${baseUrl}/demo-fhir-r4-appointment-booking.html`, '_blank');
+                    break;
+                case 'medical-records':
+                    window.open(`${baseUrl}/demo-lab-results-viewer.html`, '_blank');
+                    break;
+                case 'prescriptions':
+                    alert('💊 Prescription Management module would open here.\n\nFeatures:\n• View active prescriptions\n• Request refills\n• Medication history\n• Pharmacy information');
+                    break;
+                case 'telehealth':
+                    window.open(`${baseUrl}/telehealth-demo.html`, '_blank');
+                    break;
+                case 'mental-health':
+                    window.open(`${baseUrl}/patient-portal/telehealth-session.html`, '_blank');
+                    break;
+                case 'messages':
+                    alert('✉️ Secure Messaging module would open here.\n\nFeatures:\n• Message your care team\n• Receive notifications\n• Appointment reminders\n• Lab result notifications');
+                    break;
+                default:
+                    alert(`Module "${moduleName}" would open here in a full deployment.`);
+            }
+        }
+
+        function quickAction(action) {
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            const baseUrl = isGitHubPages ? '/webqx' : '';
+            
+            switch (action) {
+                case 'appointment':
+                    window.open(`${baseUrl}/demo-fhir-r4-appointment-booking.html`, '_blank');
+                    break;
+                case 'refill':
+                    alert('💊 Prescription refill request would be initiated.\n\nFeatures:\n• Select medications to refill\n• Choose pharmacy\n• Track refill status\n• Set reminders');
+                    break;
+                case 'message':
+                    alert('✉️ Secure message composer would open.\n\nFeatures:\n• Send to care team\n• Attach documents\n• Priority levels\n• Read receipts');
+                    break;
+                case 'telehealth':
+                    window.open(`${baseUrl}/telehealth-demo.html`, '_blank');
+                    break;
+            }
+        }
+
+        function emergencyContact() {
+            if (confirm('🚨 EMERGENCY CONTACT\n\nThis will connect you to emergency services.\n\nFor immediate medical emergencies, call 911.\n\nFor urgent but non-emergency care, would you like to:\n- Connect to urgent care hotline\n- Schedule emergency telehealth session\n- Contact your primary care provider\n\nClick OK to proceed or Cancel to return.')) {
+                alert('🚨 Emergency protocols activated.\n\n• Connecting to urgent care hotline\n• Notifying your primary care provider\n• Emergency contact information sent\n• Location services activated\n\nHelp is on the way!');
+            }
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to log out?')) {
+                // Clear authentication data
+                localStorage.removeItem('patientAuthToken');
+                localStorage.removeItem('patientUser');
+                localStorage.removeItem('patientLoginTime');
+                sessionStorage.removeItem('patientAuthToken');
+                sessionStorage.removeItem('patientUser');
+                sessionStorage.removeItem('patientLoginTime');
+                
+                // Redirect to login
+                const isGitHubPages = window.location.hostname.includes('github.io');
+                const baseUrl = isGitHubPages ? '/webqx' : '';
+                window.location.href = baseUrl + '/login.html';
+            }
+        }
+    </script>
+    
+    <!-- Universal Navigation Header -->
+    <script src="../navigation-header.js"></script>
+</body>
+</html>

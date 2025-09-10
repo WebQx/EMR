@@ -101,6 +101,9 @@ function createNavigationHeader() {
                 <a href="${baseUrl}/provider/" class="quick-nav-item">
                     👨‍⚕️ Provider Portal
                 </a>
+                <a href="${baseUrl}/patient-portal/" class="quick-nav-item">
+                    👤 Patient Portal
+                </a>
                 <a href="${baseUrl}/telehealth-realtime-demo.html" class="quick-nav-item">
                     🎥 Real-Time Telehealth
                 </a>
@@ -200,6 +203,8 @@ function updateCurrentPageIndicator() {
         '/index.html': 'Demo Hub',
         '/provider/': 'Provider Portal',
         '/provider/index.html': 'Provider Portal',
+        '/patient-portal/': 'Patient Portal',
+        '/patient-portal/index.html': 'Patient Portal',
         '/telehealth-realtime-demo.html': 'Real-Time Telehealth',
         '/telehealth-demo.html': 'Telehealth Demo',
         '/demo-fhir-r4-appointment-booking.html': 'FHIR Appointments',
