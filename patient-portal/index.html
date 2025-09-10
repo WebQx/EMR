@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebQX™ Patient Portal - Healthcare Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../assets/webqx-styles.css">
     <style>
         .glass {
             background: rgba(255, 255, 255, 0.1);
@@ -332,6 +332,22 @@
                     🎥 Start Video Call
                 </button>
             </div>
+            
+            <!-- Debug Navigation Section -->
+            <div class="mt-6 pt-4 border-t border-gray-600">
+                <h3 class="text-white text-sm font-medium mb-3">🔧 Navigation Test (Debug)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <button onclick="testDirectNavigation('appointments')" class="bg-gray-600 hover:bg-gray-500 text-white text-sm py-2 px-3 rounded transition-all">
+                        Test Appointments
+                    </button>
+                    <button onclick="testDirectNavigation('lab-results')" class="bg-gray-600 hover:bg-gray-500 text-white text-sm py-2 px-3 rounded transition-all">
+                        Test Lab Results
+                    </button>
+                    <button onclick="testDirectNavigation('telehealth')" class="bg-gray-600 hover:bg-gray-500 text-white text-sm py-2 px-3 rounded transition-all">
+                        Test Telehealth
+                    </button>
+                </div>
+            </div>
         </div>
     </main>
 
@@ -340,7 +356,67 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadUserData();
             updateStats();
+            testNavigation();
         });
+
+        function testNavigation() {
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            const baseUrl = isGitHubPages ? '/webqx' : '';
+            
+            console.log('=== Navigation Test ===');
+            console.log('Current hostname:', window.location.hostname);
+            console.log('Is GitHub Pages:', isGitHubPages);
+            console.log('Base URL:', baseUrl);
+            console.log('Current URL:', window.location.href);
+            console.log('Test appointment URL:', `${baseUrl}/demo-fhir-r4-appointment-booking.html`);
+            console.log('Test telehealth URL:', `${baseUrl}/telehealth-demo.html`);
+            console.log('Test lab results URL:', `${baseUrl}/demo-lab-results-viewer.html`);
+            console.log('======================');
+            
+            // Add click debugging to all portal cards
+            const portalCards = document.querySelectorAll('.portal-card');
+            portalCards.forEach((card, index) => {
+                card.addEventListener('click', function(e) {
+                    console.log(`Portal card ${index} clicked:`, e.target);
+                });
+            });
+        }
+
+        // Direct navigation test function
+        function testDirectNavigation(module) {
+            console.log(`🔧 Testing direct navigation to: ${module}`);
+            
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            const baseUrl = isGitHubPages ? '/webqx' : '';
+            console.log(`Base URL: ${baseUrl}`);
+            
+            const urlMap = {
+                'appointments': `${baseUrl}/demo-fhir-r4-appointment-booking.html`,
+                'lab-results': `${baseUrl}/demo-lab-results-viewer.html`,
+                'telehealth': `${baseUrl}/telehealth-demo.html`
+            };
+            
+            const targetUrl = urlMap[module];
+            console.log(`Target URL: ${targetUrl}`);
+            
+            // Test if URL is accessible
+            fetch(targetUrl, { method: 'HEAD' })
+                .then(response => {
+                    console.log(`✅ ${module} URL status: ${response.status}`);
+                    if (response.ok) {
+                        console.log(`🚀 Navigating to: ${targetUrl}`);
+                        window.open(targetUrl, '_blank');
+                    } else {
+                        console.error(`❌ ${module} URL not accessible: ${response.status}`);
+                        alert(`Navigation Error: ${module} page not accessible (${response.status})`);
+                    }
+                })
+                .catch(error => {
+                    console.error(`❌ Error testing ${module} URL:`, error);
+                    console.log(`🔄 Trying direct navigation anyway...`);
+                    window.open(targetUrl, '_blank');
+                });
+        }
 
         function loadUserData() {
             // Get user data from localStorage/sessionStorage
@@ -376,48 +452,166 @@
             const isGitHubPages = window.location.hostname.includes('github.io');
             const baseUrl = isGitHubPages ? '/webqx' : '';
             
+            console.log(`Opening module: ${moduleName}, Base URL: ${baseUrl}`);
+            
             switch (moduleName) {
                 case 'appointments':
-                    window.open(`${baseUrl}/demo-fhir-r4-appointment-booking.html`, '_blank');
+                    const appointmentUrl = `${baseUrl}/demo-fhir-r4-appointment-booking.html`;
+                    console.log(`Navigating to: ${appointmentUrl}`);
+                    window.open(appointmentUrl, '_blank');
                     break;
                 case 'medical-records':
-                    window.open(`${baseUrl}/demo-lab-results-viewer.html`, '_blank');
+                    const medicalUrl = `${baseUrl}/demo-lab-results-viewer.html`;
+                    console.log(`Navigating to: ${medicalUrl}`);
+                    window.open(medicalUrl, '_blank');
                     break;
                 case 'prescriptions':
-                    alert('💊 Prescription Management module would open here.\n\nFeatures:\n• View active prescriptions\n• Request refills\n• Medication history\n• Pharmacy information');
+                    // Create a more functional prescription demo
+                    window.open(`${baseUrl}/demo.html`, '_blank');
                     break;
                 case 'telehealth':
-                    window.open(`${baseUrl}/telehealth-demo.html`, '_blank');
+                    const telehealthUrl = `${baseUrl}/telehealth-demo.html`;
+                    console.log(`Navigating to: ${telehealthUrl}`);
+                    window.open(telehealthUrl, '_blank');
                     break;
                 case 'mental-health':
-                    window.open(`${baseUrl}/patient-portal/telehealth-session.html`, '_blank');
+                    const mentalHealthUrl = `${baseUrl}/patient-portal/telehealth-session.html`;
+                    console.log(`Navigating to: ${mentalHealthUrl}`);
+                    window.open(mentalHealthUrl, '_blank');
                     break;
                 case 'messages':
-                    alert('✉️ Secure Messaging module would open here.\n\nFeatures:\n• Message your care team\n• Receive notifications\n• Appointment reminders\n• Lab result notifications');
+                    // Create a simple messaging interface
+                    showMessageInterface();
                     break;
                 default:
                     alert(`Module "${moduleName}" would open here in a full deployment.`);
             }
         }
 
+        function showMessageInterface() {
+            const messageHtml = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                        <h2 style="color: #333; margin-bottom: 20px;">💬 Secure Messages</h2>
+                        
+                        <div style="background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                <div style="width: 40px; height: 40px; background: #007bff; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 10px;">DS</div>
+                                <div>
+                                    <strong>Dr. Smith</strong>
+                                    <div style="font-size: 0.8rem; color: #666;">2 hours ago</div>
+                                </div>
+                            </div>
+                            <p style="color: #333; margin: 0;">Your lab results are in and everything looks normal. Please schedule a follow-up appointment in 6 months.</p>
+                        </div>
+                        
+                        <div style="background: #e3f2fd; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                                <div style="width: 40px; height: 40px; background: #28a745; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; margin-right: 10px;">SYS</div>
+                                <div>
+                                    <strong>System Notification</strong>
+                                    <div style="font-size: 0.8rem; color: #666;">1 day ago</div>
+                                </div>
+                            </div>
+                            <p style="color: #333; margin: 0;">Your appointment with Dr. Smith has been confirmed for tomorrow at 2:00 PM.</p>
+                        </div>
+                        
+                        <textarea placeholder="Type your message here..." style="width: 100%; height: 100px; border: 2px solid #ddd; border-radius: 8px; padding: 10px; margin-bottom: 15px; resize: vertical;"></textarea>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Close</button>
+                            <button onclick="alert('Message sent!'); this.closest('div[style*=\"position: fixed\"]').remove();" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Send Message</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', messageHtml);
+        }
+
         function quickAction(action) {
             const isGitHubPages = window.location.hostname.includes('github.io');
             const baseUrl = isGitHubPages ? '/webqx' : '';
             
+            console.log(`Quick action: ${action}, Base URL: ${baseUrl}`);
+            
             switch (action) {
                 case 'appointment':
-                    window.open(`${baseUrl}/demo-fhir-r4-appointment-booking.html`, '_blank');
+                    const appointmentUrl = `${baseUrl}/demo-fhir-r4-appointment-booking.html`;
+                    console.log(`Quick navigating to: ${appointmentUrl}`);
+                    window.open(appointmentUrl, '_blank');
                     break;
                 case 'refill':
-                    alert('💊 Prescription refill request would be initiated.\n\nFeatures:\n• Select medications to refill\n• Choose pharmacy\n• Track refill status\n• Set reminders');
+                    showPrescriptionRefill();
                     break;
                 case 'message':
-                    alert('✉️ Secure message composer would open.\n\nFeatures:\n• Send to care team\n• Attach documents\n• Priority levels\n• Read receipts');
+                    showMessageInterface();
                     break;
                 case 'telehealth':
-                    window.open(`${baseUrl}/telehealth-demo.html`, '_blank');
+                    const telehealthUrl = `${baseUrl}/telehealth-demo.html`;
+                    console.log(`Quick navigating to: ${telehealthUrl}`);
+                    window.open(telehealthUrl, '_blank');
                     break;
             }
+        }
+
+        function showPrescriptionRefill() {
+            const refillHtml = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                    <div style="background: white; border-radius: 15px; padding: 30px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                        <h2 style="color: #333; margin-bottom: 20px;">💊 Prescription Refill Request</h2>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="color: #333; margin-bottom: 15px;">Your Active Prescriptions:</h3>
+                            
+                            <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #28a745;">
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <div>
+                                        <strong>Lisinopril 10mg</strong>
+                                        <div style="font-size: 0.9rem; color: #666;">Take once daily • 30 tablets</div>
+                                        <div style="font-size: 0.8rem; color: #28a745;">✅ Refills available: 2</div>
+                                    </div>
+                                    <button onclick="alert('Refill requested for Lisinopril!')" style="background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Request Refill</button>
+                                </div>
+                            </div>
+                            
+                            <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #ffc107;">
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <div>
+                                        <strong>Metformin 500mg</strong>
+                                        <div style="font-size: 0.9rem; color: #666;">Take twice daily • 60 tablets</div>
+                                        <div style="font-size: 0.8rem; color: #ffc107;">⚠️ Refills available: 1</div>
+                                    </div>
+                                    <button onclick="alert('Refill requested for Metformin!')" style="background: #ffc107; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Request Refill</button>
+                                </div>
+                            </div>
+                            
+                            <div style="background: #f8f9fa; border-radius: 8px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #dc3545;">
+                                <div style="display: flex; justify-content: between; align-items: center;">
+                                    <div>
+                                        <strong>Atorvastatin 20mg</strong>
+                                        <div style="font-size: 0.9rem; color: #666;">Take once daily • 30 tablets</div>
+                                        <div style="font-size: 0.8rem; color: #dc3545;">❌ No refills remaining</div>
+                                    </div>
+                                    <button onclick="alert('Contact required - no refills remaining')" style="background: #dc3545; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;">Contact Doctor</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #e3f2fd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                            <h4 style="color: #1976d2; margin-bottom: 10px;">📍 Preferred Pharmacy</h4>
+                            <p style="margin: 0; color: #333;">CVS Pharmacy - Main Street<br>
+                            123 Main St, Your City<br>
+                            Phone: (555) 123-4567</p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <button onclick="this.closest('div[style*=\"position: fixed\"]').remove()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Close</button>
+                            <button onclick="alert('All available refills have been requested and sent to your pharmacy!'); this.closest('div[style*=\"position: fixed\"]').remove();" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Request All Refills</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', refillHtml);
         }
 
         function emergencyContact() {

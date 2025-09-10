@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom WebQX Healthcare Styles */
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-blue-900 via-purple-800 to-indigo-900;
+    @apply min-h-screen text-white;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white bg-opacity-10 backdrop-blur-md border border-white border-opacity-20;
+  }
+  
+  .glass-card {
+    @apply glass rounded-xl p-6 shadow-xl hover:bg-opacity-20 transition-all duration-300;
+  }
+  
+  .portal-card {
+    @apply glass-card cursor-pointer transform hover:scale-105;
+  }
+  
+  .nav-glass {
+    @apply bg-white bg-opacity-5 backdrop-blur-sm border-b border-white border-opacity-10;
+  }
+  
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200;
+  }
+  
+  .stat-card {
+    @apply glass-card text-center animate-fade-in;
+  }
+  
+  .module-card {
+    @apply portal-card group relative overflow-hidden;
+  }
+  
+  .module-card::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white to-transparent opacity-0 transform -skew-x-12 -translate-x-full transition-all duration-700 group-hover:translate-x-full group-hover:opacity-10;
+  }
+}
+
+@layer utilities {
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  
+  .glow {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+  
+  .glow-green {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+  }
+  
+  .glow-red {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+  }
+}

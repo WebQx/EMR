@@ -1,0 +1,50 @@
+/*! WebQX Healthcare Platform - Medical Teal Theme */
+/* OPTION 1: Medical Teal & Soft Blue (RECOMMENDED) */
+body.theme-medical-teal {
+  background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
+  min-height: 100vh;
+  color: white;
+}
+
+/*! WebQX Healthcare Platform - Sage Green Theme */
+/* OPTION 2: Sage Green & Ocean Blue */  
+body.theme-sage-ocean {
+  background: linear-gradient(135deg, #15803d 0%, #0e7490 50%, #1e3a8a 100%);
+  min-height: 100vh;
+  color: white;
+}
+
+/*! WebQX Healthcare Platform - Professional Navy Theme */
+/* OPTION 3: Professional Navy & Healthcare Blue */
+body.theme-professional-navy {
+  background: linear-gradient(135deg, #1e293b 0%, #1e40af 50%, #312e81 100%);
+  min-height: 100vh;
+  color: white;
+}
+
+/* Enhanced glass components for all themes */
+.glass-enhanced {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Theme-specific accent colors */
+.theme-medical-teal .btn-primary {
+  background: linear-gradient(135deg, #0891b2, #0f766e);
+  box-shadow: 0 4px 15px rgba(8, 145, 178, 0.3);
+}
+
+.theme-sage-ocean .btn-primary {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  box-shadow: 0 4px 15px rgba(22, 163, 74, 0.3);
+}
+
+.theme-professional-navy .btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #1e40af);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}

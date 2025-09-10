@@ -22,8 +22,10 @@
     "chatehr:mock": "node scripts/start-mock-chatehr.js",
     "chatehr:test": "jest __tests__/chatEHR.test.js",
     "chatehr:health": "curl -f http://localhost:3000/api/chatehr/health",
+    "build:css": "tailwindcss -i ./src/styles.css -o ./assets/webqx-styles.css --watch",
+    "build:css:prod": "tailwindcss -i ./src/styles.css -o ./assets/webqx-styles.css --minify",
     "build:pages": "node scripts/build-pages.js",
-    "deploy:pages": "npm run build:pages"
+    "deploy:pages": "npm run build:css:prod && npm run build:pages"
   },
   "keywords": [
     "healthcare",
