@@ -7,14 +7,11 @@
 
 class OpenEMRLauncher {
     constructor() {
-        // Wait for config to be available and merge with defaults
-        this.waitForConfig().then(() => {
-            this.initializeConfig();
-        });
+        console.log('🔧 Initializing OpenEMR Launcher...');
         
         // Default configuration
         this.config = {
-            baseUrl: this.getOpenEMRBaseUrl(),
+            baseUrl: 'https://demo.openemr.io',
             clientId: 'webqx-provider-portal',
             redirectUri: this.getRedirectUri(),
             scopes: [
@@ -31,7 +28,7 @@ class OpenEMRLauncher {
                 'user/Practitioner.read'
             ],
             fhirBaseUrl: null,
-            apiVersion: '7.0.2'
+            apiVersion: '4.4.0' // Updated to match demo.openemr.io
         };
         
         this.tokens = null;
@@ -40,6 +37,93 @@ class OpenEMRLauncher {
         
         // Load stored tokens if available
         this.loadStoredTokens();
+        
+        // Initialize configuration asynchronously
+        this.initConfigAsync();
+    }
+
+    async initConfigAsync() {
+        try {
+            // Wait for config to be available and merge with defaults
+            await this.waitForConfig();
+            this.initializeConfig();
+            console.log('✅ OpenEMR Launcher configuration ready');
+        } catch (error) {
+            console.warn('⚠️ Config initialization failed, using defaults:', error);
+        }
+    }
+
+    async waitForConfig() {
+        // Wait for openemrConfig to be available (loaded from openemr-config.js)
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 50; // 5 second timeout
+            
+            const checkConfig = () => {
+                attempts++;
+                if (typeof window.openemrConfig !== 'undefined') {
+                    resolve(window.openemrConfig);
+                } else if (attempts >= maxAttempts) {
+                    reject(new Error('Configuration timeout - openemr-config.js may not be loaded'));
+                } else {
+                    setTimeout(checkConfig, 100);
+                }
+            };
+            
+            checkConfig();
+        });
+    }
+
+    initializeConfig() {
+        if (window.openemrConfig) {
+            // Merge loaded configuration with defaults
+            this.config = { ...this.config, ...window.openemrConfig };
+            
+            // Set FHIR base URL if not already configured
+            if (!this.config.fhirBaseUrl) {
+                this.config.fhirBaseUrl = `${this.config.baseUrl}/apis/default/fhir`;
+            }
+        }
+        
+        this.isInitialized = true;
+        console.log('🔧 OpenEMR configuration initialized:', this.config);
+    }
+
+    getRedirectUri() {
+        // Use current page as redirect URI for OAuth callback
+        const currentUrl = new URL(window.location.href);
+        currentUrl.search = ''; // Remove query parameters
+        currentUrl.hash = ''; // Remove hash
+        return currentUrl.toString() + 'openemr-callback.html';
+    }
+
+    loadStoredTokens() {
+        try {
+            const stored = localStorage.getItem('webqx_openemr_tokens');
+            if (stored) {
+                this.tokens = JSON.parse(stored);
+                console.log('🔑 Loaded stored OpenEMR tokens');
+            }
+        } catch (error) {
+            console.warn('⚠️ Failed to load stored tokens:', error);
+        }
+    }
+
+    saveTokens(tokens) {
+        try {
+            this.tokens = tokens;
+            localStorage.setItem('webqx_openemr_tokens', JSON.stringify(tokens));
+            console.log('💾 Saved OpenEMR tokens');
+        } catch (error) {
+            console.error('❌ Failed to save tokens:', error);
+        }
+    }
+
+    clearTokens() {
+        this.tokens = null;
+        this.userContext = null;
+        localStorage.removeItem('webqx_openemr_tokens');
+        console.log('🗑️ Cleared OpenEMR tokens');
     }
 
     /**
@@ -1025,12 +1109,30 @@ class OpenEMRLauncher {
     }
 }
 
-// Global instance
-window.openEMRLauncher = new OpenEMRLauncher();
+// Global instance - Initialize with error handling
+try {
+    window.openEMRLauncher = new OpenEMRLauncher();
+    console.log('✅ OpenEMR Launcher instance created');
+} catch (error) {
+    console.error('❌ Failed to create OpenEMR Launcher:', error);
+    // Create a fallback object
+    window.openEMRLauncher = {
+        isInitialized: false,
+        error: error.message,
+        launchOpenEMR: async (context) => {
+            console.error('OpenEMR Launcher failed to initialize:', error);
+            throw new Error('OpenEMR Launcher initialization failed: ' + error.message);
+        }
+    };
+}
 
-// Initialize on page load
+// Initialize on page load with error handling
 document.addEventListener('DOMContentLoaded', () => {
-    window.openEMRLauncher.initialize();
+    if (window.openEMRLauncher && typeof window.openEMRLauncher.initialize === 'function') {
+        window.openEMRLauncher.initialize().catch(error => {
+            console.error('❌ OpenEMR Launcher initialization failed:', error);
+        });
+    }
 });
 
 // Export for module use

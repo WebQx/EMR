@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenEMR Launch Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f0f0f0;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-button {
+            background: #0d9488;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .test-button:hover {
+            background: #0f766e;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🏥 OpenEMR Launch Test</h1>
+        <p>This page tests the OpenEMR integration directly.</p>
+        
+        <button class="test-button" onclick="testBasicLaunch()">Test Basic Launch</button>
+        <button class="test-button" onclick="testConfigLoad()">Test Config Loading</button>
+        <button class="test-button" onclick="testLauncherLoad()">Test Launcher Loading</button>
+        <button class="test-button" onclick="clearLog()">Clear Log</button>
+        
+        <div id="log" class="log">Test log will appear here...\n</div>
+    </div>
+
+    <!-- OpenEMR Integration Scripts -->
+    <script src="./openemr-config.js"></script>
+    <script src="./openemr-launcher.js"></script>
+    
+    <script>
+        function log(message) {
+            const logEl = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logEl.textContent += `[${timestamp}] ${message}\n`;
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+
+        function testConfigLoad() {
+            log('=== Testing Config Loading ===');
+            
+            if (typeof window.openEMRConfig !== 'undefined') {
+                log('✅ openEMRConfig found');
+                log('Config: ' + JSON.stringify(window.openEMRConfig, null, 2));
+            } else {
+                log('❌ openEMRConfig not found');
+            }
+        }
+
+        function testLauncherLoad() {
+            log('=== Testing Launcher Loading ===');
+            
+            if (typeof window.openEMRLauncher !== 'undefined') {
+                log('✅ openEMRLauncher found');
+                log('Launcher type: ' + typeof window.openEMRLauncher);
+                
+                if (window.openEMRLauncher.isInitialized) {
+                    log('✅ Launcher is initialized');
+                } else {
+                    log('⚠️ Launcher not yet initialized');
+                }
+            } else {
+                log('❌ openEMRLauncher not found');
+            }
+        }
+
+        async function testBasicLaunch() {
+            log('=== Testing Basic Launch ===');
+            
+            try {
+                if (!window.openEMRLauncher) {
+                    log('❌ Launcher not available');
+                    return;
+                }
+                
+                log('🚀 Attempting launch...');
+                const result = await window.openEMRLauncher.launchOpenEMR({
+                    mode: 'modal',
+                    module: 'patient_management'
+                });
+                
+                log('✅ Launch result: ' + JSON.stringify(result, null, 2));
+                
+            } catch (error) {
+                log('❌ Launch failed: ' + error.message);
+                log('Error details: ' + error.stack);
+            }
+        }
+
+        // Auto-run tests when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            log('🔄 Page loaded, running auto-tests...');
+            
+            setTimeout(() => {
+                testConfigLoad();
+                testLauncherLoad();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

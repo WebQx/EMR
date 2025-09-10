@@ -26,8 +26,8 @@ window.openEMRConfig = {
     clientId: getEnvVar('OPENEMR_CLIENT_ID', 'webqx-provider-portal'),
     clientSecret: getEnvVar('OPENEMR_CLIENT_SECRET', ''), // For server-side flows
     
-    // API Configuration
-    apiVersion: '7.0.2',
+    // API Configuration  
+    apiVersion: '4.4.0', // Updated to match demo.openemr.io actual version
     
     // FHIR Configuration
     fhir: {
