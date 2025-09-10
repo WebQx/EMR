@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebQX™ - Auto OpenEMR Launch</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00ffd5, #ffffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .status-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .status-card {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .quick-launch {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .quick-launch h2 {
+            margin-bottom: 20px;
+            color: #00ffd5;
+        }
+        
+        .quick-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .quick-btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .quick-admin {
+            background: linear-gradient(45deg, #dc2626, #ef4444);
+            color: white;
+        }
+        
+        .quick-physician {
+            background: linear-gradient(45deg, #0891b2, #06b6d4);
+            color: white;
+        }
+        
+        .quick-patient {
+            background: linear-gradient(45deg, #059669, #10b981);
+            color: white;
+        }
+        
+        .quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .credentials-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 1.8em;
+            margin-bottom: 20px;
+            color: #00ffd5;
+            text-align: center;
+        }
+        
+        .credentials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .credential-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .credential-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .credential-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .credential-header h4 {
+            font-size: 1.3em;
+            color: #00ffd5;
+        }
+        
+        .credential-badge {
+            background: rgba(0, 255, 213, 0.2);
+            color: #00ffd5;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .credential-badge.patient {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        
+        .credential-desc {
+            margin-bottom: 15px;
+            opacity: 0.9;
+            line-height: 1.4;
+        }
+        
+        .credential-details {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .credential-details code {
+            display: block;
+            margin-bottom: 5px;
+            color: #00ffd5;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .launch-btn {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .provider-btn {
+            background: linear-gradient(45deg, #0891b2, #06b6d4);
+            color: white;
+        }
+        
+        .patient-btn {
+            background: linear-gradient(45deg, #059669, #10b981);
+            color: white;
+        }
+        
+        .launch-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+        
+        .server-config {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .server-config h3 {
+            color: #00ffd5;
+            margin-bottom: 15px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 1em;
+            margin-bottom: 15px;
+        }
+        
+        select option {
+            background: #1e293b;
+            color: white;
+        }
+        
+        .server-info {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .server-info a {
+            color: #00ffd5;
+            text-decoration: none;
+        }
+        
+        .server-info a:hover {
+            text-decoration: underline;
+        }
+        
+        .demo-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .demo-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .feature-item {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .status-connected { color: #10b981; }
+        .status-error { color: #ef4444; }
+        .status-checking { color: #f59e0b; }
+        .status-launching { color: #06b6d4; }
+        .status-ready { color: #10b981; }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            opacity: 0.7;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 50px;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .credentials-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-buttons {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Auto OpenEMR Launch</h1>
+            <p>Seamless access to official OpenEMR demo with automatic credential filling</p>
+            <div id="serverStatus" class="status-checking">🔄 Initializing...</div>
+        </div>
+
+        <div class="quick-launch">
+            <h2>⚡ Quick Launch</h2>
+            <div class="quick-buttons">
+                <button id="quickAdmin" class="quick-btn quick-admin">
+                    🛡️ Admin Console
+                </button>
+                <button id="quickPhysician" class="quick-btn quick-physician">
+                    👩‍⚕️ Physician Portal
+                </button>
+                <button id="quickPatient" class="quick-btn quick-patient">
+                    🏥 Patient Portal
+                </button>
+            </div>
+        </div>
+
+        <div class="server-config">
+            <h3>🌐 Demo Server Selection</h3>
+            <select id="serverSelect">
+                <option value="0">Loading servers...</option>
+            </select>
+            <div id="serverInfo" class="server-info">
+                <strong>Server information will appear here...</strong>
+            </div>
+        </div>
+
+        <div class="demo-info">
+            <h3 class="section-title">📋 Demo Information</h3>
+            <div class="demo-features">
+                <div class="feature-item">
+                    <div class="feature-icon">🔄</div>
+                    <h4>Daily Reset</h4>
+                    <p>All demos reset at 8:00 AM UTC daily</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🌟</div>
+                    <h4>Full Featured</h4>
+                    <p>Complete OpenEMR 7.0.3 functionality</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔒</div>
+                    <h4>Pre-configured</h4>
+                    <p>Ready-to-use credentials included</p>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <h4>Auto-Login</h4>
+                    <p>Automatic credential filling</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="credentials-section">
+            <h2 class="section-title">👥 Provider Access</h2>
+            <div id="providerCredentials" class="credentials-grid">
+                <!-- Provider credentials will be populated here -->
+            </div>
+        </div>
+
+        <div class="credentials-section">
+            <h2 class="section-title">🏥 Patient Portal Access</h2>
+            <div id="patientCredentials" class="credentials-grid">
+                <!-- Patient credentials will be populated here -->
+            </div>
+        </div>
+
+        <div class="status-section">
+            <h3>📊 Launch Status</h3>
+            <div id="launchStatus" class="status-ready">✅ Ready for launches</div>
+            <div class="status-grid">
+                <div class="status-card">
+                    <h4>Available Roles</h4>
+                    <div>5 Provider Types + 2 Patients</div>
+                </div>
+                <div class="status-card">
+                    <h4>Demo Servers</h4>
+                    <div>3 Active Instances</div>
+                </div>
+                <div class="status-card">
+                    <h4>OpenEMR Version</h4>
+                    <div>7.0.3 (Latest)</div>
+                </div>
+                <div class="status-card">
+                    <h4>Auto-Login</h4>
+                    <div>✅ Enabled</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>WebQX™ Auto OpenEMR Launch</strong> - Powered by official OpenEMR demo servers</p>
+            <p>OpenEMR Demo: <a href="https://www.open-emr.org/demo/" target="_blank">https://www.open-emr.org/demo/</a></p>
+            <p>All credentials are provided by OpenEMR Foundation for demo purposes</p>
+        </div>
+    </div>
+
+    <script src="auto-openemr-launch.js"></script>
+</body>
+</html>
