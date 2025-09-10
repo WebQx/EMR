@@ -163,34 +163,6 @@
             color: rgba(255, 255, 255, 0.9);
         }
         
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        
-        .stat-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .stat-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #7dd3fc;
-            margin-bottom: 4px;
-        }
-        
-        .stat-label {
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.8);
-        }
-        
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -363,10 +335,6 @@
                 grid-template-columns: 1fr;
             }
             
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
             .actions-grid {
                 grid-template-columns: 1fr;
             }
@@ -448,26 +416,6 @@
             <div class="welcome-banner">
                 <h2 class="welcome-title">WebQX™ OpenEMR Integration Portal</h2>
                 <p class="welcome-subtitle">Seamlessly integrated with OpenEMR EHR system via FHIR R4</p>
-            </div>
-            
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value">47</div>
-                    <div class="stat-label">Patients Today</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">12</div>
-                    <div class="stat-label">Appointments</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">5</div>
-                    <div class="stat-label">Pending Reviews</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">98%</div>
-                    <div class="stat-label">System Uptime</div>
-                </div>
             </div>
             
             <!-- Dashboard Modules -->
@@ -570,7 +518,6 @@
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', () => {
             loadUserData();
-            updateStats();
         });
 
         function loadUserData() {
@@ -602,21 +549,6 @@
                     document.getElementById('adminModule').style.display = 'block';
                 }
             }
-        }
-
-        function updateStats() {
-            // Simulate real-time stats updates
-            setInterval(() => {
-                // Random small updates to make it feel live
-                const elements = document.querySelectorAll('.stat-value');
-                elements.forEach(el => {
-                    if (Math.random() < 0.1 && !el.textContent.includes('%')) { // 10% chance to update, skip percentage
-                        const current = parseInt(el.textContent);
-                        const change = Math.random() < 0.5 ? -1 : 1;
-                        el.textContent = Math.max(0, current + change);
-                    }
-                });
-            }, 30000); // Update every 30 seconds
         }
 
         function openModule(moduleName) {
