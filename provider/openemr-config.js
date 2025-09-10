@@ -4,13 +4,27 @@
  * Configure your OpenEMR instance details here or use environment variables
  */
 
+// Helper function to safely get environment variables in browser
+function getEnvVar(name, defaultValue) {
+    // Try to get from global env object (if set by build tools)
+    if (typeof window !== 'undefined' && window.env && window.env[name]) {
+        return window.env[name];
+    }
+    // Try to get from process.env (if available in build environment)
+    if (typeof process !== 'undefined' && process.env && process.env[name]) {
+        return process.env[name];
+    }
+    // Return default value
+    return defaultValue;
+}
+
 window.openEMRConfig = {
     // OpenEMR Instance Configuration
-    baseUrl: process.env.OPENEMR_BASE_URL || 'https://demo.openemr.io',
+    baseUrl: getEnvVar('OPENEMR_BASE_URL', 'https://demo.openemr.io'),
     
     // OAuth2 Client Configuration
-    clientId: process.env.OPENEMR_CLIENT_ID || 'webqx-provider-portal',
-    clientSecret: process.env.OPENEMR_CLIENT_SECRET || '', // For server-side flows
+    clientId: getEnvVar('OPENEMR_CLIENT_ID', 'webqx-provider-portal'),
+    clientSecret: getEnvVar('OPENEMR_CLIENT_SECRET', ''), // For server-side flows
     
     // API Configuration
     apiVersion: '7.0.2',
@@ -116,7 +130,7 @@ const envConfigs = {
 };
 
 // Apply environment-specific config if available
-const environment = process.env.NODE_ENV || 'development';
+const environment = getEnvVar('NODE_ENV', 'development');
 if (envConfigs[environment]) {
     window.openEMRConfig = {
         ...window.openEMRConfig,

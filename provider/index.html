@@ -518,7 +518,38 @@
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', () => {
             loadUserData();
+            
+            // Debug: Check OpenEMR integration status
+            setTimeout(() => {
+                checkOpenEMRIntegration();
+            }, 1000);
         });
+
+        function checkOpenEMRIntegration() {
+            console.log('🔍 Checking OpenEMR integration status...');
+            
+            // Check if config is loaded
+            if (window.openEMRConfig) {
+                console.log('✅ OpenEMR config loaded:', window.openEMRConfig);
+            } else {
+                console.error('❌ OpenEMR config not loaded');
+            }
+            
+            // Check if launcher is available
+            if (window.openEMRLauncher) {
+                console.log('✅ OpenEMR launcher available:', window.openEMRLauncher);
+                
+                // Check initialization status
+                if (window.openEMRLauncher.isInitialized) {
+                    console.log('✅ OpenEMR launcher initialized');
+                } else {
+                    console.log('🔄 OpenEMR launcher initializing...');
+                }
+            } else {
+                console.error('❌ OpenEMR launcher not available');
+                showNotification('⚠️ OpenEMR launcher not loaded. Please refresh the page.', 'warning');
+            }
+        }
 
         function loadUserData() {
             // Get user data from localStorage/sessionStorage
@@ -571,9 +602,32 @@
             switch (moduleName) {
                 case 'openemr-patients':
                     setTimeout(() => {
-                        // Create OpenEMR patient management interface
-                        createOpenEMRPatientInterface();
-                        hideModuleLoading();
+                        // Use OpenEMR launcher for patient management
+                        if (window.openEMRLauncher) {
+                            window.openEMRLauncher.launchOpenEMR({
+                                mode: 'modal',
+                                module: 'patient_management',
+                                context: 'provider_portal'
+                            }).then(result => {
+                                hideModuleLoading();
+                                if (result.success) {
+                                    showNotification(`✅ OpenEMR Patient Management launched: ${result.action}`);
+                                } else {
+                                    showNotification(`❌ Launch failed: ${result.error}`);
+                                }
+                            }).catch(error => {
+                                hideModuleLoading();
+                                console.error('OpenEMR launch error:', error);
+                                showNotification(`❌ OpenEMR launch failed: ${error.message}`);
+                                // Fallback to modal interface
+                                createOpenEMRPatientInterface();
+                            });
+                        } else {
+                            // Fallback to modal interface if launcher not available
+                            console.warn('OpenEMR launcher not available, using fallback interface');
+                            createOpenEMRPatientInterface();
+                            hideModuleLoading();
+                        }
                     }, 500);
                     break;
                 case 'telehealth':
@@ -584,16 +638,56 @@
                     break;
                 case 'openemr-appointments':
                     setTimeout(() => {
-                        // Create OpenEMR FHIR scheduling interface
-                        createOpenEMRSchedulingInterface();
-                        hideModuleLoading();
+                        // Use OpenEMR launcher for appointments
+                        if (window.openEMRLauncher) {
+                            window.openEMRLauncher.launchOpenEMR({
+                                mode: 'modal',
+                                module: 'appointments',
+                                context: 'fhir_scheduling'
+                            }).then(result => {
+                                hideModuleLoading();
+                                if (result.success) {
+                                    showNotification(`✅ OpenEMR Appointments launched: ${result.action}`);
+                                } else {
+                                    showNotification(`❌ Launch failed: ${result.error}`);
+                                }
+                            }).catch(error => {
+                                hideModuleLoading();
+                                console.error('OpenEMR appointments launch error:', error);
+                                // Fallback to interface
+                                createOpenEMRSchedulingInterface();
+                            });
+                        } else {
+                            createOpenEMRSchedulingInterface();
+                            hideModuleLoading();
+                        }
                     }, 500);
                     break;
                 case 'openemr-clinical':
                     setTimeout(() => {
-                        // Create OpenEMR clinical data interface
-                        createOpenEMRClinicalInterface();
-                        hideModuleLoading();
+                        // Use OpenEMR launcher for clinical data
+                        if (window.openEMRLauncher) {
+                            window.openEMRLauncher.launchOpenEMR({
+                                mode: 'modal',
+                                module: 'clinical_data',
+                                context: 'provider_portal'
+                            }).then(result => {
+                                hideModuleLoading();
+                                if (result.success) {
+                                    showNotification(`✅ OpenEMR Clinical Data launched: ${result.action}`);
+                                } else {
+                                    showNotification(`❌ Launch failed: ${result.error}`);
+                                }
+                            }).catch(error => {
+                                hideModuleLoading();
+                                console.error('OpenEMR clinical launch error:', error);
+                                // Fallback to interface
+                                createOpenEMRClinicalInterface();
+                            });
+                        } else {
+                            createOpenEMRClinicalInterface();
+                            hideModuleLoading();
+                        }
                     }, 500);
                     break;
                 case 'admin':
