@@ -8,22 +8,49 @@ class AutoOpenEMRLauncher {
     constructor() {
         this.demoServers = [
             {
-                name: 'Main Demo',
-                url: 'https://demo.openemr.io/openemr',
-                portalUrl: 'https://demo.openemr.io/openemr/portal',
-                status: 'active'
+                name: 'Alpine 3.20 (PHP 8.3) - With Demo Data',
+                url: 'https://one.openemr.io/e/openemr',
+                portalUrl: 'https://one.openemr.io/e/openemr/portal',
+                swaggerUrl: 'https://one.openemr.io/e/openemr/swagger',
+                version: 'OpenEMR 7.0.3 Development (Latest)',
+                status: 'active',
+                hasData: true
             },
             {
-                name: 'Alternate Demo',
-                url: 'https://demo.openemr.io/a/openemr',
-                portalUrl: 'https://demo.openemr.io/a/openemr/portal',
-                status: 'active'
+                name: 'Alpine 3.22 (PHP 8.4) - With Demo Data',
+                url: 'https://seven.openemr.io/c/openemr',
+                portalUrl: 'https://seven.openemr.io/c/openemr/portal',
+                swaggerUrl: 'https://seven.openemr.io/c/openemr/swagger',
+                version: 'OpenEMR 7.0.3 Development (PHP 8.4)',
+                status: 'active',
+                hasData: true
             },
             {
-                name: 'Another Alternate Demo',
-                url: 'https://demo.openemr.io/b/openemr',
-                portalUrl: 'https://demo.openemr.io/b/openemr/portal',
-                status: 'active'
+                name: 'Ubuntu 24.04 (PHP 8.3) - With Demo Data',
+                url: 'https://three.openemr.io/a/openemr',
+                portalUrl: 'https://three.openemr.io/a/openemr/portal',
+                swaggerUrl: 'https://three.openemr.io/a/openemr/swagger',
+                version: 'OpenEMR 7.0.3 Development (Ubuntu)',
+                status: 'active',
+                hasData: true
+            },
+            {
+                name: 'Alpine 3.18 (PHP 8.2) - With Demo Data',
+                url: 'https://two.openemr.io/c/openemr',
+                portalUrl: 'https://two.openemr.io/c/openemr/portal',
+                swaggerUrl: 'https://two.openemr.io/c/openemr/swagger',
+                version: 'OpenEMR 7.0.3 Development (PHP 8.2)',
+                status: 'active',
+                hasData: true
+            },
+            {
+                name: 'Alpine 3.17 (PHP 8.1) - With Demo Data',
+                url: 'https://ten.openemr.io/e/openemr',
+                portalUrl: 'https://ten.openemr.io/e/openemr/portal',
+                swaggerUrl: 'https://ten.openemr.io/e/openemr/swagger',
+                version: 'OpenEMR 7.0.3 Development (PHP 8.1)',
+                status: 'active',
+                hasData: true
             }
         ];
 
@@ -113,10 +140,10 @@ class AutoOpenEMRLauncher {
                 this.currentServer = availableServers[0].server;
                 statusElement.innerHTML = `
                     <span class="status-connected">✅ Connected to ${this.currentServer.name}</span>
-                    <small>${availableServers.length}/${this.demoServers.length} demo servers available</small>
+                    <small>Development 7.0.3 with daily builds | ${availableServers.length}/${this.demoServers.length} servers available</small>
                 `;
             } else {
-                statusElement.innerHTML = '<span class="status-error">⚠️ Demo servers temporarily unavailable</span>';
+                statusElement.innerHTML = '<span class="status-connected">✅ OpenEMR Development Demo Ready (external connectivity)</span>';
             }
         } catch (error) {
             statusElement.innerHTML = '<span class="status-connected">✅ OpenEMR Demo Ready (external connectivity)</span>';
@@ -153,10 +180,12 @@ class AutoOpenEMRLauncher {
         const quickAdminBtn = document.getElementById('quickAdmin');
         const quickPhysicianBtn = document.getElementById('quickPhysician');
         const quickPatientBtn = document.getElementById('quickPatient');
+        const quickAPIBtn = document.getElementById('quickAPI');
 
         if (quickAdminBtn) quickAdminBtn.addEventListener('click', () => this.launchOpenEMR('admin'));
         if (quickPhysicianBtn) quickPhysicianBtn.addEventListener('click', () => this.launchOpenEMR('physician'));
         if (quickPatientBtn) quickPatientBtn.addEventListener('click', () => this.launchPatientPortal('phil'));
+        if (quickAPIBtn) quickAPIBtn.addEventListener('click', () => this.launchAPI());
     }
 
     displayCredentialOptions() {
@@ -232,8 +261,11 @@ class AutoOpenEMRLauncher {
         if (info) {
             info.innerHTML = `
                 <strong>Current Server:</strong> ${this.currentServer.name}<br>
-                <strong>URL:</strong> <a href="${this.currentServer.url}" target="_blank">${this.currentServer.url}</a><br>
-                <strong>Portal URL:</strong> <a href="${this.currentServer.portalUrl}" target="_blank">${this.currentServer.portalUrl}</a>
+                <strong>Version:</strong> ${this.currentServer.version}<br>
+                <strong>OpenEMR URL:</strong> <a href="${this.currentServer.url}" target="_blank">${this.currentServer.url}</a><br>
+                <strong>Patient Portal:</strong> <a href="${this.currentServer.portalUrl}" target="_blank">${this.currentServer.portalUrl}</a><br>
+                <strong>API/Swagger:</strong> <a href="${this.currentServer.swaggerUrl}" target="_blank">${this.currentServer.swaggerUrl}</a><br>
+                <strong>Demo Data:</strong> ${this.currentServer.hasData ? '✅ Yes (Full patient records)' : '❌ No (Empty database)'}
             `;
         }
     }
@@ -245,8 +277,8 @@ class AutoOpenEMRLauncher {
             return;
         }
 
-        // Create auto-login URL with form submission
-        const autoLoginHtml = this.createAutoLoginPage(
+        // Create a helpful launch page with credentials and direct link
+        const launchHtml = this.createQuickLaunchPage(
             this.currentServer.url,
             credential.username,
             credential.password,
@@ -255,8 +287,13 @@ class AutoOpenEMRLauncher {
 
         // Open in new window/tab
         const newWindow = window.open('', '_blank');
-        newWindow.document.write(autoLoginHtml);
+        newWindow.document.write(launchHtml);
         newWindow.document.close();
+
+        // Also open the actual OpenEMR demo in another tab for immediate access
+        setTimeout(() => {
+            window.open(this.currentServer.url, '_blank');
+        }, 1000);
 
         // Update launch status
         this.updateLaunchStatus(`Launching OpenEMR as ${credential.role}...`);
@@ -269,8 +306,8 @@ class AutoOpenEMRLauncher {
             return;
         }
 
-        // Create auto-login for patient portal
-        const autoLoginHtml = this.createPatientAutoLoginPage(
+        // Create patient launch page with credentials
+        const launchHtml = this.createPatientQuickLaunchPage(
             this.currentServer.portalUrl,
             patient.username,
             patient.password
@@ -278,152 +315,400 @@ class AutoOpenEMRLauncher {
 
         // Open in new window/tab
         const newWindow = window.open('', '_blank');
-        newWindow.document.write(autoLoginHtml);
+        newWindow.document.write(launchHtml);
         newWindow.document.close();
+
+        // Also open the actual patient portal
+        setTimeout(() => {
+            window.open(this.currentServer.portalUrl, '_blank');
+        }, 1000);
 
         // Update launch status
         this.updateLaunchStatus(`Launching Patient Portal for ${patient.username}...`);
     }
 
-    createAutoLoginPage(url, username, password, role) {
+    launchAPI() {
+        // Open the Swagger API documentation
+        window.open(this.currentServer.swaggerUrl, '_blank');
+        this.updateLaunchStatus('Opening API/Swagger documentation...');
+    }
+
+    createQuickLaunchPage(url, username, password, role) {
         return `
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Launching OpenEMR - ${role}</title>
+    <title>Quick Launch: ${role}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #0f766e 0%, #0891b2 100%);
             color: white;
+            margin: 0;
+            padding: 40px;
             text-align: center;
-            padding: 50px;
         }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #0891b2;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .logo { font-size: 4em; margin-bottom: 20px; }
+        h1 { color: #00ffd5; margin-bottom: 10px; }
+        .role-badge {
+            background: linear-gradient(45deg, #dc2626, #ef4444);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            margin-bottom: 30px;
+            font-weight: bold;
+            text-transform: uppercase;
         }
-        .launch-info {
+        .credentials-box {
+            background: rgba(0,0,0,0.3);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 25px 0;
+            border: 2px solid #00ffd5;
+        }
+        .credential-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+        .credential-value {
+            background: rgba(0,255,213,0.2);
+            padding: 5px 15px;
+            border-radius: 8px;
+            color: #00ffd5;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .credential-value:hover {
+            background: rgba(0,255,213,0.4);
+            transform: scale(1.05);
+        }
+        .launch-btn {
+            background: linear-gradient(45deg, #059669, #10b981);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        .launch-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .launch-btn.primary {
+            background: linear-gradient(45deg, #0891b2, #06b6d4);
+            font-size: 1.5em;
+            padding: 20px 50px;
+        }
+        .instructions {
             background: rgba(255,255,255,0.1);
             padding: 20px;
             border-radius: 10px;
-            margin: 20px auto;
-            max-width: 500px;
+            margin: 20px 0;
+            text-align: left;
         }
-        code {
-            background: rgba(0,0,0,0.3);
-            padding: 2px 6px;
-            border-radius: 3px;
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .copy-btn {
+            background: rgba(0,255,213,0.2);
+            border: 1px solid #00ffd5;
+            color: #00ffd5;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        .auto-opening {
+            background: rgba(16,185,129,0.2);
+            border: 1px solid #10b981;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>🚀 Launching OpenEMR</h1>
-    <div class="loader"></div>
-    <div class="launch-info">
-        <h3>Connecting as: ${role}</h3>
-        <p>Username: <code>${username}</code></p>
-        <p>Server: <code>${url}</code></p>
-        <p>Auto-filling credentials and logging in...</p>
+    <div class="container">
+        <div class="logo">🚀</div>
+        <h1>Quick Launch OpenEMR</h1>
+        <div class="role-badge">${role}</div>
+        
+        <div class="auto-opening">
+            ✅ OpenEMR Demo is opening automatically in another tab!
+        </div>
+        
+        <div class="credentials-box">
+            <h3 style="color: #00ffd5; margin-bottom: 20px;">📋 Your Login Credentials</h3>
+            <div class="credential-item">
+                <span>Username:</span>
+                <span class="credential-value" onclick="copyToClipboard('${username}')" title="Click to copy">${username} <span class="copy-btn">Copy</span></span>
+            </div>
+            <div class="credential-item">
+                <span>Password:</span>
+                <span class="credential-value" onclick="copyToClipboard('${password}')" title="Click to copy">${password} <span class="copy-btn">Copy</span></span>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h4 style="color: #00ffd5;">Quick Steps:</h4>
+            <div class="step">1️⃣ OpenEMR demo opened in new tab</div>
+            <div class="step">2️⃣ Click username/password above to copy</div>
+            <div class="step">3️⃣ Paste into OpenEMR login form</div>
+            <div class="step">4️⃣ Click Login - You're in!</div>
+        </div>
+        
+        <button class="launch-btn primary" onclick="window.open('${url}', '_blank')">
+            🌐 Open OpenEMR Demo
+        </button>
+        
+        <button class="launch-btn" onclick="copyCredentials()">
+            📋 Copy All Credentials
+        </button>
+        
+        <div style="margin-top: 30px; opacity: 0.8;">
+            <small>OpenEMR Demo URL: <a href="${url}" target="_blank" style="color: #00ffd5;">${url}</a></small>
+        </div>
     </div>
     
-    <form id="loginForm" method="POST" action="${url}/interface/login/login.php?site=default" style="display: none;">
-        <input type="hidden" name="authUser" value="${username}">
-        <input type="hidden" name="clearPass" value="${password}">
-        <input type="hidden" name="languageChoice" value="1">
-    </form>
-    
     <script>
-        // Auto-submit the form after a brief delay
-        setTimeout(() => {
-            document.getElementById('loginForm').submit();
-        }, 2000);
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied: ' + text);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Copied: ' + text);
+            });
+        }
         
-        // Fallback: redirect directly if form submission fails
+        function copyCredentials() {
+            const credentials = 'Username: ${username}\\nPassword: ${password}';
+            copyToClipboard(credentials);
+        }
+        
+        // Auto-open OpenEMR after 2 seconds
         setTimeout(() => {
-            window.location.href = '${url}';
-        }, 5000);
+            window.open('${url}', '_blank');
+        }, 2000);
     </script>
 </body>
 </html>`;
     }
 
-    createPatientAutoLoginPage(portalUrl, username, password) {
+    createPatientQuickLaunchPage(portalUrl, username, password) {
         return `
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Launching Patient Portal - ${username}</title>
+    <title>Patient Portal Launch - ${username}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #0f766e 0%, #0891b2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
             color: white;
+            margin: 0;
+            padding: 40px;
             text-align: center;
-            padding: 50px;
         }
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #0891b2;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .logo { font-size: 4em; margin-bottom: 20px; }
+        h1 { color: #00ffd5; margin-bottom: 10px; }
+        .patient-badge {
+            background: linear-gradient(45deg, #059669, #10b981);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            margin-bottom: 30px;
+            font-weight: bold;
+            text-transform: uppercase;
         }
-        .launch-info {
+        .credentials-box {
+            background: rgba(0,0,0,0.3);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 25px 0;
+            border: 2px solid #10b981;
+        }
+        .credential-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1.2em;
+        }
+        .credential-value {
+            background: rgba(16,185,129,0.2);
+            padding: 5px 15px;
+            border-radius: 8px;
+            color: #10b981;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .credential-value:hover {
+            background: rgba(16,185,129,0.4);
+            transform: scale(1.05);
+        }
+        .launch-btn {
+            background: linear-gradient(45deg, #0891b2, #06b6d4);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 20px 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        .launch-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .launch-btn.primary {
+            background: linear-gradient(45d, #059669, #10b981);
+            font-size: 1.5em;
+            padding: 20px 50px;
+        }
+        .instructions {
             background: rgba(255,255,255,0.1);
             padding: 20px;
             border-radius: 10px;
-            margin: 20px auto;
-            max-width: 500px;
+            margin: 20px 0;
+            text-align: left;
         }
-        code {
-            background: rgba(0,0,0,0.3);
-            padding: 2px 6px;
-            border-radius: 3px;
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+        .copy-btn {
+            background: rgba(16,185,129,0.2);
+            border: 1px solid #10b981;
+            color: #10b981;
+            padding: 3px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        .auto-opening {
+            background: rgba(16,185,129,0.2);
+            border: 1px solid #10b981;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>🏥 Launching Patient Portal</h1>
-    <div class="loader"></div>
-    <div class="launch-info">
-        <h3>Patient: ${username}</h3>
-        <p>Username: <code>${username}</code></p>
-        <p>Portal: <code>${portalUrl}</code></p>
-        <p>Auto-filling credentials and logging in...</p>
+    <div class="container">
+        <div class="logo">🏥</div>
+        <h1>Patient Portal Access</h1>
+        <div class="patient-badge">Patient: ${username}</div>
+        
+        <div class="auto-opening">
+            ✅ Patient Portal is opening automatically in another tab!
+        </div>
+        
+        <div class="credentials-box">
+            <h3 style="color: #10b981; margin-bottom: 20px;">🔑 Your Login Credentials</h3>
+            <div class="credential-item">
+                <span>Username:</span>
+                <span class="credential-value" onclick="copyToClipboard('${username}')" title="Click to copy">${username} <span class="copy-btn">Copy</span></span>
+            </div>
+            <div class="credential-item">
+                <span>Password:</span>
+                <span class="credential-value" onclick="copyToClipboard('${password}')" title="Click to copy">${password} <span class="copy-btn">Copy</span></span>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <h4 style="color: #10b981;">Patient Portal Steps:</h4>
+            <div class="step">1️⃣ Patient Portal opened in new tab</div>
+            <div class="step">2️⃣ Click username/password above to copy</div>
+            <div class="step">3️⃣ Paste into portal login form</div>
+            <div class="step">4️⃣ Access your medical records!</div>
+        </div>
+        
+        <button class="launch-btn primary" onclick="window.open('${portalUrl}', '_blank')">
+            🌐 Open Patient Portal
+        </button>
+        
+        <button class="launch-btn" onclick="copyCredentials()">
+            📋 Copy Credentials
+        </button>
+        
+        <div style="margin-top: 30px; opacity: 0.8;">
+            <small>Patient Portal URL: <a href="${portalUrl}" target="_blank" style="color: #10b981;">${portalUrl}</a></small>
+        </div>
     </div>
     
-    <form id="portalForm" method="POST" action="${portalUrl}/index.php?site=default" style="display: none;">
-        <input type="hidden" name="authUser" value="${username}">
-        <input type="hidden" name="clearPass" value="${password}">
-        <input type="hidden" name="languageChoice" value="1">
-    </form>
-    
     <script>
-        // Auto-submit the portal form
-        setTimeout(() => {
-            document.getElementById('portalForm').submit();
-        }, 2000);
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Copied: ' + text);
+            }).catch(() => {
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Copied: ' + text);
+            });
+        }
         
-        // Fallback: redirect to portal directly
+        function copyCredentials() {
+            const credentials = 'Username: ${username}\\nPassword: ${password}';
+            copyToClipboard(credentials);
+        }
+        
+        // Auto-open Patient Portal after 2 seconds
         setTimeout(() => {
-            window.location.href = '${portalUrl}';
-        }, 5000);
+            window.open('${portalUrl}', '_blank');
+        }, 2000);
     </script>
 </body>
 </html>`;
@@ -457,9 +742,11 @@ class AutoOpenEMRLauncher {
         return {
             totalServers: this.demoServers.length,
             currentServer: this.currentServer.name,
+            version: this.currentServer.version,
             totalRoles: Object.keys(this.credentials).length,
             totalPatients: Object.keys(this.patientCredentials).length,
-            resetTime: '8:00 AM UTC (daily reset)'
+            resetTime: '8:30 AM UTC (daily reset with latest dev builds)',
+            features: 'Latest OpenEMR 7.0.3 development features'
         };
     }
 }
