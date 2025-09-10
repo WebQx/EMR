@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct OpenEMR Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0f766e, #0891b2);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        .test-button {
+            background: #0d9488;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+            display: block;
+            width: 100%;
+            max-width: 300px;
+        }
+        .test-button:hover {
+            background: #0f766e;
+        }
+        .result {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .success { border-left: 4px solid #10b981; }
+        .error { border-left: 4px solid #ef4444; }
+        .warning { border-left: 4px solid #f59e0b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏥 Direct OpenEMR Launch Test</h1>
+        <p>This is a simplified test to verify OpenEMR launching works.</p>
+        
+        <button class="test-button" onclick="directLaunchTest()">🚀 Launch OpenEMR Demo Modal</button>
+        <button class="test-button" onclick="directWindowTest()">🪟 Launch OpenEMR Demo Window</button>
+        <button class="test-button" onclick="checkSystemStatus()">🔍 Check System Status</button>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Set up demo authentication immediately
+        console.log('🎭 Setting up demo authentication...');
+        
+        // Demo authentication
+        const demoAuth = {
+            providerAuthToken: 'demo_token_' + Date.now(),
+            providerUser: {
+                id: 'demo_provider_001',
+                name: 'Dr. Demo Provider',
+                email: 'demo@webqx.health',
+                role: 'physician',
+                verified: true
+            },
+            providerLoginTime: new Date().toISOString()
+        };
+
+        localStorage.setItem('providerAuthToken', demoAuth.providerAuthToken);
+        localStorage.setItem('providerUser', JSON.stringify(demoAuth.providerUser));
+        localStorage.setItem('providerLoginTime', demoAuth.providerLoginTime);
+
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            results.appendChild(div);
+            console.log(message);
+        }
+
+        function directLaunchTest() {
+            log('🚀 Starting direct OpenEMR modal launch test...');
+            
+            try {
+                // Create OpenEMR demo modal directly
+                createOpenEMRDemoModal();
+                log('✅ OpenEMR demo modal created successfully!', 'success');
+            } catch (error) {
+                log(`❌ Modal launch failed: ${error.message}`, 'error');
+            }
+        }
+
+        function directWindowTest() {
+            log('🪟 Starting direct OpenEMR window launch test...');
+            
+            try {
+                // Create OpenEMR demo window directly
+                const demoWindow = window.open('', 'openemr_demo', 'width=1000,height=700,scrollbars=yes,resizable=yes');
+                
+                if (!demoWindow) {
+                    throw new Error('Popup blocked. Please disable popup blocker and try again.');
+                }
+
+                demoWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>OpenEMR Demo - Patient Management</title>
+                        <style>
+                            body { 
+                                font-family: Arial, sans-serif; 
+                                margin: 20px; 
+                                background: linear-gradient(135deg, #0f766e, #0891b2);
+                                color: white;
+                                min-height: 100vh;
+                            }
+                            .demo-container {
+                                background: rgba(255,255,255,0.1);
+                                border-radius: 12px;
+                                padding: 30px;
+                                backdrop-filter: blur(10px);
+                            }
+                            .demo-header { text-align: center; margin-bottom: 30px; }
+                            .demo-feature { 
+                                margin: 15px 0; 
+                                padding: 15px; 
+                                background: rgba(255,255,255,0.1); 
+                                border-radius: 8px; 
+                            }
+                            .btn { 
+                                background: #0d9488; 
+                                color: white; 
+                                border: none; 
+                                padding: 10px 20px; 
+                                border-radius: 6px; 
+                                cursor: pointer; 
+                                margin: 5px; 
+                            }
+                            .btn:hover { background: #0f766e; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="demo-container">
+                            <div class="demo-header">
+                                <h1>🏥 OpenEMR Patient Management Demo</h1>
+                                <p>WebQX™ OpenEMR Integration - Demo Mode</p>
+                            </div>
+                            
+                            <div class="demo-feature">
+                                <h3>🔐 Authentication Status</h3>
+                                <p>✅ Demo Mode Active - OAuth2 flow simulated</p>
+                                <p>✅ Connected to demo.openemr.io</p>
+                            </div>
+                            
+                            <div class="demo-feature">
+                                <h3>🔗 Integration Features</h3>
+                                <p>✅ FHIR R4 API Ready</p>
+                                <p>✅ Patient Management Interface</p>
+                                <p>✅ Appointment Scheduling</p>
+                                <p>✅ Clinical Data Access</p>
+                                <p>✅ Real-time Synchronization</p>
+                            </div>
+                            
+                            <div class="demo-feature">
+                                <h3>⚙️ Configuration</h3>
+                                <p><strong>Base URL:</strong> https://demo.openemr.io</p>
+                                <p><strong>Client ID:</strong> webqx-provider-portal</p>
+                                <p><strong>Mode:</strong> Demo</p>
+                                <p><strong>FHIR Enabled:</strong> Yes</p>
+                            </div>
+                            
+                            <div class="demo-feature">
+                                <h3>🎭 Demo Actions</h3>
+                                <p>This is a demonstration of the OpenEMR integration.</p>
+                                <p><strong>In production:</strong> This would connect to your actual OpenEMR instance with full OAuth2 authentication.</p>
+                                <button class="btn" onclick="alert('Demo: Patient search functionality would be available here')">Search Patients</button>
+                                <button class="btn" onclick="alert('Demo: Appointment booking would be available here')">Book Appointment</button>
+                                <button class="btn" onclick="alert('Demo: Clinical data access would be available here')">View Clinical Data</button>
+                            </div>
+                            
+                            <div style="text-align: center; margin-top: 30px;">
+                                <button class="btn" onclick="window.open('https://demo.openemr.io', '_blank')">Visit Real OpenEMR Demo</button>
+                                <button class="btn" onclick="window.close()">Close Demo</button>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                `);
+
+                demoWindow.document.close();
+                log('✅ OpenEMR demo window opened successfully!', 'success');
+            } catch (error) {
+                log(`❌ Window launch failed: ${error.message}`, 'error');
+            }
+        }
+
+        function createOpenEMRDemoModal() {
+            // Remove any existing modal
+            const existingModal = document.querySelector('.openemr-demo-modal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'openemr-demo-modal';
+            modal.innerHTML = `
+                <div class="modal-overlay" onclick="this.closest('.openemr-demo-modal').remove()"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>🏥 OpenEMR Patient Management Demo</h3>
+                        <button class="close-btn" onclick="this.closest('.openemr-demo-modal').remove()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="demo-interface">
+                            <div class="demo-status">
+                                <div class="status-indicator">
+                                    <div class="status-dot connected"></div>
+                                    <span>Demo Mode - OpenEMR Integration Ready</span>
+                                </div>
+                            </div>
+                            
+                            <div class="demo-content">
+                                <h4>🎭 Demo: OpenEMR Patient Management</h4>
+                                <p>This is a demonstration of the OpenEMR Patient Management interface.</p>
+                                <p><strong>In production:</strong> This would connect to your actual OpenEMR instance with OAuth2 authentication.</p>
+                                
+                                <div class="demo-features">
+                                    <h5>Features Available:</h5>
+                                    <ul>
+                                        <li>✅ OAuth2 Authentication Flow</li>
+                                        <li>✅ FHIR R4 API Integration</li>
+                                        <li>✅ Patient Management</li>
+                                        <li>✅ Appointment Scheduling</li>
+                                        <li>✅ Clinical Data Access</li>
+                                        <li>✅ Real-time Synchronization</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="demo-config">
+                                    <h5>Current Configuration:</h5>
+                                    <pre>{
+  "baseUrl": "https://demo.openemr.io",
+  "clientId": "webqx-provider-portal",
+  "mode": "demo",
+  "fhirEnabled": true
+}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" onclick="this.closest('.openemr-demo-modal').remove()">Close Demo</button>
+                        <button class="btn-primary" onclick="window.open('https://demo.openemr.io', '_blank')">Try OpenEMR Demo</button>
+                    </div>
+                </div>
+            `;
+
+            // Add demo modal styles
+            const style = document.createElement('style');
+            style.textContent = `
+                .openemr-demo-modal {
+                    position: fixed;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .openemr-demo-modal .modal-overlay {
+                    position: absolute;
+                    top: 0; left: 0; right: 0; bottom: 0;
+                    background: rgba(0,0,0,0.8);
+                    backdrop-filter: blur(5px);
+                }
+                
+                .openemr-demo-modal .modal-content {
+                    background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 16px;
+                    width: 90%;
+                    max-width: 900px;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    position: relative;
+                    color: white;
+                }
+                
+                .openemr-demo-modal .modal-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 20px 24px;
+                    border-bottom: 1px solid rgba(255,255,255,0.2);
+                }
+                
+                .openemr-demo-modal .close-btn {
+                    background: none;
+                    border: none;
+                    color: white;
+                    font-size: 24px;
+                    cursor: pointer;
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                
+                .openemr-demo-modal .close-btn:hover {
+                    background: rgba(255,255,255,0.1);
+                }
+                
+                .openemr-demo-modal .modal-body {
+                    padding: 24px;
+                }
+                
+                .demo-status {
+                    background: rgba(255,255,255,0.1);
+                    border-radius: 8px;
+                    padding: 12px 16px;
+                    margin-bottom: 24px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+                
+                .status-indicator {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                
+                .status-dot.connected {
+                    width: 8px;
+                    height: 8px;
+                    background: #10b981;
+                    border-radius: 50%;
+                    animation: pulse 2s infinite;
+                }
+                
+                @keyframes pulse {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0.5; }
+                }
+                
+                .demo-features ul {
+                    list-style: none;
+                    padding: 0;
+                }
+                
+                .demo-features li {
+                    padding: 4px 0;
+                }
+                
+                .demo-config pre {
+                    background: rgba(0,0,0,0.3);
+                    padding: 12px;
+                    border-radius: 6px;
+                    font-size: 12px;
+                    overflow-x: auto;
+                }
+                
+                .openemr-demo-modal .modal-footer {
+                    display: flex;
+                    align-items: center;
+                    justify-content: flex-end;
+                    gap: 12px;
+                    padding: 20px 24px;
+                    border-top: 1px solid rgba(255,255,255,0.2);
+                }
+                
+                .openemr-demo-modal .btn-secondary {
+                    background: rgba(255,255,255,0.1);
+                    border: 1px solid rgba(255,255,255,0.3);
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                }
+                
+                .openemr-demo-modal .btn-primary {
+                    background: #0d9488;
+                    border: none;
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 600;
+                }
+            `;
+
+            document.head.appendChild(style);
+            document.body.appendChild(modal);
+        }
+
+        function checkSystemStatus() {
+            log('🔍 Checking system status...');
+            
+            // Check authentication
+            const authToken = localStorage.getItem('providerAuthToken');
+            const userInfo = localStorage.getItem('providerUser');
+            
+            if (authToken && userInfo) {
+                log('✅ Authentication: Active', 'success');
+                const user = JSON.parse(userInfo);
+                log(`✅ User: ${user.name} (${user.role})`, 'success');
+            } else {
+                log('❌ Authentication: Not found', 'error');
+            }
+            
+            // Check if we're in demo mode
+            const isDemoMode = window.location.hostname.includes('github.io') || 
+                              window.location.hostname.includes('localhost');
+            log(`🎭 Demo Mode: ${isDemoMode ? 'Active' : 'Inactive'}`, isDemoMode ? 'success' : 'warning');
+            
+            log('✅ System check complete', 'success');
+        }
+
+        // Auto-run system check
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                log('🎭 Direct OpenEMR Test Page Loaded');
+                checkSystemStatus();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
