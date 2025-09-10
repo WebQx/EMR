@@ -11,7 +11,7 @@ class AutoOpenEMRLauncher {
                 name: 'Alpine 3.20 (PHP 8.3) - With Demo Data',
                 url: 'https://one.openemr.io/e/openemr',
                 portalUrl: 'https://one.openemr.io/e/openemr/portal',
-                swaggerUrl: 'https://one.openemr.io/e/openemr/swagger',
+                swaggerUrl: 'https://one.openemr.io/d/openemr/swagger',
                 version: 'OpenEMR 7.0.3 Development (Latest)',
                 status: 'active',
                 hasData: true
@@ -20,7 +20,7 @@ class AutoOpenEMRLauncher {
                 name: 'Alpine 3.22 (PHP 8.4) - With Demo Data',
                 url: 'https://seven.openemr.io/c/openemr',
                 portalUrl: 'https://seven.openemr.io/c/openemr/portal',
-                swaggerUrl: 'https://seven.openemr.io/c/openemr/swagger',
+                swaggerUrl: 'https://seven.openemr.io/b/openemr/swagger',
                 version: 'OpenEMR 7.0.3 Development (PHP 8.4)',
                 status: 'active',
                 hasData: true
@@ -29,7 +29,7 @@ class AutoOpenEMRLauncher {
                 name: 'Ubuntu 24.04 (PHP 8.3) - With Demo Data',
                 url: 'https://three.openemr.io/a/openemr',
                 portalUrl: 'https://three.openemr.io/a/openemr/portal',
-                swaggerUrl: 'https://three.openemr.io/a/openemr/swagger',
+                swaggerUrl: 'https://three.openemr.io/openemr/swagger',
                 version: 'OpenEMR 7.0.3 Development (Ubuntu)',
                 status: 'active',
                 hasData: true
@@ -38,7 +38,7 @@ class AutoOpenEMRLauncher {
                 name: 'Alpine 3.18 (PHP 8.2) - With Demo Data',
                 url: 'https://two.openemr.io/c/openemr',
                 portalUrl: 'https://two.openemr.io/c/openemr/portal',
-                swaggerUrl: 'https://two.openemr.io/c/openemr/swagger',
+                swaggerUrl: 'https://two.openemr.io/b/openemr/swagger',
                 version: 'OpenEMR 7.0.3 Development (PHP 8.2)',
                 status: 'active',
                 hasData: true
@@ -47,7 +47,7 @@ class AutoOpenEMRLauncher {
                 name: 'Alpine 3.17 (PHP 8.1) - With Demo Data',
                 url: 'https://ten.openemr.io/e/openemr',
                 portalUrl: 'https://ten.openemr.io/e/openemr/portal',
-                swaggerUrl: 'https://ten.openemr.io/e/openemr/swagger',
+                swaggerUrl: 'https://ten.openemr.io/d/openemr/swagger',
                 version: 'OpenEMR 7.0.3 Development (PHP 8.1)',
                 status: 'active',
                 hasData: true
