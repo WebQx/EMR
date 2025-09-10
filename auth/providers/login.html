@@ -75,7 +75,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 flex items-center justify-center p-4">
+<body class="min-h-screen bg-gradient-to-br from-teal-700 via-cyan-600 to-slate-700 flex items-center justify-center p-4" style="background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);">
     <!-- Background Animation -->
     <div class="absolute inset-0 overflow-hidden">
         <div class="absolute -top-40 -right-40 w-80 h-80 bg-white opacity-10 rounded-full animate-pulse-slow"></div>
@@ -98,7 +98,7 @@
         <!-- Login Card -->
         <div class="glass rounded-xl shadow-2xl overflow-hidden">
             <!-- Header -->
-            <div class="bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-center text-white">
+            <div class="bg-gradient-to-r from-teal-600 to-cyan-600 p-8 text-center text-white" style="background: linear-gradient(to right, #0d9488, #0891b2);">
                 <div class="mb-4">
                     <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
@@ -131,7 +131,7 @@
                         type="text" 
                         id="username" 
                         name="username"
-                        class="form-control w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                        class="form-control w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
                         placeholder="Enter your username or email"
                         data-i18n-placeholder="form.usernamePlaceholder"
                         required
@@ -148,7 +148,7 @@
                             type="password" 
                             id="password" 
                             name="password"
-                            class="form-control w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all pr-12"
+                            class="form-control w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all pr-12"
                             placeholder="Enter your password"
                             data-i18n-placeholder="form.passwordPlaceholder"
                             required
@@ -170,14 +170,14 @@
                         <input type="checkbox" id="rememberMe" name="rememberMe" class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0">
                         <span data-i18n="form.rememberMe">Remember me</span>
                     </label>
-                    <a href="#" onclick="showForgotPassword()" class="text-sm text-blue-200 hover:text-white transition-colors" data-i18n="form.forgotPassword">Forgot Password?</a>
+                    <a href="#" onclick="showForgotPassword()" class="text-sm text-teal-200 hover:text-white transition-colors" data-i18n="form.forgotPassword">Forgot Password?</a>
                 </div>
 
                 <!-- Login Button -->
                 <button 
                     type="submit" 
                     id="loginButton"
-                    class="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    class="w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                     <span class="login-text" data-i18n="form.signIn">Sign In</span>
                     <svg class="loading-spinner w-5 h-5 mx-auto hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
