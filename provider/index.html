@@ -927,14 +927,61 @@
             };
             
             showNotification(actions[action] || 'Processing OpenEMR action...');
+            
+            if (window.openEMRLauncher) {
+                // Launch OpenEMR with specific context
+                const launchContext = {
+                    mode: 'modal',
+                    module: action,
+                    action: action
+                };
+                
+                window.openEMRLauncher.launchOpenEMR(launchContext)
+                    .then(result => {
+                        if (result.success) {
+                            showNotification(`✅ ${actions[action] || 'Action completed'}`);
+                        } else {
+                            showNotification(`❌ Failed: ${result.error}`);
+                        }
+                    })
+                    .catch(error => {
+                        showNotification(`❌ Error: ${error.message}`);
+                    });
+            } else {
+                // Fallback demo behavior
+                setTimeout(() => {
+                    showNotification('🔧 Demo: ' + actions[action] + ' (OpenEMR integration would handle this)');
+                }, 500);
+            }
         }
 
         function launchOpenEMR() {
-            showNotification('🚀 Launching OpenEMR instance...');
-            // In production, this would redirect to the actual OpenEMR instance
-            setTimeout(() => {
-                showNotification('OpenEMR would open in a new window with SSO authentication');
-            }, 1000);
+            showNotification('🚀 Launching OpenEMR system...');
+            
+            if (window.openEMRLauncher) {
+                // Use the comprehensive OpenEMR launcher
+                window.openEMRLauncher.launchOpenEMR({
+                    mode: 'window', // Options: 'window', 'modal', 'embed', 'redirect'
+                    newWindow: true,
+                    module: 'patient_management'
+                }).then(result => {
+                    if (result.success) {
+                        showNotification(`✅ OpenEMR launched successfully! ${result.action}`);
+                        console.log('OpenEMR Launch Result:', result);
+                    } else {
+                        showNotification(`❌ Failed to launch OpenEMR: ${result.error}`);
+                    }
+                }).catch(error => {
+                    console.error('OpenEMR launch error:', error);
+                    showNotification(`❌ OpenEMR launch failed: ${error.message}`);
+                });
+            } else {
+                // Fallback for demo purposes
+                showNotification('⚠️ OpenEMR launcher not initialized. Using demo mode.');
+                setTimeout(() => {
+                    showNotification('🔧 In production, this would launch the actual OpenEMR instance with SSO authentication');
+                }, 1000);
+            }
         }
 
         function quickAction(action) {
@@ -953,12 +1000,26 @@
             switch (action) {
                 case 'openemr-patient-search':
                     setTimeout(() => {
-                        createOpenEMRPatientInterface();
+                        if (window.openEMRLauncher) {
+                            window.openEMRLauncher.launchOpenEMR({
+                                mode: 'modal',
+                                module: 'patient_search'
+                            });
+                        } else {
+                            createOpenEMRPatientInterface();
+                        }
                     }, 300);
                     break;
                 case 'openemr-appointments':
                     setTimeout(() => {
-                        createOpenEMRSchedulingInterface();
+                        if (window.openEMRLauncher) {
+                            window.openEMRLauncher.launchOpenEMR({
+                                mode: 'modal',
+                                module: 'appointments'
+                            });
+                        } else {
+                            createOpenEMRSchedulingInterface();
+                        }
                     }, 300);
                     break;
                 case 'urgent-telehealth':
@@ -1061,5 +1122,9 @@
             }
         }
     </script>
+    
+    <!-- OpenEMR Integration -->
+    <script src="./openemr-config.js"></script>
+    <script src="./openemr-launcher.js"></script>
 </body>
 </html>

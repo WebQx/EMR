@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenEMR Authentication - WebQX™</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            color: white;
+        }
+        
+        .callback-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .logo {
+            width: 60px;
+            height: 60px;
+            background: #0d9488;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
+        }
+        
+        .status {
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            margin: 20px auto;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            color: #fecaca;
+        }
+        
+        .success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            color: #a7f3d0;
+        }
+        
+        .btn {
+            background: #0d9488;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s ease;
+        }
+        
+        .btn:hover {
+            background: #0f766e;
+        }
+        
+        .btn:disabled {
+            background: rgba(255, 255, 255, 0.3);
+            cursor: not-allowed;
+        }
+        
+        .details {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 20px 0;
+            text-align: left;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="callback-container">
+        <div class="logo">🏥</div>
+        <h2>OpenEMR Authentication</h2>
+        
+        <div id="status" class="status">
+            <div class="spinner"></div>
+            <p>Processing authentication...</p>
+        </div>
+        
+        <div id="result" style="display: none;"></div>
+        <div id="details" style="display: none;"></div>
+        
+        <div id="actions" style="display: none;">
+            <button class="btn" onclick="closeWindow()">Close Window</button>
+            <button class="btn" onclick="returnToPortal()">Return to Portal</button>
+        </div>
+    </div>
+
+    <script>
+        let authResult = null;
+
+        async function handleAuthCallback() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const code = urlParams.get('code');
+                const state = urlParams.get('state');
+                const error = urlParams.get('error');
+                const errorDescription = urlParams.get('error_description');
+
+                if (error) {
+                    throw new Error(`Authentication failed: ${error} - ${errorDescription || 'Unknown error'}`);
+                }
+
+                if (!code) {
+                    throw new Error('No authorization code received');
+                }
+
+                updateStatus('🔄 Exchanging authorization code for tokens...');
+
+                // Try to get the launcher from parent window or opener
+                let launcher = null;
+                
+                if (window.opener && window.opener.openEMRLauncher) {
+                    launcher = window.opener.openEMRLauncher;
+                } else if (window.parent && window.parent.openEMRLauncher) {
+                    launcher = window.parent.openEMRLauncher;
+                } else {
+                    // Load launcher script if not available
+                    await loadLauncherScript();
+                    launcher = window.openEMRLauncher;
+                }
+
+                if (!launcher) {
+                    throw new Error('OpenEMR launcher not available');
+                }
+
+                // Handle the authentication callback
+                authResult = await launcher.handleAuthCallback();
+                
+                updateStatus('✅ Authentication successful!', 'success');
+                showResult(authResult);
+                
+                // Post message to parent/opener if available
+                const message = {
+                    type: 'openemr_auth_complete',
+                    success: true,
+                    result: authResult
+                };
+                
+                if (window.opener) {
+                    window.opener.postMessage(message, '*');
+                } else if (window.parent !== window) {
+                    window.parent.postMessage(message, '*');
+                }
+                
+                // Auto-close after success
+                setTimeout(() => {
+                    if (window.opener || window.parent !== window) {
+                        window.close();
+                    } else {
+                        returnToPortal();
+                    }
+                }, 3000);
+
+            } catch (error) {
+                console.error('Authentication callback error:', error);
+                updateStatus(`❌ Authentication failed: ${error.message}`, 'error');
+                
+                // Post error message to parent/opener if available
+                const message = {
+                    type: 'openemr_auth_complete',
+                    success: false,
+                    error: error.message
+                };
+                
+                if (window.opener) {
+                    window.opener.postMessage(message, '*');
+                } else if (window.parent !== window) {
+                    window.parent.postMessage(message, '*');
+                }
+                
+                showActions();
+            }
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            
+            if (type === 'error') {
+                statusEl.innerHTML = `
+                    <div class="error">
+                        <p>${message}</p>
+                    </div>
+                `;
+            } else if (type === 'success') {
+                statusEl.innerHTML = `
+                    <div class="success">
+                        <p>${message}</p>
+                    </div>
+                `;
+            } else {
+                statusEl.innerHTML = `
+                    <div class="spinner"></div>
+                    <p>${message}</p>
+                `;
+            }
+        }
+
+        function showResult(result) {
+            const resultEl = document.getElementById('result');
+            const detailsEl = document.getElementById('details');
+            
+            if (result.success) {
+                resultEl.innerHTML = `
+                    <div class="success">
+                        <h3>🎉 OpenEMR Ready!</h3>
+                        <p>Successfully authenticated and launched OpenEMR system.</p>
+                        <p><strong>Action:</strong> ${result.action}</p>
+                        ${result.url ? `<p><strong>URL:</strong> ${result.url}</p>` : ''}
+                    </div>
+                `;
+                
+                detailsEl.innerHTML = `
+                    <div class="details">
+                        <h4>Technical Details:</h4>
+                        <pre>${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                `;
+            } else {
+                resultEl.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Launch Failed</h3>
+                        <p>${result.error || 'Unknown error occurred'}</p>
+                    </div>
+                `;
+            }
+            
+            resultEl.style.display = 'block';
+            detailsEl.style.display = 'block';
+            showActions();
+        }
+
+        function showActions() {
+            document.getElementById('actions').style.display = 'block';
+        }
+
+        async function loadLauncherScript() {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = './openemr-launcher.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        function closeWindow() {
+            if (window.opener || window.parent !== window) {
+                window.close();
+            } else {
+                returnToPortal();
+            }
+        }
+
+        function returnToPortal() {
+            const isGitHubPages = window.location.hostname.includes('github.io');
+            const baseUrl = isGitHubPages ? '/webqx' : '';
+            window.location.href = baseUrl + '/provider/';
+        }
+
+        // Handle messages from parent/opener
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'openemr_auth_request') {
+                handleAuthCallback();
+            }
+        });
+
+        // Auto-start callback handling
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if we're in an authentication callback
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('code') || urlParams.has('error')) {
+                handleAuthCallback();
+            } else {
+                updateStatus('❌ Invalid callback - no authentication parameters found', 'error');
+                showActions();
+            }
+        });
+    </script>
+</body>
+</html>
