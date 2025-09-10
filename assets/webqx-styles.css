@@ -1,12 +1,23 @@
 /*! WebQX Healthcare Platform - Medical Teal Theme */
-/* Base styles - Professional healthcare color scheme */
-body {
-  background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
-  min-height: 100vh;
-  color: white;
+/* Base reset and global styles */
+*, *::before, *::after {
+  box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: linear-gradient(135deg, #1e3a8a 0%, #581c87 50%, #312e81 100%);
+  min-height: 100vh;
+  color: white;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.5;
 }
 
 /* Background gradient utilities */
@@ -126,10 +137,23 @@ body {
 
 /* Layout utilities */
 .container {
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Display utilities */
+.block { display: block; }
+.inline-block { display: inline-block; }
+.inline { display: inline; }
+.hidden { display: none; }
 
 .grid {
   display: grid;
@@ -149,6 +173,10 @@ body {
 
 .grid-cols-4 {
   grid-template-columns: repeat(4, 1fr);
+}
+
+.gap-2 {
+  gap: 0.5rem;
 }
 
 .gap-4 {
@@ -323,6 +351,25 @@ body {
 
 /* Cursor utilities */
 .cursor-pointer { cursor: pointer; }
+
+/* SVG utilities */
+svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.fill-current { fill: currentColor; }
+
+/* Stroke utilities */
+.stroke-current { stroke: currentColor; }
+
+/* Overflow utilities */
+.overflow-hidden { overflow: hidden; }
+.overflow-y-auto { overflow-y: auto; }
+
+/* Z-index utilities */
+.z-10 { z-index: 10; }
+.z-50 { z-index: 50; }
 
 /* Responsive design */
 @media (min-width: 768px) {
