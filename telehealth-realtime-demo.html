@@ -4,8 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebQX™ Real-Time Telehealth Demo - Updated</title>
-    <link rel="stylesheet" href="assets/webqx-styles.css">
     <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Video feed styles */
         .video-feed {
             background: linear-gradient(45deg, #1a1a2e, #16213e);
             position: relative;
@@ -49,6 +65,527 @@
             to {
                 opacity: 1;
                 transform: translateY(0);
+            }
+        }
+        
+        /* Header styles */
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 16px 24px;
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #7dd3fc;
+        }
+        
+        .recording-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #dc2626;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        
+        .recording-dot {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .view-selector {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(to right, #0d9488, #0891b2);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
+        }
+        
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background: #b91c1c;
+            transform: translateY(-2px);
+        }
+        
+        /* Main interface */
+        .main-interface {
+            flex: 1;
+            padding: 24px;
+        }
+        
+        .dual-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            height: 100%;
+        }
+        
+        .video-panel {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        
+        .panel-header {
+            background: rgba(13, 148, 136, 0.3);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .panel-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: #0d9488;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .user-info h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .user-info p {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .video-container {
+            position: relative;
+            height: 300px;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+        }
+        
+        .video-element {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 0 0 16px 16px;
+        }
+        
+        .video-placeholder {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            bottom: 16px;
+            background: rgba(13, 148, 136, 0.2);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .video-placeholder-icon {
+            width: 64px;
+            height: 64px;
+            background: #0d9488;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        
+        .video-controls {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-btn {
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(13, 148, 136, 0.8);
+        }
+        
+        .control-btn.active {
+            background: #0d9488;
+        }
+        
+        .panel-footer {
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .status-dot.connected {
+            background: #10b981;
+        }
+        
+        .status-dot.connecting {
+            background: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+        
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+        
+        .quality-indicator {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        /* Chat sidebar */
+        .chat-sidebar {
+            width: 320px;
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 600;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            max-height: 400px;
+        }
+        
+        .message {
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .message.provider {
+            background: rgba(13, 148, 136, 0.3);
+            margin-left: 20px;
+        }
+        
+        .message.patient {
+            background: rgba(8, 145, 178, 0.3);
+            margin-right: 20px;
+        }
+        
+        .message.system {
+            background: rgba(255, 255, 255, 0.1);
+            text-align: center;
+            font-style: italic;
+            opacity: 0.8;
+        }
+        
+        .chat-input {
+            padding: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .chat-input-field {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .chat-input-field::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .send-btn {
+            padding: 8px 16px;
+            background: #0d9488;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .send-btn:hover {
+            background: #0891b2;
+        }
+        
+        /* Vitals panel */
+        .vitals-panel {
+            background: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .vital-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .vital-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #7dd3fc;
+            margin-bottom: 4px;
+        }
+        
+        .vital-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .vital-trend {
+            font-size: 10px;
+            margin-top: 4px;
+        }
+        
+        .trend-up {
+            color: #ef4444;
+        }
+        
+        .trend-down {
+            color: #10b981;
+        }
+        
+        .trend-stable {
+            color: #f59e0b;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .dual-view {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            
+            .chat-sidebar {
+                width: 100%;
+            }
+            
+            .main-interface {
+                padding: 16px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 12px;
+            }
+            
+            .header-right {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .video-container {
+                height: 200px;
+            }
+        }
+        
+        /* View mode styles */
+        .single-view {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+        
+        .picture-in-picture {
+            position: relative;
+        }
+        
+        .pip-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 200px;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+            z-index: 10;
+        }
+        
+        /* Animation utilities */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Hidden utility */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Loading states */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
             }
         }
         
@@ -145,24 +682,34 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 min-h-screen">
+<body>
     <!-- Header -->
-    <header class="bg-gray-800 border-b border-gray-700 px-6 py-4">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <h1 class="text-white text-xl font-bold">🎥 WebQX™ Real-Time Telehealth</h1>
-                <div class="flex items-center space-x-2 bg-red-600 px-3 py-1 rounded-full recording-indicator">
-                    <div class="w-2 h-2 bg-white rounded-full"></div>
-                    <span class="text-white text-sm font-medium">LIVE SESSION</span>
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="logo">WebQX™ Telehealth</h1>
+                <div class="recording-indicator">
+                    <div class="recording-dot"></div>
+                    <span>LIVE SESSION</span>
                 </div>
             </div>
-            
-            <div class="flex items-center space-x-4">
-                <!-- Session Timer -->
-                <div class="text-green-400 font-mono" id="sessionTimer">00:00:00</div>
-                
-                <!-- View Toggle -->
-                <select id="viewMode" class="bg-gray-700 text-white px-3 py-1 rounded" onchange="changeViewMode()">
+            <div class="header-right">
+                <div id="sessionTimer" style="font-family: monospace; color: #10b981;">00:00:00</div>
+                <button onclick="toggleFullscreen()" class="btn-primary">
+                    📺 Fullscreen
+                </button>
+                <select id="viewMode" class="view-selector" onchange="changeViewMode()">
+                    <option value="dual">Dual View</option>
+                    <option value="provider">Provider Focus</option>
+                    <option value="patient">Patient Focus</option>
+                    <option value="pip">Picture-in-Picture</option>
+                </select>
+                <button onclick="endSession()" class="btn-danger">
+                    End Session
+                </button>
+            </div>
+        </div>
+    </header>
                     <option value="dual">Dual View</option>
                     <option value="provider">Provider View</option>
                     <option value="patient">Patient View</option>
