@@ -4,36 +4,459 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebQX™ Provider Portal - Login</title>
-    <link rel="stylesheet" href="../../assets/webqx-styles.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-in-out',
-                        'slide-up': 'slideUp 0.3s ease-out',
-                        'pulse-slow': 'pulse 3s infinite',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0', transform: 'translateY(10px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' }
-                        },
-                        slideUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' }
-                        }
-                    }
-                }
-            }
-        }
-    </script>
     <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+        
         /* Glass morphism effect */
         .glass {
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+        }
+        
+        /* Container styles */
+        .main-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .security-notice {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .security-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+        
+        .security-icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .login-header {
+            background: linear-gradient(to right, #0d9488, #0891b2);
+            padding: 32px;
+            text-align: center;
+        }
+        
+        .logo-container {
+            width: 64px;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+        
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 24px;
+        }
+        
+        .language-selector {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .lang-btn {
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .lang-btn:hover, .lang-btn.active {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        
+        .alert-container {
+            padding: 24px 32px 0;
+            display: none;
+        }
+        
+        .alert-message {
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .alert-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border: 1px solid #ef4444;
+        }
+        
+        .alert-success {
+            background: rgba(34, 197, 94, 0.2);
+            color: #86efac;
+            border: 1px solid #22c55e;
+        }
+        
+        .login-form {
+            padding: 32px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #0d9488;
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.3);
+        }
+        
+        .password-container {
+            position: relative;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            padding: 4px;
+        }
+        
+        .password-toggle:hover {
+            color: white;
+        }
+        
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .checkbox {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .forgot-link {
+            font-size: 14px;
+            color: #7dd3fc;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .forgot-link:hover {
+            color: white;
+        }
+        
+        .login-button {
+            width: 100%;
+            background: linear-gradient(to right, #0d9488, #0891b2);
+            color: white;
+            font-weight: 600;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
+        }
+        
+        .login-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: translateY(0);
+        }
+        
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            margin: 0 auto;
+            animation: spin 1s linear infinite;
+        }
+        
+        .sso-section {
+            margin-top: 32px;
+        }
+        
+        .divider {
+            position: relative;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .divider-text {
+            background: transparent;
+            padding: 0 16px;
+            font-size: 14px;
+        }
+        
+        .sso-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .sso-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .sso-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .sso-icon {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .session-notice {
+            text-align: center;
+            margin-top: 16px;
+            font-size: 12px;
+            opacity: 0.75;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 100%;
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
+        
+        .modal-description {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 24px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .modal-button {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-button-secondary {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+        }
+        
+        .modal-button-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-button-primary {
+            background: #0d9488;
+            border: 1px solid #0d9488;
+            color: white;
+        }
+        
+        .modal-button-primary:hover {
+            background: #0891b2;
+        }
+        
+        .modal-button-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Background animation */
+        .bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            z-index: -1;
+        }
+        
+        .bg-circle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: pulse 3s infinite;
+        }
+        
+        .bg-circle-1 {
+            width: 320px;
+            height: 320px;
+            top: -160px;
+            right: -160px;
+        }
+        
+        .bg-circle-2 {
+            width: 240px;
+            height: 240px;
+            bottom: -120px;
+            left: -120px;
+            animation-delay: 1s;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.1; }
+            50% { opacity: 0.2; }
         }
         
         /* RTL Support */
@@ -41,7 +464,7 @@
             text-align: right;
         }
         
-        [dir="rtl"] .form-control {
+        [dir="rtl"] .form-input {
             text-align: right;
         }
         
@@ -49,45 +472,45 @@
             flex-direction: row-reverse;
         }
         
-        /* Custom scrollbar for accessibility */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+        [dir="rtl"] .checkbox {
+            margin-right: 0;
+            margin-left: 8px;
         }
         
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 3px;
+        [dir="rtl"] .security-icon {
+            margin-right: 0;
+            margin-left: 8px;
         }
         
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-        }
-        
-        /* Loading animation */
-        .loading-spinner {
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        /* Responsive design */
+        @media (max-width: 480px) {
+            body {
+                padding: 16px;
+            }
+            
+            .login-header, .login-form {
+                padding: 24px;
+            }
+            
+            .main-container {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-teal-700 via-cyan-600 to-slate-700 flex items-center justify-center p-4" style="background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);">
+<body>
     <!-- Background Animation -->
-    <div class="absolute inset-0 overflow-hidden">
-        <div class="absolute -top-40 -right-40 w-80 h-80 bg-white opacity-10 rounded-full animate-pulse-slow"></div>
-        <div class="absolute -bottom-40 -left-40 w-60 h-60 bg-white opacity-10 rounded-full animate-pulse-slow" style="animation-delay: 1s;"></div>
+    <div class="bg-animation">
+        <div class="bg-circle bg-circle-1"></div>
+        <div class="bg-circle bg-circle-2"></div>
     </div>
 
     <!-- Main Container -->
-    <div class="relative w-full max-w-md animate-fade-in">
+    <div class="main-container">
         <!-- Security Notice -->
-        <div class="glass rounded-lg p-4 mb-6 text-white text-sm text-center">
-            <div class="flex items-center justify-center mb-2">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+        <div class="security-notice">
+            <div class="security-header">
+                <svg class="security-icon" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
                 </svg>
                 <span class="font-semibold" data-i18n="security.hipaaCompliant">HIPAA Compliant</span>
@@ -96,42 +519,40 @@
         </div>
 
         <!-- Login Card -->
-        <div class="glass rounded-xl shadow-2xl overflow-hidden">
+        <div class="login-card">
             <!-- Header -->
-            <div class="bg-gradient-to-r from-teal-600 to-cyan-600 p-8 text-center text-white" style="background: linear-gradient(to right, #0d9488, #0891b2);">
-                <div class="mb-4">
-                    <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <h1 class="text-2xl font-bold" data-i18n="provider.title">WebQX™ Provider Portal</h1>
-                    <p class="text-blue-100 mt-2" data-i18n="provider.subtitle">Secure Healthcare Professional Access</p>
+            <div class="login-header">
+                <div class="logo-container">
+                    <svg class="logo-icon" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
                 </div>
+                <h1 class="title" data-i18n="provider.title">WebQX™ Provider Portal</h1>
+                <p class="subtitle" data-i18n="provider.subtitle">Secure Healthcare Professional Access</p>
                 
                 <!-- Language Selector -->
-                <div class="flex justify-center space-x-2">
-                    <button onclick="changeLanguage('en')" class="px-3 py-1 rounded-full text-xs bg-white bg-opacity-20 hover:bg-opacity-30 transition-all" id="lang-en">English</button>
-                    <button onclick="changeLanguage('es')" class="px-3 py-1 rounded-full text-xs bg-white bg-opacity-20 hover:bg-opacity-30 transition-all" id="lang-es">Español</button>
-                    <button onclick="changeLanguage('ar')" class="px-3 py-1 rounded-full text-xs bg-white bg-opacity-20 hover:bg-opacity-30 transition-all" id="lang-ar">العربية</button>
+                <div class="language-selector">
+                    <button onclick="changeLanguage('en')" class="lang-btn active" id="lang-en">English</button>
+                    <button onclick="changeLanguage('es')" class="lang-btn" id="lang-es">Español</button>
+                    <button onclick="changeLanguage('ar')" class="lang-btn" id="lang-ar">العربية</button>
                 </div>
             </div>
 
             <!-- Alert Messages -->
-            <div id="alertContainer" class="p-6 pb-0 hidden">
-                <div id="alertMessage" class="p-4 rounded-lg text-sm"></div>
+            <div id="alertContainer" class="alert-container">
+                <div id="alertMessage" class="alert-message"></div>
             </div>
 
             <!-- Login Form -->
-            <form id="providerLoginForm" class="p-8 space-y-6">
+            <form id="providerLoginForm" class="login-form">
                 <!-- Username Field -->
-                <div>
-                    <label for="username" class="block text-sm font-medium text-white mb-2" data-i18n="form.username">Username or Email</label>
+                <div class="form-group">
+                    <label for="username" class="form-label" data-i18n="form.username">Username or Email</label>
                     <input 
                         type="text" 
                         id="username" 
                         name="username"
-                        class="form-control w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all"
+                        class="form-input"
                         placeholder="Enter your username or email"
                         data-i18n-placeholder="form.usernamePlaceholder"
                         required
@@ -141,21 +562,21 @@
                 </div>
 
                 <!-- Password Field -->
-                <div>
-                    <label for="password" class="block text-sm font-medium text-white mb-2" data-i18n="form.password">Password</label>
-                    <div class="relative">
+                <div class="form-group">
+                    <label for="password" class="form-label" data-i18n="form.password">Password</label>
+                    <div class="password-container">
                         <input 
                             type="password" 
                             id="password" 
                             name="password"
-                            class="form-control w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all pr-12"
+                            class="form-input"
                             placeholder="Enter your password"
                             data-i18n-placeholder="form.passwordPlaceholder"
                             required
                             autocomplete="current-password"
                         >
-                        <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-300 hover:text-white transition-colors">
-                            <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <button type="button" onclick="togglePassword()" class="password-toggle">
+                            <svg id="eyeIcon" class="sso-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                             </svg>
@@ -165,58 +586,53 @@
                 </div>
 
                 <!-- Remember Me Checkbox -->
-                <div class="flex items-center justify-between">
-                    <label class="checkbox-label flex items-center text-sm text-white cursor-pointer">
-                        <input type="checkbox" id="rememberMe" name="rememberMe" class="mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0">
+                <div class="checkbox-container">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="rememberMe" name="rememberMe" class="checkbox">
                         <span data-i18n="form.rememberMe">Remember me</span>
                     </label>
-                    <a href="#" onclick="showForgotPassword()" class="text-sm text-teal-200 hover:text-white transition-colors" data-i18n="form.forgotPassword">Forgot Password?</a>
+                    <a href="#" onclick="showForgotPassword()" class="forgot-link" data-i18n="form.forgotPassword">Forgot Password?</a>
                 </div>
 
                 <!-- Login Button -->
                 <button 
                     type="submit" 
                     id="loginButton"
-                    class="w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:ring-offset-2 focus:ring-offset-transparent disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    class="login-button"
                 >
                     <span class="login-text" data-i18n="form.signIn">Sign In</span>
-                    <svg class="loading-spinner w-5 h-5 mx-auto hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="loading-spinner" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                     </svg>
                 </button>
 
                 <!-- SSO Options -->
-                <div class="mt-8">
-                    <div class="relative">
-                        <div class="absolute inset-0 flex items-center">
-                            <div class="w-full border-t border-white border-opacity-20"></div>
-                        </div>
-                        <div class="relative flex justify-center text-sm">
-                            <span class="bg-transparent px-2 text-white" data-i18n="sso.orSignInWith">Or sign in with</span>
-                        </div>
+                <div class="sso-section">
+                    <div class="divider">
+                        <span class="divider-text" data-i18n="sso.orSignInWith">Or sign in with</span>
                     </div>
 
-                    <div class="mt-6 grid grid-cols-3 gap-3">
+                    <div class="sso-buttons">
                         <!-- Keycloak SSO -->
-                        <button type="button" onclick="initiateSSO('keycloak')" class="sso-button w-full inline-flex justify-center py-2 px-4 border border-white border-opacity-20 rounded-md shadow-sm bg-white bg-opacity-10 text-sm font-medium text-white hover:bg-opacity-20 transition-all">
+                        <button type="button" onclick="initiateSSO('keycloak')" class="sso-button">
                             <span class="sr-only">Sign in with Keycloak</span>
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <svg class="sso-icon" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z"/>
                             </svg>
                         </button>
 
                         <!-- Microsoft SSO -->
-                        <button type="button" onclick="initiateSSO('microsoft')" class="sso-button w-full inline-flex justify-center py-2 px-4 border border-white border-opacity-20 rounded-md shadow-sm bg-white bg-opacity-10 text-sm font-medium text-white hover:bg-opacity-20 transition-all">
+                        <button type="button" onclick="initiateSSO('microsoft')" class="sso-button">
                             <span class="sr-only">Sign in with Microsoft</span>
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <svg class="sso-icon" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z"/>
                             </svg>
                         </button>
 
                         <!-- SMART on FHIR SSO -->
-                        <button type="button" onclick="initiateSSO('smart-fhir')" class="sso-button w-full inline-flex justify-center py-2 px-4 border border-white border-opacity-20 rounded-md shadow-sm bg-white bg-opacity-10 text-sm font-medium text-white hover:bg-opacity-20 transition-all">
+                        <button type="button" onclick="initiateSSO('smart-fhir')" class="sso-button">
                             <span class="sr-only">Sign in with SMART on FHIR</span>
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <svg class="sso-icon" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                             </svg>
                         </button>
@@ -226,48 +642,49 @@
         </div>
 
         <!-- Session Timeout Notice -->
-        <div class="text-center mt-4 text-white text-xs opacity-75">
+        <div class="session-notice">
             <p data-i18n="security.sessionTimeout">Session will timeout after 30 minutes of inactivity for security.</p>
         </div>
     </div>
 
     <!-- Role Confirmation Modal -->
-    <div id="roleModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-        <div class="glass rounded-xl p-8 max-w-md w-full text-white animate-slide-up">
-            <h3 class="text-xl font-bold mb-4" data-i18n="roleModal.title">Confirm Your Role</h3>
-            <p class="text-gray-200 mb-6" data-i18n="roleModal.description">Please confirm your professional role to access the appropriate modules.</p>
+    <div id="roleModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title" data-i18n="roleModal.title">Confirm Your Role</h3>
+            <p class="modal-description" data-i18n="roleModal.description">Please confirm your professional role to access the appropriate modules.</p>
             
-            <div id="roleOptions" class="space-y-3">
+            <div id="roleOptions" style="margin-bottom: 24px;">
                 <!-- Role options will be populated by JavaScript -->
             </div>
             
-            <div class="mt-6 flex space-x-3">
-                <button onclick="cancelRoleSelection()" class="flex-1 py-2 px-4 border border-white border-opacity-30 rounded-lg text-white hover:bg-white hover:bg-opacity-10 transition-all" data-i18n="roleModal.cancel">Cancel</button>
-                <button onclick="confirmRole()" id="confirmRoleBtn" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-all disabled:opacity-50" data-i18n="roleModal.confirm" disabled>Confirm</button>
+            <div class="modal-buttons">
+                <button onclick="cancelRoleSelection()" class="modal-button modal-button-secondary" data-i18n="roleModal.cancel">Cancel</button>
+                <button onclick="confirmRole()" id="confirmRoleBtn" class="modal-button modal-button-primary" data-i18n="roleModal.confirm" disabled>Confirm</button>
             </div>
         </div>
     </div>
 
     <!-- Forgot Password Modal -->
-    <div id="forgotPasswordModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden z-50">
-        <div class="glass rounded-xl p-8 max-w-md w-full text-white animate-slide-up">
-            <h3 class="text-xl font-bold mb-4" data-i18n="forgotPassword.title">Reset Password</h3>
-            <p class="text-gray-200 mb-6" data-i18n="forgotPassword.description">Enter your email address and we'll send you instructions to reset your password.</p>
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title" data-i18n="forgotPassword.title">Reset Password</h3>
+            <p class="modal-description" data-i18n="forgotPassword.description">Enter your email address and we'll send you instructions to reset your password.</p>
             
             <form id="forgotPasswordForm">
                 <input 
                     type="email" 
                     id="resetEmail" 
                     name="resetEmail"
-                    class="w-full px-4 py-3 bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 mb-6"
+                    class="form-input"
+                    style="margin-bottom: 24px;"
                     placeholder="Enter your email address"
                     data-i18n-placeholder="forgotPassword.emailPlaceholder"
                     required
                 >
                 
-                <div class="flex space-x-3">
-                    <button type="button" onclick="closeForgotPassword()" class="flex-1 py-2 px-4 border border-white border-opacity-30 rounded-lg text-white hover:bg-white hover:bg-opacity-10 transition-all" data-i18n="forgotPassword.cancel">Cancel</button>
-                    <button type="submit" class="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-all" data-i18n="forgotPassword.sendInstructions">Send Instructions</button>
+                <div class="modal-buttons">
+                    <button type="button" onclick="closeForgotPassword()" class="modal-button modal-button-secondary" data-i18n="forgotPassword.cancel">Cancel</button>
+                    <button type="submit" class="modal-button modal-button-primary" data-i18n="forgotPassword.sendInstructions">Send Instructions</button>
                 </div>
             </form>
         </div>
@@ -423,28 +840,28 @@
                     const role = this.providerRoles[roleKey];
                     if (role) {
                         const option = document.createElement('div');
-                        option.className = 'role-option p-4 border border-white border-opacity-20 rounded-lg cursor-pointer hover:bg-white hover:bg-opacity-10 transition-all';
+                        option.style.cssText = 'padding: 16px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; cursor: pointer; transition: all 0.3s ease; margin-bottom: 12px;';
                         option.dataset.role = roleKey;
                         
                         option.innerHTML = `
-                            <div class="flex items-center">
-                                <input type="radio" name="role" value="${roleKey}" class="mr-3 text-blue-600 focus:ring-blue-500">
-                                <div class="flex-1">
-                                    <h4 class="font-semibold text-white">${role.name}</h4>
-                                    <p class="text-sm text-gray-200 mt-1">${role.description}</p>
-                                    <div class="mt-2">
-                                        <span class="text-xs text-blue-200">Modules: ${role.modules.join(', ')}</span>
+                            <div style="display: flex; align-items: center;">
+                                <input type="radio" name="role" value="${roleKey}" style="margin-right: 12px;">
+                                <div style="flex: 1;">
+                                    <h4 style="font-weight: 600; margin-bottom: 4px;">${role.name}</h4>
+                                    <p style="font-size: 14px; color: rgba(255, 255, 255, 0.8); margin-bottom: 8px;">${role.description}</p>
+                                    <div>
+                                        <span style="font-size: 12px; color: #7dd3fc;">Modules: ${role.modules.join(', ')}</span>
                                     </div>
                                 </div>
                             </div>
                         `;
                         
                         option.addEventListener('click', () => {
-                            document.querySelectorAll('.role-option').forEach(opt => {
-                                opt.classList.remove('bg-blue-600', 'bg-opacity-30');
+                            document.querySelectorAll('#roleOptions > div').forEach(opt => {
+                                opt.style.background = 'transparent';
                             });
                             
-                            option.classList.add('bg-blue-600', 'bg-opacity-30');
+                            option.style.background = 'rgba(13, 148, 136, 0.3)';
                             option.querySelector('input[type="radio"]').checked = true;
                             this.selectedRole = roleKey;
                             
@@ -455,7 +872,7 @@
                     }
                 });
                 
-                modal.classList.remove('hidden');
+                modal.style.display = 'flex';
             }
 
             checkExistingSession() {
@@ -485,11 +902,11 @@
                 button.disabled = loading;
                 
                 if (loading) {
-                    loginText.classList.add('hidden');
-                    spinner.classList.remove('hidden');
+                    loginText.style.display = 'none';
+                    spinner.style.display = 'block';
                 } else {
-                    loginText.classList.remove('hidden');
-                    spinner.classList.add('hidden');
+                    loginText.style.display = 'inline';
+                    spinner.style.display = 'none';
                 }
             }
 
@@ -498,20 +915,20 @@
                 const alertElement = document.getElementById('alertMessage');
                 
                 alertElement.textContent = message;
-                alertElement.className = `p-4 rounded-lg text-sm ${type === 'error' ? 'bg-red-500 bg-opacity-20 text-red-100 border border-red-400' : 'bg-green-500 bg-opacity-20 text-green-100 border border-green-400'}`;
+                alertElement.className = `alert-message ${type === 'error' ? 'alert-error' : 'alert-success'}`;
                 
-                container.classList.remove('hidden');
+                container.style.display = 'block';
                 
                 if (type === 'success') {
                     setTimeout(() => {
-                        container.classList.add('hidden');
+                        container.style.display = 'none';
                     }, 3000);
                 }
             }
 
             clearAlert() {
                 const container = document.getElementById('alertContainer');
-                container.classList.add('hidden');
+                container.style.display = 'none';
             }
 
             async handleForgotPassword(e) {
@@ -553,7 +970,7 @@
             }
 
             closeForgotPassword() {
-                document.getElementById('forgotPasswordModal').classList.add('hidden');
+                document.getElementById('forgotPasswordModal').style.display = 'none';
                 document.getElementById('resetEmail').value = '';
             }
         }
@@ -573,7 +990,7 @@
         }
 
         function showForgotPassword() {
-            document.getElementById('forgotPasswordModal').classList.remove('hidden');
+            document.getElementById('forgotPasswordModal').style.display = 'flex';
         }
 
         function closeForgotPassword() {
@@ -583,7 +1000,7 @@
         }
 
         function cancelRoleSelection() {
-            document.getElementById('roleModal').classList.add('hidden');
+            document.getElementById('roleModal').style.display = 'none';
             localStorage.removeItem('providerAuthToken');
             localStorage.removeItem('providerUser');
             sessionStorage.removeItem('providerAuthToken');
@@ -599,7 +1016,7 @@
                 const storage = localStorage.getItem('providerAuthToken') ? localStorage : sessionStorage;
                 storage.setItem('providerUser', JSON.stringify(userData));
                 
-                document.getElementById('roleModal').classList.add('hidden');
+                document.getElementById('roleModal').style.display = 'none';
                 window.providerAuth.redirectToRoleDashboard(window.providerAuth.selectedRole);
             }
         }
