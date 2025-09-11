@@ -402,7 +402,8 @@
 
         // Traditional login with backend integration
         async function performTraditionalLogin(email, password, role) {
-            const backendUrl = 'http://localhost:3001';
+            const backendUrl = window.location.hostname.includes('github.io') ? 
+                'http://192.168.173.251:3001' : 'http://localhost:3001';
             
             try {
                 const response = await fetch(`${backendUrl}/api/v1/auth/token/`, {

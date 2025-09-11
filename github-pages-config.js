@@ -7,7 +7,7 @@
 const WEBQX_CONFIG = {
     // Backend server configuration
     BACKEND_URL: 'http://localhost:3001', // Change this to your machine's IP for external access
-    BACKEND_IP: '192.168.1.100:3001', // Replace with your actual IP address
+    BACKEND_IP: '192.168.173.251:3001', // Your actual machine IP
     
     // GitHub Pages URLs
     GITHUB_PAGES_URL: 'https://webqx-health.github.io/webqx',
@@ -42,7 +42,7 @@ function getBackendUrl() {
         const possibleIPs = [
             'http://localhost:3001',
             'http://127.0.0.1:3001',
-            'http://192.168.1.100:3001', // Replace with actual IP
+            'http://192.168.173.251:3001', // Your actual machine IP
             'http://10.0.0.100:3001'     // Replace with actual IP
         ];
         
