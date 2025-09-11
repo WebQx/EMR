@@ -93,6 +93,7 @@ if [[ $REPO_URL == *"github.com"* ]]; then
     echo -e "${GREEN}   ✅ Login: https://webqx.github.io/webqx/login.html${NC}"
     echo -e "${GREEN}   ✅ Patients: https://webqx.github.io/webqx/patient-portal/${NC}"
     echo -e "${GREEN}   ✅ Providers: https://webqx.github.io/webqx/provider/${NC}"
+    echo -e "${GREEN}   ✅ Admin: https://webqx.github.io/webqx/admin-console/${NC}"
     echo -e "${GREEN}   ✅ Telehealth: https://webqx.github.io/webqx/telehealth.html${NC}"
     echo ""
     echo -e "${YELLOW}📝 Note: It may take 5-10 minutes for changes to appear${NC}"
