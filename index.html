@@ -311,6 +311,7 @@
     <div class="status-bar">
         <span class="status-indicator status-offline" id="backendStatus"></span>
         <span id="statusText">Backend: Checking connection...</span>
+        <button id="startBackend" style="display: none; margin-left: 1rem; padding: 0.25rem 0.75rem; background: #48bb78; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Start Backend</button>
     </div>
 
     <!-- Header -->
@@ -458,6 +459,7 @@
         async function checkBackendStatus() {
             const statusIndicator = document.getElementById('backendStatus');
             const statusText = document.getElementById('statusText');
+            const startButton = document.getElementById('startBackend');
             
             const backendUrl = window.location.hostname.includes('github.io') ? 
                 'http://192.168.173.251:3001' : 'http://localhost:3001';
@@ -471,17 +473,53 @@
                 if (response.ok) {
                     statusIndicator.className = 'status-indicator status-online';
                     statusText.textContent = 'Backend: Connected ✓';
+                    startButton.style.display = 'none';
                 } else {
                     throw new Error('Backend unavailable');
                 }
             } catch (error) {
                 statusIndicator.className = 'status-indicator status-offline';
-                statusText.textContent = 'Backend: Offline (Demo mode only)';
+                statusText.textContent = 'Backend: Offline';
+                startButton.style.display = 'inline-block';
+            }
+        }
+        
+        // Start backend server
+        async function startBackend() {
+            const startButton = document.getElementById('startBackend');
+            const statusText = document.getElementById('statusText');
+            
+            startButton.textContent = 'Starting...';
+            startButton.disabled = true;
+            
+            try {
+                // Try to wake up the backend
+                const backendUrl = window.location.hostname.includes('github.io') ? 
+                    'http://192.168.173.251:3001' : 'http://localhost:3001';
+                
+                await fetch(`${backendUrl}/api/wake`, { method: 'POST' });
+                
+                statusText.textContent = 'Backend: Starting up...';
+                
+                // Wait and recheck
+                setTimeout(() => {
+                    checkBackendStatus();
+                    startButton.textContent = 'Start Backend';
+                    startButton.disabled = false;
+                }, 3000);
+                
+            } catch (error) {
+                statusText.textContent = 'Backend: Failed to start (Run: node server.js)';
+                startButton.textContent = 'Start Backend';
+                startButton.disabled = false;
             }
         }
         
         // Check status on page load
         document.addEventListener('DOMContentLoaded', checkBackendStatus);
+        
+        // Add click handler for start button
+        document.getElementById('startBackend').addEventListener('click', startBackend);
         
         // Recheck every 30 seconds
         setInterval(checkBackendStatus, 30000);
