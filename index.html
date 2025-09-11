@@ -264,6 +264,31 @@
             opacity: 0.8;
         }
 
+        /* Status Bar */
+        .status-bar {
+            background: #2d3748;
+            color: white;
+            padding: 0.5rem 0;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-online {
+            background: #48bb78;
+        }
+
+        .status-offline {
+            background: #f56565;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .hero h1 {
@@ -282,6 +307,12 @@
     </style>
 </head>
 <body>
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <span class="status-indicator status-offline" id="backendStatus"></span>
+        <span id="statusText">Backend: Checking connection...</span>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="nav-container">
@@ -421,5 +452,39 @@
             <p>© 2025 WebQx Healthcare Platform - Global Healthcare Ecosystem</p>
         </div>
     </footer>
+
+    <script>
+        // Check backend connectivity
+        async function checkBackendStatus() {
+            const statusIndicator = document.getElementById('backendStatus');
+            const statusText = document.getElementById('statusText');
+            
+            const backendUrl = window.location.hostname.includes('github.io') ? 
+                'http://192.168.173.251:3001' : 'http://localhost:3001';
+            
+            try {
+                const response = await fetch(`${backendUrl}/api/health`, {
+                    method: 'GET',
+                    timeout: 5000
+                });
+                
+                if (response.ok) {
+                    statusIndicator.className = 'status-indicator status-online';
+                    statusText.textContent = 'Backend: Connected ✓';
+                } else {
+                    throw new Error('Backend unavailable');
+                }
+            } catch (error) {
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.textContent = 'Backend: Offline (Demo mode only)';
+            }
+        }
+        
+        // Check status on page load
+        document.addEventListener('DOMContentLoaded', checkBackendStatus);
+        
+        // Recheck every 30 seconds
+        setInterval(checkBackendStatus, 30000);
+    </script>
 </body>
 </html>
