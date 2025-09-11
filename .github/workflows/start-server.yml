@@ -1,0 +1,20 @@
+name: Start WebQx Server
+on:
+  repository_dispatch:
+    types: [start-server]
+  workflow_dispatch:
+
+jobs:
+  start-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Server Start
+        run: |
+          echo "🚀 WebQx Server start requested"
+          echo "Target IP: ${{ github.event.client_payload.server_ip }}"
+          echo "Port: ${{ github.event.client_payload.port }}"
+          
+          # Attempt to wake server via HTTP
+          curl -X POST http://${{ github.event.client_payload.server_ip }}:${{ github.event.client_payload.port }}/api/wake || true
+          
+          echo "✅ Server start command sent"
