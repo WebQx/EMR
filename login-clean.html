@@ -311,7 +311,7 @@
             const accounts = {
                 patient: [
                     { label: 'Patient Access:', cred: 'demo / patient123' },
-                    { label: 'Emergency Access:', cred: 'emergency / demo123' }
+                    { label: 'Physician Access:', cred: 'physician / demo123' }
                 ],
                 provider: [
                     { label: 'Doctor Access:', cred: 'doctor / provider123' },
@@ -345,6 +345,8 @@
             // Demo login logic
             if (username === 'demo' && password === 'patient123') {
                 window.location.href = 'patient-portal/';
+            } else if (username === 'physician' && password === 'demo123') {
+                window.location.href = 'provider/';
             } else if (username === 'doctor' && password === 'provider123') {
                 window.location.href = 'provider/';
             } else if (username === 'admin' && password === 'admin123') {
