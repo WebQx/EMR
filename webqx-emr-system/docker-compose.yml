@@ -1,0 +1,221 @@
+# WebQX™ EMR System
+# Complete Docker Composition for Development and Production
+
+services:
+  # MySQL Database Server
+  mysql:
+    image: mysql:8.0
+    container_name: webqx-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: webqx_root_2024!
+      MYSQL_DATABASE: webqx_emr
+      MYSQL_USER: webqx_user
+      MYSQL_PASSWORD: webqx_pass_2024!
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+      - ./backups:/backups
+    ports:
+      - "3306:3306"
+    networks:
+      - webqx-network
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --innodb-buffer-pool-size=512M
+      --innodb-log-file-size=256M
+      --max-connections=200
+      --bind-address=0.0.0.0
+      --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Redis Cache Server
+  redis:
+    image: redis:7-alpine
+    container_name: webqx-redis
+    restart: unless-stopped
+    command: >
+      redis-server 
+      --requirepass webqx_redis_2024!
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+      --save 60 10000
+    volumes:
+      - redis_data:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    networks:
+      - webqx-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      timeout: 10s
+      retries: 5
+
+  # WebQX EMR Application
+  webqx-emr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: webqx-emr-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database Configuration
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: webqx_emr
+      DB_USER: webqx_user
+      DB_PASSWORD: webqx_pass_2024!
+      DB_CHARSET: utf8mb4
+      
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: webqx_redis_2024!
+      
+      # WebQX Configuration
+      WEBQX_ENV: development
+      WEBQX_DEBUG: true
+      WEBQX_VERSION: 1.0.0
+      WEBQX_SITE_URL: http://localhost:8080
+      WEBQX_API_URL: http://localhost:8080/api
+      
+      # Security
+      WEBQX_SECRET_KEY: webqx_secret_key_change_in_production_2024!
+      WEBQX_JWT_SECRET: webqx_jwt_secret_change_in_production_2024!
+      WEBQX_ENCRYPTION_KEY: webqx_encrypt_key_change_in_production_2024!
+      
+      # Email Configuration
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_USER: webqx
+      SMTP_PASSWORD: webqx
+      SMTP_FROM: noreply@webqx-emr.local
+      
+      # File Storage
+      UPLOAD_PATH: /var/www/html/uploads
+      MAX_UPLOAD_SIZE: 100M
+      
+      # PHP Configuration
+      PHP_MEMORY_LIMIT: 512M
+      PHP_MAX_EXECUTION_TIME: 300
+      PHP_UPLOAD_MAX_FILESIZE: 100M
+      PHP_POST_MAX_SIZE: 100M
+      
+      # OpenEMR Integration
+      OPENEMR_ROOT: /var/www/html/core
+      OPENEMR_VERSION: 7.0.3
+      
+      # FHIR Configuration
+      FHIR_BASE_URL: http://localhost:8080/api/fhir
+      FHIR_VERSION: R4
+      
+      # HL7 Configuration
+      HL7_LISTENER_PORT: 2575
+      HL7_ENABLED: true
+    volumes:
+      - webqx_uploads:/var/www/html/uploads
+      - webqx_logs:/var/www/html/logs
+      - ./customizations:/var/www/html/customizations
+      - ./themes:/var/www/html/themes
+      - ./modules:/var/www/html/modules
+      - ./api:/var/www/html/api
+      - ./config:/var/www/html/config
+    ports:
+      - "8080:80"
+      - "8443:443"
+      - "2575:2575"  # HL7 MLLP port
+    networks:
+      - webqx-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/api/v2/status"]
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # MailHog (Email Testing)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: webqx-mailhog
+    restart: unless-stopped
+    ports:
+      - "8025:8025"  # Web interface
+      - "1025:1025"  # SMTP
+    networks:
+      - webqx-network
+
+  # phpMyAdmin (Development)
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: webqx-phpmyadmin
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: webqx_user
+      PMA_PASSWORD: webqx_pass_2024!
+      MYSQL_ROOT_PASSWORD: webqx_root_2024!
+    ports:
+      - "8081:80"
+    networks:
+      - webqx-network
+    profiles:
+      - development
+
+  # Redis Commander (Development)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: webqx-redis-commander
+    restart: unless-stopped
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:webqx_redis_2024!
+    ports:
+      - "8082:8081"
+    networks:
+      - webqx-network
+    profiles:
+      - development
+
+# Networks
+networks:
+  webqx-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# Volumes
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  webqx_uploads:
+    driver: local
+  webqx_logs:
+    driver: local
+
+# Development Environment Setup
+# To start development environment:
+# docker-compose --profile development up -d
+
+# Production Environment Setup  
+# To start production environment:
+# docker-compose up -d

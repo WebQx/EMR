@@ -1,0 +1,155 @@
+{
+  "name": "WebQx Global - 24/7 Healthcare",
+  "short_name": "WebQx Global",
+  "description": "Global 24/7 telehealth platform connecting patients to healthcare providers worldwide",
+  "start_url": "/telehealth-24-7-global.html",
+  "display": "standalone",
+  "background_color": "#2196F3",
+  "theme_color": "#2196F3",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiByeD0iMTIiIGZpbGw9IiMyMTk2RjMiLz4KPHA+dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIj7wn5CPPC90ZXh0Pgo8L3N2Zz4K",
+      "sizes": "48x48",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjQiIGZpbGw9IiMyMTk2RjMiLz4KPHA+dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI0OCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIj7wn5CPPC90ZXh0Pgo8L3N2Zz4K",
+      "sizes": "96x96",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iNDgiIGZpbGw9IiMyMTk2RjMiLz4KPHA+dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI5NiIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIj7wn5CPPC90ZXh0Pgo8L3N2Zz4K",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTI4IiBmaWxsPSIjMjE5NkYzIi8+CjxwPnRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMjU2IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiPvCfkI88L3RleHQ+Cjwvc3ZnPgo=",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+
+  "categories": ["medical", "health", "productivity", "lifestyle"],
+  
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzkwIiBoZWlnaHQ9IjY4MCIgdmlld0JveD0iMCAwIDM5MCA2ODAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIzOTAiIGhlaWdodD0iNjgwIiBmaWxsPSJsaW5lYXItZ3JhZGllbnQoMTM1ZGVnLCAjNjY3ZWVhIDAlLCAjNzY0YmEyIDEwMCUpIi8+Cjx0ZXh0IHg9IjE5NSIgeT0iMzQwIiBmb250LXNpemU9IjI0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+V2ViUXggR2xvYmFsPC90ZXh0Pgo8dGV4dCB4PSIxOTUiIHk9IjM3MCIgZm9udC1zaXplPSIxNiIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjI0LzcgSGVhbHRoY2FyZTwvdGV4dD4KPC9zdmc+",
+      "sizes": "390x680",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Mobile view of WebQx Global telehealth platform"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "Emergency Consultation",
+      "short_name": "Emergency",
+      "description": "Start emergency medical consultation",
+      "url": "/telehealth-24-7-global.html#emergency",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjQiIGZpbGw9IiNGNDQzMzYiLz4KPHA+dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI0OCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIj7wn5qoPC90ZXh0Pgo8L3N2Zz4K",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Schedule Appointment",
+      "short_name": "Schedule",
+      "description": "Book a medical appointment",
+      "url": "/telehealth-24-7-global.html#schedule",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjQiIGZpbGw9IiMyMTk2RjMiLz4KPHA+dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI0OCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIj7wn5OJPC90ZXh0Pgo8L3N2Zz4K",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Crisis Support",
+      "short_name": "Crisis",
+      "description": "24/7 mental health crisis support",
+      "url": "/telehealth-24-7-global.html#crisis",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCA5NiA5NiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjQiIGZpbGw9IiM5QzI3QjAiLz4KPHA+dGV4dCB4PSI1MCUiIHk9IjUwJSIgZm9udC1zaXplPSI0OCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGRvbWluYW50LWJhc2VsaW5lPSJjZW50cmFsIj7wn5KaPC90ZXh0Pgo8L3N2Zz4K",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+
+  "prefer_related_applications": false,
+  
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://webqx.com/"
+    }
+  ],
+
+  "protocol_handlers": [
+    {
+      "protocol": "web+telehealth",
+      "url": "/telehealth-24-7-global.html?consultation=%s"
+    }
+  ],
+
+  "file_handlers": [
+    {
+      "action": "/import-medical-data",
+      "accept": {
+        "application/fhir+json": [".fhir", ".json"],
+        "text/csv": [".csv"],
+        "application/pdf": [".pdf"]
+      }
+    }
+  ],
+
+  "share_target": {
+    "action": "/share-medical-data",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text", 
+      "url": "url",
+      "files": [
+        {
+          "name": "medical_files",
+          "accept": ["image/*", "application/pdf", "application/fhir+json"]
+        }
+      ]
+    }
+  },
+
+  "capture_links": "new-client",
+  
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+
+  "features": [
+    "cross-origin-isolated"
+  ],
+
+  "permissions": [
+    "camera",
+    "microphone", 
+    "notifications",
+    "geolocation",
+    "background-sync",
+    "background-fetch"
+  ]
+}

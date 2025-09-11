@@ -1,0 +1,378 @@
+/**
+ * WebQX™ EMR - Custom Theme
+ * Modern, responsive design system for WebQX Electronic Medical Records
+ */
+
+:root {
+    /* WebQX Brand Colors */
+    --webqx-primary: #0891b2;
+    --webqx-primary-dark: #0f766e;
+    --webqx-primary-light: #06b6d4;
+    --webqx-secondary: #164e63;
+    --webqx-accent: #00ffd5;
+    --webqx-success: #10b981;
+    --webqx-warning: #f59e0b;
+    --webqx-error: #ef4444;
+    --webqx-info: #3b82f6;
+    
+    /* Neutral Colors */
+    --webqx-white: #ffffff;
+    --webqx-gray-50: #f8fafc;
+    --webqx-gray-100: #f1f5f9;
+    --webqx-gray-200: #e2e8f0;
+    --webqx-gray-300: #cbd5e1;
+    --webqx-gray-400: #94a3b8;
+    --webqx-gray-500: #64748b;
+    --webqx-gray-600: #475569;
+    --webqx-gray-700: #334155;
+    --webqx-gray-800: #1e293b;
+    --webqx-gray-900: #0f172a;
+    
+    /* Typography */
+    --webqx-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --webqx-font-size-xs: 0.75rem;
+    --webqx-font-size-sm: 0.875rem;
+    --webqx-font-size-base: 1rem;
+    --webqx-font-size-lg: 1.125rem;
+    --webqx-font-size-xl: 1.25rem;
+    --webqx-font-size-2xl: 1.5rem;
+    --webqx-font-size-3xl: 1.875rem;
+    --webqx-font-size-4xl: 2.25rem;
+    
+    /* Spacing */
+    --webqx-spacing-1: 0.25rem;
+    --webqx-spacing-2: 0.5rem;
+    --webqx-spacing-3: 0.75rem;
+    --webqx-spacing-4: 1rem;
+    --webqx-spacing-5: 1.25rem;
+    --webqx-spacing-6: 1.5rem;
+    --webqx-spacing-8: 2rem;
+    --webqx-spacing-10: 2.5rem;
+    --webqx-spacing-12: 3rem;
+    --webqx-spacing-16: 4rem;
+    --webqx-spacing-20: 5rem;
+    
+    /* Border Radius */
+    --webqx-radius-sm: 0.25rem;
+    --webqx-radius-base: 0.375rem;
+    --webqx-radius-md: 0.5rem;
+    --webqx-radius-lg: 0.75rem;
+    --webqx-radius-xl: 1rem;
+    --webqx-radius-2xl: 1.5rem;
+    --webqx-radius-full: 9999px;
+    
+    /* Shadows */
+    --webqx-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --webqx-shadow-base: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --webqx-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --webqx-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --webqx-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Global Styles Override */
+body {
+    font-family: var(--webqx-font-family);
+    background: linear-gradient(135deg, var(--webqx-gray-50) 0%, var(--webqx-white) 100%);
+    color: var(--webqx-gray-800);
+    line-height: 1.6;
+}
+
+/* Header Customization */
+.webqx-header {
+    background: linear-gradient(135deg, var(--webqx-primary-dark) 0%, var(--webqx-primary) 50%, var(--webqx-primary-light) 100%);
+    color: var(--webqx-white);
+    padding: var(--webqx-spacing-4) var(--webqx-spacing-6);
+    box-shadow: var(--webqx-shadow-lg);
+    border-bottom: 3px solid var(--webqx-accent);
+}
+
+.webqx-logo {
+    font-size: var(--webqx-font-size-2xl);
+    font-weight: bold;
+    background: linear-gradient(45deg, var(--webqx-accent), var(--webqx-white));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Navigation Styling */
+.webqx-nav {
+    background: var(--webqx-white);
+    border-bottom: 1px solid var(--webqx-gray-200);
+    box-shadow: var(--webqx-shadow-sm);
+}
+
+.webqx-nav-item {
+    color: var(--webqx-gray-600);
+    padding: var(--webqx-spacing-3) var(--webqx-spacing-4);
+    border-radius: var(--webqx-radius-md);
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.webqx-nav-item:hover {
+    background: var(--webqx-primary);
+    color: var(--webqx-white);
+    transform: translateY(-2px);
+    box-shadow: var(--webqx-shadow-md);
+}
+
+.webqx-nav-item.active {
+    background: var(--webqx-primary-dark);
+    color: var(--webqx-white);
+}
+
+/* Button Styles */
+.webqx-btn {
+    padding: var(--webqx-spacing-3) var(--webqx-spacing-6);
+    border: none;
+    border-radius: var(--webqx-radius-md);
+    font-weight: 600;
+    font-size: var(--webqx-font-size-sm);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.webqx-btn-primary {
+    background: linear-gradient(45deg, var(--webqx-primary), var(--webqx-primary-light));
+    color: var(--webqx-white);
+}
+
+.webqx-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--webqx-shadow-lg);
+    background: linear-gradient(45deg, var(--webqx-primary-dark), var(--webqx-primary));
+}
+
+.webqx-btn-secondary {
+    background: var(--webqx-gray-100);
+    color: var(--webqx-gray-700);
+    border: 1px solid var(--webqx-gray-300);
+}
+
+.webqx-btn-secondary:hover {
+    background: var(--webqx-gray-200);
+    transform: translateY(-2px);
+    box-shadow: var(--webqx-shadow-md);
+}
+
+.webqx-btn-success {
+    background: linear-gradient(45deg, var(--webqx-success), #059669);
+    color: var(--webqx-white);
+}
+
+.webqx-btn-warning {
+    background: linear-gradient(45deg, var(--webqx-warning), #d97706);
+    color: var(--webqx-white);
+}
+
+.webqx-btn-error {
+    background: linear-gradient(45deg, var(--webqx-error), #dc2626);
+    color: var(--webqx-white);
+}
+
+/* Card Styles */
+.webqx-card {
+    background: var(--webqx-white);
+    border-radius: var(--webqx-radius-xl);
+    box-shadow: var(--webqx-shadow-base);
+    border: 1px solid var(--webqx-gray-200);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.webqx-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--webqx-shadow-xl);
+}
+
+.webqx-card-header {
+    background: linear-gradient(135deg, var(--webqx-gray-50), var(--webqx-white));
+    padding: var(--webqx-spacing-6);
+    border-bottom: 1px solid var(--webqx-gray-200);
+}
+
+.webqx-card-body {
+    padding: var(--webqx-spacing-6);
+}
+
+.webqx-card-footer {
+    background: var(--webqx-gray-50);
+    padding: var(--webqx-spacing-4) var(--webqx-spacing-6);
+    border-top: 1px solid var(--webqx-gray-200);
+}
+
+/* Form Styles */
+.webqx-form-group {
+    margin-bottom: var(--webqx-spacing-6);
+}
+
+.webqx-label {
+    display: block;
+    font-weight: 600;
+    color: var(--webqx-gray-700);
+    margin-bottom: var(--webqx-spacing-2);
+    font-size: var(--webqx-font-size-sm);
+}
+
+.webqx-input {
+    width: 100%;
+    padding: var(--webqx-spacing-3) var(--webqx-spacing-4);
+    border: 2px solid var(--webqx-gray-300);
+    border-radius: var(--webqx-radius-md);
+    font-size: var(--webqx-font-size-base);
+    transition: all 0.3s ease;
+    background: var(--webqx-white);
+}
+
+.webqx-input:focus {
+    outline: none;
+    border-color: var(--webqx-primary);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+    transform: translateY(-1px);
+}
+
+.webqx-select {
+    width: 100%;
+    padding: var(--webqx-spacing-3) var(--webqx-spacing-4);
+    border: 2px solid var(--webqx-gray-300);
+    border-radius: var(--webqx-radius-md);
+    background: var(--webqx-white);
+    font-size: var(--webqx-font-size-base);
+    cursor: pointer;
+}
+
+/* Table Styles */
+.webqx-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--webqx-white);
+    border-radius: var(--webqx-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--webqx-shadow-base);
+}
+
+.webqx-table th {
+    background: linear-gradient(135deg, var(--webqx-primary-dark), var(--webqx-primary));
+    color: var(--webqx-white);
+    padding: var(--webqx-spacing-4) var(--webqx-spacing-6);
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: var(--webqx-font-size-sm);
+}
+
+.webqx-table td {
+    padding: var(--webqx-spacing-4) var(--webqx-spacing-6);
+    border-bottom: 1px solid var(--webqx-gray-200);
+}
+
+.webqx-table tbody tr:hover {
+    background: var(--webqx-gray-50);
+}
+
+/* Alert Styles */
+.webqx-alert {
+    padding: var(--webqx-spacing-4) var(--webqx-spacing-6);
+    border-radius: var(--webqx-radius-md);
+    margin-bottom: var(--webqx-spacing-4);
+    border-left: 4px solid;
+}
+
+.webqx-alert-success {
+    background: rgba(16, 185, 129, 0.1);
+    border-color: var(--webqx-success);
+    color: #065f46;
+}
+
+.webqx-alert-warning {
+    background: rgba(245, 158, 11, 0.1);
+    border-color: var(--webqx-warning);
+    color: #92400e;
+}
+
+.webqx-alert-error {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: var(--webqx-error);
+    color: #991b1b;
+}
+
+.webqx-alert-info {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: var(--webqx-info);
+    color: #1e40af;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .webqx-header {
+        padding: var(--webqx-spacing-3) var(--webqx-spacing-4);
+    }
+    
+    .webqx-card-body {
+        padding: var(--webqx-spacing-4);
+    }
+    
+    .webqx-btn {
+        padding: var(--webqx-spacing-2) var(--webqx-spacing-4);
+        font-size: var(--webqx-font-size-xs);
+    }
+}
+
+/* Custom WebQX Components */
+.webqx-dashboard-widget {
+    background: var(--webqx-white);
+    border-radius: var(--webqx-radius-xl);
+    padding: var(--webqx-spacing-6);
+    box-shadow: var(--webqx-shadow-md);
+    border: 1px solid var(--webqx-gray-200);
+    transition: all 0.3s ease;
+}
+
+.webqx-dashboard-widget:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--webqx-shadow-lg);
+}
+
+.webqx-patient-card {
+    background: linear-gradient(135deg, var(--webqx-white), var(--webqx-gray-50));
+    border: 2px solid var(--webqx-gray-200);
+    border-radius: var(--webqx-radius-xl);
+    padding: var(--webqx-spacing-6);
+    transition: all 0.3s ease;
+}
+
+.webqx-patient-card:hover {
+    border-color: var(--webqx-primary);
+    box-shadow: var(--webqx-shadow-lg);
+}
+
+.webqx-status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: var(--webqx-radius-full);
+    margin-right: var(--webqx-spacing-2);
+}
+
+.webqx-status-active {
+    background: var(--webqx-success);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
+.webqx-status-inactive {
+    background: var(--webqx-gray-400);
+}
+
+.webqx-status-warning {
+    background: var(--webqx-warning);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.webqx-status-error {
+    background: var(--webqx-error);
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}

@@ -1,0 +1,21 @@
+{
+  "name": "webqx-emr-server",
+  "version": "1.0.0",
+  "description": "WebQX™ EMR Development Server - Node.js Edition",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js --dev",
+    "install-node": "powershell -Command \"Invoke-WebRequest -Uri 'https://nodejs.org/dist/v20.17.0/node-v20.17.0-win-x64.zip' -OutFile 'node.zip'; Expand-Archive -Path 'node.zip' -DestinationPath '.' -Force; Move-Item 'node-v20.17.0-win-x64' 'nodejs'; Remove-Item 'node.zip'\"",
+    "launch": "nodejs\\node.exe server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "morgan": "^1.10.0"
+  },
+  "keywords": ["healthcare", "emr", "openemr", "webqx", "medical"],
+  "author": "WebQX EMR Team",
+  "license": "MIT"
+}

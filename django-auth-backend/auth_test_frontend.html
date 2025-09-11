@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebQX Authentication Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1.1em;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .user-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .user-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-email {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-type {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .mfa-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .mfa-enabled {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .mfa-disabled {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .qr-code {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .qr-code img {
+            max-width: 300px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .backup-codes {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .backup-codes h4 {
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .codes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .backup-code {
+            background: white;
+            padding: 10px;
+            text-align: center;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            border: 1px solid #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 WebQX Authentication Test</h1>
+            <div class="subtitle">Secure Authentication System for Millions of Users</div>
+        </div>
+
+        <div class="content">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('register')">Register</button>
+                <button class="tab" onclick="showTab('login')">Login</button>
+                <button class="tab" onclick="showTab('profile')">Profile</button>
+                <button class="tab" onclick="showTab('mfa')">MFA Setup</button>
+                <button class="tab" onclick="showTab('dashboard')">Dashboard</button>
+            </div>
+
+            <!-- Registration Tab -->
+            <div id="register" class="tab-content active">
+                <h2>👥 User Registration</h2>
+                <p style="margin-bottom: 20px; color: #666;">Create a new account in the WebQX Healthcare system</p>
+                
+                <div class="two-column">
+                    <div>
+                        <form id="registerForm">
+                            <div class="form-group">
+                                <label for="reg_email">Email Address</label>
+                                <input type="email" id="reg_email" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reg_password">Password</label>
+                                <input type="password" id="reg_password" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reg_first_name">First Name</label>
+                                <input type="text" id="reg_first_name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reg_last_name">Last Name</label>
+                                <input type="text" id="reg_last_name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reg_user_type">User Type</label>
+                                <select id="reg_user_type" required>
+                                    <option value="">Select user type</option>
+                                    <option value="PATIENT">Patient</option>
+                                    <option value="PROVIDER">Healthcare Provider</option>
+                                    <option value="PHARMACY">Pharmacy</option>
+                                    <option value="ADMIN">Administrator</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reg_phone">Phone Number (Optional)</label>
+                                <input type="tel" id="reg_phone">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="reg_country">Country</label>
+                                <input type="text" id="reg_country" placeholder="e.g., US, CA, UK">
+                            </div>
+                            
+                            <button type="submit" class="btn">Create Account</button>
+                        </form>
+                    </div>
+                    <div>
+                        <h3>Password Requirements:</h3>
+                        <ul style="color: #666; line-height: 1.6;">
+                            <li>At least 8 characters long</li>
+                            <li>One uppercase letter</li>
+                            <li>One lowercase letter</li>
+                            <li>One number</li>
+                            <li>One special character</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div id="registerResult" class="result hidden"></div>
+            </div>
+
+            <!-- Login Tab -->
+            <div id="login" class="tab-content">
+                <h2>🔑 User Login</h2>
+                <p style="margin-bottom: 20px; color: #666;">Sign in to your WebQX Healthcare account</p>
+                
+                <div class="two-column">
+                    <div>
+                        <form id="loginForm">
+                            <div class="form-group">
+                                <label for="login_email">Email Address</label>
+                                <input type="email" id="login_email" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="login_password">Password</label>
+                                <input type="password" id="login_password" required>
+                            </div>
+                            
+                            <button type="submit" class="btn">Sign In</button>
+                        </form>
+                    </div>
+                    <div>
+                        <h3>Demo Accounts:</h3>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
+                            <p><strong>Admin:</strong> admin@webqx.healthcare<br>
+                            Password: WebQxAdmin2024!</p>
+                            
+                            <p><strong>Doctor:</strong> doctor@webqx.healthcare<br>
+                            Password: DoctorDemo2024!</p>
+                            
+                            <p><strong>Patient:</strong> patient@webqx.healthcare<br>
+                            Password: PatientDemo2024!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="loginResult" class="result hidden"></div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="profile" class="tab-content">
+                <h2>👤 User Profile</h2>
+                <p style="margin-bottom: 20px; color: #666;">View your account information and active sessions</p>
+                
+                <button onclick="getProfile()" class="btn">Load Profile</button>
+                <button onclick="getSessions()" class="btn btn-secondary">View Sessions</button>
+                
+                <div id="profileResult" class="result hidden"></div>
+            </div>
+
+            <!-- MFA Tab -->
+            <div id="mfa" class="tab-content">
+                <h2>🛡️ Multi-Factor Authentication</h2>
+                <p style="margin-bottom: 20px; color: #666;">Secure your account with two-factor authentication</p>
+                
+                <button onclick="setupMFA()" class="btn">Setup MFA</button>
+                
+                <div id="mfaSetup" class="hidden">
+                    <h3>Scan QR Code with Authenticator App:</h3>
+                    <div id="qrCode" class="qr-code"></div>
+                    
+                    <div class="form-group">
+                        <label for="mfa_token">Enter verification code from your app:</label>
+                        <input type="text" id="mfa_token" placeholder="6-digit code" maxlength="6">
+                    </div>
+                    
+                    <button onclick="verifyMFA()" class="btn">Verify & Enable MFA</button>
+                </div>
+                
+                <div id="mfaResult" class="result hidden"></div>
+            </div>
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content">
+                <h2>📊 Authentication Dashboard</h2>
+                <p style="margin-bottom: 20px; color: #666;">System statistics and user management</p>
+                
+                <button onclick="loadDashboard()" class="btn">Load Dashboard</button>
+                
+                <div id="dashboardContent" class="hidden">
+                    <div id="statsGrid" class="stats-grid"></div>
+                    
+                    <h3>Recent Users:</h3>
+                    <div id="userList" class="user-list"></div>
+                </div>
+                
+                <div id="dashboardResult" class="result hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+        let authToken = localStorage.getItem('authToken');
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content and mark tab as active
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+            element.classList.remove('hidden');
+        }
+
+        function hideResult(elementId) {
+            document.getElementById(elementId).classList.add('hidden');
+        }
+
+        // Registration
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                email: document.getElementById('reg_email').value,
+                password: document.getElementById('reg_password').value,
+                first_name: document.getElementById('reg_first_name').value,
+                last_name: document.getElementById('reg_last_name').value,
+                user_type: document.getElementById('reg_user_type').value,
+                phone_number: document.getElementById('reg_phone').value,
+                country: document.getElementById('reg_country').value
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/register/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    showResult('registerResult', JSON.stringify(data, null, 2), 'success');
+                    document.getElementById('registerForm').reset();
+                } else {
+                    showResult('registerResult', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                showResult('registerResult', `Error: ${error.message}`, 'error');
+            }
+        });
+
+        // Login
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                email: document.getElementById('login_email').value,
+                password: document.getElementById('login_password').value
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/login/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.token;
+                    localStorage.setItem('authToken', authToken);
+                    showResult('loginResult', JSON.stringify(data, null, 2), 'success');
+                    document.getElementById('loginForm').reset();
+                } else {
+                    showResult('loginResult', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                showResult('loginResult', `Error: ${error.message}`, 'error');
+            }
+        });
+
+        // Get Profile
+        async function getProfile() {
+            if (!authToken) {
+                showResult('profileResult', 'Please login first', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/profile/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('profileResult', JSON.stringify(data, null, 2), 'success');
+                } else {
+                    showResult('profileResult', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                showResult('profileResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Get Sessions
+        async function getSessions() {
+            if (!authToken) {
+                showResult('profileResult', 'Please login first', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/sessions/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('profileResult', JSON.stringify(data, null, 2), 'success');
+                } else {
+                    showResult('profileResult', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                showResult('profileResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Setup MFA
+        async function setupMFA() {
+            if (!authToken) {
+                showResult('mfaResult', 'Please login first', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/mfa/setup/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.setup_complete) {
+                        showResult('mfaResult', 'MFA is already enabled for your account', 'info');
+                    } else {
+                        document.getElementById('qrCode').innerHTML = `<img src="${data.qr_code}" alt="QR Code">`;
+                        document.getElementById('mfaSetup').classList.remove('hidden');
+                        showResult('mfaResult', 'Scan the QR code with your authenticator app, then enter the verification code', 'info');
+                    }
+                } else {
+                    showResult('mfaResult', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                showResult('mfaResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Verify MFA
+        async function verifyMFA() {
+            const token = document.getElementById('mfa_token').value;
+            
+            if (!token || token.length !== 6) {
+                showResult('mfaResult', 'Please enter a 6-digit verification code', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/mfa/setup/`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('mfaSetup').classList.add('hidden');
+                    
+                    let resultMessage = JSON.stringify(data, null, 2);
+                    
+                    if (data.backup_codes) {
+                        resultMessage += '\n\n🔑 BACKUP CODES (Save these safely!):\n';
+                        data.backup_codes.forEach(code => {
+                            resultMessage += `${code}\n`;
+                        });
+                    }
+                    
+                    showResult('mfaResult', resultMessage, 'success');
+                    document.getElementById('mfa_token').value = '';
+                } else {
+                    showResult('mfaResult', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                showResult('mfaResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Load Dashboard
+        async function loadDashboard() {
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/auth/dashboard/`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Update stats
+                    const statsGrid = document.getElementById('statsGrid');
+                    statsGrid.innerHTML = `
+                        <div class="stat-card">
+                            <div class="stat-value">${data.stats.total_users}</div>
+                            <div class="stat-label">Total Users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${data.stats.active_sessions}</div>
+                            <div class="stat-label">Active Sessions</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${data.stats.mfa_enabled_users}</div>
+                            <div class="stat-label">MFA Enabled</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${data.stats.recent_registrations}</div>
+                            <div class="stat-label">Recent Registrations</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${data.stats.mfa_adoption_rate}</div>
+                            <div class="stat-label">MFA Adoption Rate</div>
+                        </div>
+                    `;
+                    
+                    // Update user list
+                    const userList = document.getElementById('userList');
+                    userList.innerHTML = data.recent_users.map(user => `
+                        <div class="user-item">
+                            <div class="user-info">
+                                <div class="user-email">${user.email}</div>
+                                <div class="user-type">${user.user_type} • ${new Date(user.created_at).toLocaleDateString()}</div>
+                            </div>
+                            <div class="mfa-status ${user.mfa_enabled ? 'mfa-enabled' : 'mfa-disabled'}">
+                                ${user.mfa_enabled ? 'MFA Enabled' : 'MFA Disabled'}
+                            </div>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('dashboardContent').classList.remove('hidden');
+                    hideResult('dashboardResult');
+                } else {
+                    showResult('dashboardResult', JSON.stringify(data, null, 2), 'error');
+                }
+            } catch (error) {
+                showResult('dashboardResult', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-load dashboard on page load
+        window.addEventListener('load', () => {
+            loadDashboard();
+        });
+    </script>
+</body>
+</html>

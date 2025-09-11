@@ -1,0 +1,44 @@
+{
+  "name": "webqx-django-auth",
+  "version": "1.0.0",
+  "description": "Django-style Authentication Server for WebQX Healthcare Platform",
+  "main": "auth-server.js",
+  "scripts": {
+    "start": "node auth-server.js",
+    "dev": "nodemon auth-server.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "express-session": "^1.18.2",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "passport": "^0.7.0",
+    "passport-apple": "^2.0.2",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-microsoft": "^2.1.0",
+    "qrcode": "^1.5.3",
+    "speakeasy": "^2.0.0",
+    "uuid": "^9.0.1",
+    "validator": "^13.11.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "healthcare",
+    "authentication",
+    "django",
+    "jwt",
+    "mfa",
+    "hipaa",
+    "gdpr",
+    "security"
+  ],
+  "author": "WebQX Healthcare Team",
+  "license": "MIT"
+}

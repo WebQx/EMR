@@ -263,9 +263,9 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏥 WebQX™ Healthcare Platform</h1>
-            <p>Complete Healthcare Ecosystem - Interactive Demo Hub</p>
-            <p style="font-size: 1rem; opacity: 0.8;">Explore all modules, portals, and integrations</p>
+            <h1>� WebQX™ Global Healthcare Platform</h1>
+            <p>Complete 24/7 Global Healthcare Ecosystem - Interactive Demo Hub</p>
+            <p style="font-size: 1rem; opacity: 0.8;">🚨 Emergency Care • 📅 Global Scheduling • 🎥 Telehealth • 💚 Crisis Support - Available 24/7 Worldwide</p>
         </div>
         
         <div class="auth-section" id="auth-section">
@@ -310,6 +310,10 @@
                 <a href="whisper-demo.html" class="quick-btn">
                     <span class="icon">🎤</span>
                     AI Whisper Service
+                </a>
+                <a href="telehealth-24-7-global.html" class="quick-btn">
+                    <span class="icon">🌍</span>
+                    24/7 Global Healthcare
                 </a>
                 <a href="demo-lab-results-viewer.html" class="quick-btn">
                     <span class="icon">🧪</span>
@@ -436,6 +440,16 @@
                     <div class="category-title">Telehealth & Communication</div>
                 </div>
                 <ul class="demo-list">
+                    <li class="demo-item">
+                        <a href="telehealth-24-7-global.html" class="demo-link">
+                            <span class="icon">🌍</span>
+                            <div class="demo-details">
+                                <div class="demo-name">24/7 Global Healthcare Platform</div>
+                                <div class="demo-description">Complete 24/7 global telehealth with emergency consultations, crisis support, and worldwide provider network</div>
+                            </div>
+                            <span class="status-badge status-live">Live</span>
+                        </a>
+                    </li>
                     <li class="demo-item">
                         <a href="telehealth-realtime-demo.html" class="demo-link">
                             <span class="icon">🎥</span>
@@ -592,6 +606,19 @@
 
     <script src="api-mock.js"></script>
     <script>
+        // Register Service Worker for 24/7 offline functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('✅ WebQx Service Worker registered:', registration);
+                    })
+                    .catch((error) => {
+                        console.log('❌ Service Worker registration failed:', error);
+                    });
+            });
+        }
+
         // Initialize demo environment
         document.addEventListener('DOMContentLoaded', function() {
             setupDemoEnvironment();
