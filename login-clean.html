@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - WebQx Healthcare Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            padding: 3rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c5282;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #4a5568;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .role-selector {
+            display: flex;
+            margin-bottom: 2rem;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        .role-btn {
+            flex: 1;
+            padding: 0.75rem;
+            background: #f7fafc;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .role-btn.active {
+            background: #4299e1;
+            color: white;
+        }
+
+        .role-btn:hover {
+            background: #e2e8f0;
+        }
+
+        .role-btn.active:hover {
+            background: #3182ce;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background: #48bb78;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-bottom: 1rem;
+        }
+
+        .login-btn:hover {
+            background: #38a169;
+        }
+
+        .divider {
+            margin: 1.5rem 0;
+            text-align: center;
+            position: relative;
+            color: #a0aec0;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 1rem;
+        }
+
+        .social-login {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .social-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .social-btn:hover {
+            background: #f7fafc;
+            border-color: #cbd5e0;
+        }
+
+        .demo-section {
+            background: #f7fafc;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1.5rem;
+        }
+
+        .demo-section h4 {
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .demo-accounts {
+            display: grid;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .demo-account {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.25rem 0;
+            color: #4a5568;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 1rem;
+            color: #4299e1;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #48bb78;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">WebQx™</div>
+        <p class="subtitle">
+            <span class="status-indicator"></span>
+            Global Healthcare Platform Access
+        </p>
+
+        <!-- Role Selector -->
+        <div class="role-selector">
+            <button class="role-btn active" onclick="selectRole('patient')">Patient</button>
+            <button class="role-btn" onclick="selectRole('provider')">Provider</button>
+            <button class="role-btn" onclick="selectRole('admin')">Admin</button>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">Username or Email</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+
+            <div class="form-group" id="facilityGroup" style="display: none;">
+                <label for="facility">Healthcare Facility</label>
+                <select id="facility" name="facility">
+                    <option value="">Select Facility</option>
+                    <option value="general">General Hospital</option>
+                    <option value="clinic">Community Clinic</option>
+                    <option value="specialty">Specialty Practice</option>
+                </select>
+            </div>
+
+            <button type="submit" class="login-btn">Sign In</button>
+        </form>
+
+        <!-- Social Login -->
+        <div class="divider">
+            <span>or continue with</span>
+        </div>
+
+        <div class="social-login">
+            <button class="social-btn" onclick="socialLogin('google')">Google</button>
+            <button class="social-btn" onclick="socialLogin('microsoft')">Microsoft</button>
+            <button class="social-btn" onclick="socialLogin('apple')">Apple</button>
+        </div>
+
+        <!-- Demo Accounts -->
+        <div class="demo-section">
+            <h4>Try Demo Accounts (No Registration Required)</h4>
+            <div class="demo-accounts">
+                <div class="demo-account">
+                    <span>Patient Demo:</span>
+                    <code>demo/patient123</code>
+                </div>
+                <div class="demo-account">
+                    <span>Provider Demo:</span>
+                    <code>doctor/provider123</code>
+                </div>
+                <div class="demo-account">
+                    <span>Admin Demo:</span>
+                    <code>admin/admin123</code>
+                </div>
+            </div>
+        </div>
+
+        <a href="index-clean.html" class="back-link">← Back to Homepage</a>
+    </div>
+
+    <script>
+        function selectRole(role) {
+            // Update active button
+            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Show/hide facility selector for providers
+            const facilityGroup = document.getElementById('facilityGroup');
+            if (role === 'provider' || role === 'admin') {
+                facilityGroup.style.display = 'block';
+            } else {
+                facilityGroup.style.display = 'none';
+            }
+
+            // Update demo accounts based on role
+            updateDemoAccounts(role);
+        }
+
+        function updateDemoAccounts(role) {
+            const demoAccounts = document.querySelector('.demo-accounts');
+            const accounts = {
+                patient: [
+                    { label: 'Patient Demo:', cred: 'demo/patient123' },
+                    { label: 'Emergency Access:', cred: 'emergency/demo123' }
+                ],
+                provider: [
+                    { label: 'Doctor Demo:', cred: 'doctor/provider123' },
+                    { label: 'Nurse Demo:', cred: 'nurse/nurse123' }
+                ],
+                admin: [
+                    { label: 'Admin Demo:', cred: 'admin/admin123' },
+                    { label: 'System Demo:', cred: 'system/system123' }
+                ]
+            };
+
+            demoAccounts.innerHTML = accounts[role].map(acc => 
+                `<div class="demo-account">
+                    <span>${acc.label}</span>
+                    <code>${acc.cred}</code>
+                </div>`
+            ).join('');
+        }
+
+        function socialLogin(provider) {
+            alert(`${provider} social login integration would redirect to OAuth2 flow`);
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const activeRole = document.querySelector('.role-btn.active').textContent.toLowerCase();
+            
+            // Demo login logic
+            if (username === 'demo' && password === 'patient123') {
+                window.location.href = 'patient-portal/';
+            } else if (username === 'doctor' && password === 'provider123') {
+                window.location.href = 'provider/';
+            } else if (username === 'admin' && password === 'admin123') {
+                window.location.href = 'admin-console/';
+            } else {
+                alert('Please use demo credentials or register for a new account');
+            }
+        });
+
+        // Initialize with patient role
+        updateDemoAccounts('patient');
+    </script>
+</body>
+</html>
