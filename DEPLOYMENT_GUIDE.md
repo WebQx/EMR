@@ -1,20 +1,20 @@
-# 🚀 GitHub Pages Deployment Guide - WebQx Global Healthcare Platform
+# GitHub Pages Deployment Guide - WebQx Global Healthcare Platform
 
-## 🎯 **3 User-Friendly Deployment Methods**
+## **3 User-Friendly Deployment Methods**
 
-### **Method 1: Super Quick (1 Command) ⚡**
+### **Method 1: Super Quick (1 Command)**
 ```bash
 # One command to deploy everything
 npm run deploy:full
 ```
 
-### **Method 2: PowerShell Script (Windows) 🪟**
+### **Method 2: PowerShell Script (Windows)**
 ```powershell
 # Run the automated deployment script
 .\deploy.ps1
 ```
 
-### **Method 3: Manual Steps (5 Minutes) 👆**
+### **Method 3: Manual Steps (5 Minutes)**
 
 #### **Step 1: Enable GitHub Pages (One-time setup)**
 1. Go to your repository on GitHub: `https://github.com/WebQx/webqx`
@@ -31,7 +31,7 @@ npm run deploy:full
 git add .
 
 # Commit with a message
-git commit -m "🚀 Deploy WebQx Global Healthcare Platform"
+git commit -m "Deploy WebQx Global Healthcare Platform"
 
 # Push to GitHub (auto-deploys to Pages)
 git push origin main
@@ -44,16 +44,16 @@ Your platform will be live at:
 
 ---
 
-## 🌟 **Automatic Deployment (BEST Method)**
+## **Automatic Deployment (BEST Method)**
 
 ### **GitHub Actions (Zero Configuration)**
 
 Your repository now includes `.github/workflows/deploy.yml` which:
-- ✅ Automatically deploys on every push to `main`
-- ✅ Builds production CSS
-- ✅ Optimizes pages
-- ✅ Deploys to GitHub Pages
-- ✅ Shows deployment status
+- Automatically deploys on every push to `main`
+- Builds production CSS
+- Optimizes pages
+- Deploys to GitHub Pages
+- Shows deployment status
 
 **How it works:**
 1. You push code: `git push origin main`
@@ -62,42 +62,42 @@ Your repository now includes `.github/workflows/deploy.yml` which:
 
 ---
 
-## 📊 **Deployment URLs (Your Live Platform)**
+## **Deployment URLs (Your Live Platform)**
 
 Once deployed, your **WebQx Global Healthcare Platform** will be accessible at:
 
 ```
-🌍 Main Platform Hub:
+Main Platform Hub:
 https://webqx.github.io/webqx/
 
-🚨 24/7 Emergency Healthcare:
+24/7 Emergency Healthcare:
 https://webqx.github.io/webqx/telehealth-24-7-global.html
 
-👥 Patient Portal:
+Patient Portal:
 https://webqx.github.io/webqx/patient-portal/
 
-👨‍⚕️ Provider Portal:
+Provider Portal:
 https://webqx.github.io/webqx/provider/
 
-🎥 Telehealth Suite:
+Telehealth Suite:
 https://webqx.github.io/webqx/telehealth-demo.html
 
-🤖 AI Services:
+AI Services:
 https://webqx.github.io/webqx/whisper-demo.html
 
-📅 FHIR Appointments:
+FHIR Appointments:
 https://webqx.github.io/webqx/demo-fhir-r4-appointment-booking.html
 
-🧪 Lab Results:
+Lab Results:
 https://webqx.github.io/webqx/demo-lab-results-viewer.html
 
-💊 Pharmacy Locator:
+Pharmacy Locator:
 https://webqx.github.io/webqx/demo/PharmacyLocator-demo.html
 ```
 
 ---
 
-## 🔧 **Troubleshooting**
+## **Troubleshooting**
 
 ### **Common Issues & Solutions:**
 
@@ -123,31 +123,31 @@ https://webqx.github.io/webqx/demo/PharmacyLocator-demo.html
 
 ---
 
-## 📱 **Mobile & PWA Features**
+## **Mobile & PWA Features**
 
 Your platform automatically includes:
-- ✅ **Progressive Web App** (PWA) capabilities
-- ✅ **Offline functionality** via Service Worker
-- ✅ **Mobile-responsive** design
-- ✅ **Push notifications** (when user grants permission)
-- ✅ **Install prompt** (Add to Home Screen)
+- **Progressive Web App** (PWA) capabilities
+- **Offline functionality** via Service Worker
+- **Mobile-responsive** design
+- **Push notifications** (when user grants permission)
+- **Install prompt** (Add to Home Screen)
 
 ---
 
-## 🌍 **Global Performance**
+## **Global Performance**
 
 GitHub Pages provides:
-- ✅ **Global CDN** (fast worldwide access)
-- ✅ **99.9% uptime** SLA
-- ✅ **HTTPS by default**
-- ✅ **DDoS protection**
-- ✅ **Automatic compression**
+- **Global CDN** (fast worldwide access)
+- **99.9% uptime** SLA
+- **HTTPS by default**
+- **DDoS protection**
+- **Automatic compression**
 
 Your **24/7 global healthcare platform** will be fast and accessible from anywhere in the world!
 
 ---
 
-## 🎯 **Quick Commands Reference**
+## **Quick Commands Reference**
 
 ```bash
 # Quick deploy (with build)
@@ -171,15 +171,15 @@ git status
 
 ---
 
-## 🏆 **Success! Your Platform is Live**
+## **Success! Your Platform is Live**
 
 Once deployed, you'll have:
-- 🌍 **Global 24/7 healthcare platform**
-- 📱 **Mobile PWA experience**
-- 🚨 **Emergency consultation system**
-- 👥 **Complete patient/provider portals**
-- 🤖 **AI-powered services**
-- 🔒 **Enterprise-grade security**
-- 📊 **Real-time analytics**
+- **Global 24/7 healthcare platform**
+- **Mobile PWA experience**
+- **Emergency consultation system**
+- **Complete patient/provider portals**
+- **AI-powered services**
+- **Enterprise-grade security**
+- **Real-time analytics**
 
-**Your healthcare platform can now serve millions of users worldwide!** 🎉
+**Your healthcare platform can now serve millions of users worldwide!**

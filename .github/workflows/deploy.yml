@@ -1,4 +1,4 @@
-name: 🚀 Deploy WebQx Global Healthcare Platform
+name: Deploy WebQx Global Healthcare Platform
 
 on:
   push:
@@ -20,30 +20,30 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🔧 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
 
-      - name: 📦 Install Dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: 🏗️ Build CSS (Production)
+      - name: Build CSS (Production)
         run: npm run build:css:prod
         continue-on-error: true
 
-      - name: 🏗️ Build Pages
+      - name: Build Pages
         run: npm run build:pages
         continue-on-error: true
 
-      - name: 📄 Setup Pages
+      - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: 📦 Upload Pages Artifact
+      - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: '.'
@@ -56,12 +56,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: 🚀 Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: ✅ Deployment Success
+      - name: Deployment Success
         run: |
-          echo "🎉 WebQx Global Healthcare Platform deployed successfully!"
-          echo "🌍 Live URL: ${{ steps.deployment.outputs.page_url }}"
-          echo "📱 24/7 Healthcare: ${{ steps.deployment.outputs.page_url }}telehealth-24-7-global.html"
+          echo "WebQx Global Healthcare Platform deployed successfully!"
+          echo "Live URL: ${{ steps.deployment.outputs.page_url }}"
+          echo "24/7 Healthcare: ${{ steps.deployment.outputs.page_url }}telehealth-24-7-global.html"

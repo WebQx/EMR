@@ -26,7 +26,7 @@
     "build:css:prod": "tailwindcss -i ./src/styles.css -o ./assets/webqx-styles.css --minify",
     "build:pages": "node scripts/build-pages.js",
     "deploy:pages": "npm run build:css:prod && npm run build:pages",
-    "deploy:quick": "git add . && git commit -m \"🚀 Deploy WebQx Global Healthcare Platform\" && git push origin main",
+    "deploy:quick": "git add . && git commit -m \"Deploy WebQx Global Healthcare Platform\" && git push origin main",
     "deploy:full": "npm run deploy:pages && npm run deploy:quick"
   },
   "keywords": [
