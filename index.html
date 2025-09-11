@@ -484,32 +484,33 @@
             }
         }
         
-        // Start backend server
+        // Start WebQx server
         async function startBackend() {
             const startButton = document.getElementById('startBackend');
             const statusText = document.getElementById('statusText');
             
             startButton.textContent = 'Starting...';
             startButton.disabled = true;
+            statusText.textContent = 'WebQx Server: Starting up...';
             
             try {
-                // Try to wake up the server
-                const backendUrl = window.location.hostname.includes('github.io') ? 
-                    'http://192.168.173.251:3001' : 'http://localhost:3001';
-                
-                await fetch(`${backendUrl}/api/wake`, { method: 'POST' });
-                
-                statusText.textContent = 'WebQx Server: Starting up...';
-                
-                // Wait and recheck
-                setTimeout(() => {
-                    checkBackendStatus();
-                    startButton.textContent = 'Start WebQx Server';
-                    startButton.disabled = false;
-                }, 3000);
-                
+                // For GitHub Pages, show instructions
+                if (window.location.hostname.includes('github.io')) {
+                    alert('To start WebQx Server locally:\n\n1. Open terminal in project folder\n2. Run: node server.js\n3. Server will start on port 3001');
+                    statusText.textContent = 'WebQx Server: Please start locally (node server.js)';
+                } else {
+                    // For local development, try to start server
+                    const response = await fetch('/start-server', { method: 'POST' });
+                    if (response.ok) {
+                        statusText.textContent = 'WebQx Server: Starting...';
+                        setTimeout(checkBackendStatus, 2000);
+                    } else {
+                        throw new Error('Failed to start');
+                    }
+                }
             } catch (error) {
-                statusText.textContent = 'WebQx Server: Offline (Run: node server.js)';
+                statusText.textContent = 'WebQx Server: Manual start required (node server.js)';
+            } finally {
                 startButton.textContent = 'Start WebQx Server';
                 startButton.disabled = false;
             }
