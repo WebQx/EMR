@@ -310,8 +310,8 @@
     <!-- Status Bar -->
     <div class="status-bar">
         <span class="status-indicator status-offline" id="backendStatus"></span>
-        <span id="statusText">Backend: Checking connection...</span>
-        <button id="startBackend" style="display: none; margin-left: 1rem; padding: 0.25rem 0.75rem; background: #48bb78; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Start Backend</button>
+        <span id="statusText">WebQx Server: Checking connection...</span>
+        <button id="startBackend" style="display: none; margin-left: 1rem; padding: 0.25rem 0.75rem; background: #48bb78; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Start WebQx Server</button>
     </div>
 
     <!-- Header -->
@@ -472,14 +472,14 @@
                 
                 if (response.ok) {
                     statusIndicator.className = 'status-indicator status-online';
-                    statusText.textContent = 'Backend: Connected ✓';
+                    statusText.textContent = 'WebQx Server: Connected ✓';
                     startButton.style.display = 'none';
                 } else {
-                    throw new Error('Backend unavailable');
+                    throw new Error('WebQx Server unavailable');
                 }
             } catch (error) {
                 statusIndicator.className = 'status-indicator status-offline';
-                statusText.textContent = 'Backend: Offline';
+                statusText.textContent = 'WebQx Server: Offline';
                 startButton.style.display = 'inline-block';
             }
         }
@@ -493,24 +493,24 @@
             startButton.disabled = true;
             
             try {
-                // Try to wake up the backend
+                // Try to wake up the server
                 const backendUrl = window.location.hostname.includes('github.io') ? 
                     'http://192.168.173.251:3001' : 'http://localhost:3001';
                 
                 await fetch(`${backendUrl}/api/wake`, { method: 'POST' });
                 
-                statusText.textContent = 'Backend: Starting up...';
+                statusText.textContent = 'WebQx Server: Starting up...';
                 
                 // Wait and recheck
                 setTimeout(() => {
                     checkBackendStatus();
-                    startButton.textContent = 'Start Backend';
+                    startButton.textContent = 'Start WebQx Server';
                     startButton.disabled = false;
                 }, 3000);
                 
             } catch (error) {
-                statusText.textContent = 'Backend: Failed to start (Run: node server.js)';
-                startButton.textContent = 'Start Backend';
+                statusText.textContent = 'WebQx Server: Offline (Run: node server.js)';
+                startButton.textContent = 'Start WebQx Server';
                 startButton.disabled = false;
             }
         }
