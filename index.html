@@ -265,7 +265,7 @@
         <div class="header">
             <h1>� WebQX™ Global Healthcare Platform</h1>
             <p>Complete 24/7 Global Healthcare Ecosystem - Interactive Demo Hub</p>
-            <p style="font-size: 1rem; opacity: 0.8;">🚨 Emergency Care • 📅 Global Scheduling • 🎥 Telehealth • 💚 Crisis Support - Available 24/7 Worldwide</p>
+            <p style="font-size: 1rem; opacity: 0.8;">Emergency Care • Global Scheduling • Telehealth • Crisis Support - Available 24/7 Worldwide</p>
         </div>
         
         <div class="auth-section" id="auth-section">
@@ -277,7 +277,7 @@
         </div>
 
         <div class="quick-access">
-            <h2>🚀 Quick Access - Popular Demos</h2>
+            <h2>Quick Access - Popular Demos</h2>
             <div class="quick-buttons">
                 <a href="auth/providers/login.html" class="quick-btn">
                     <span class="icon">🔐</span>
@@ -288,7 +288,7 @@
                     Patient Login
                 </a>
                 <a href="provider/" class="quick-btn">
-                    <span class="icon">👨‍⚕️</span>
+                    <span class="icon">MD</span>
                     Provider Portal
                 </a>
                 <a href="patient-portal/" class="quick-btn">
@@ -296,7 +296,7 @@
                     Patient Portal
                 </a>
                 <a href="telehealth-realtime-demo.html" class="quick-btn">
-                    <span class="icon">🎥</span>
+                    <span class="icon">TV</span>
                     Real-Time Telehealth
                 </a>
                 <a href="telehealth-demo.html" class="quick-btn">
@@ -304,19 +304,19 @@
                     Telehealth Demo
                 </a>
                 <a href="demo-fhir-r4-appointment-booking.html" class="quick-btn">
-                    <span class="icon">📅</span>
+                    <span class="icon">CAL</span>
                     FHIR Appointments
                 </a>
                 <a href="whisper-demo.html" class="quick-btn">
-                    <span class="icon">🎤</span>
+                    <span class="icon">AI</span>
                     AI Whisper Service
                 </a>
                 <a href="telehealth-24-7-global.html" class="quick-btn">
-                    <span class="icon">🌍</span>
+                    <span class="icon">24/7</span>
                     24/7 Global Healthcare
                 </a>
                 <a href="demo-lab-results-viewer.html" class="quick-btn">
-                    <span class="icon">🧪</span>
+                    <span class="icon">LAB</span>
                     Lab Results
                 </a>
             </div>
@@ -326,13 +326,13 @@
             <!-- Patient Portal Category -->
             <div class="demo-category">
                 <div class="category-header">
-                    <div class="category-icon">👥</div>
+                    <div class="category-icon">PT</div>
                     <div class="category-title">Patient Portal & Services</div>
                 </div>
                 <ul class="demo-list">
                     <li class="demo-item">
                         <a href="patient-portal/" class="demo-link">
-                            <span class="icon">🏥</span>
+                            <span class="icon">HOSP</span>
                             <div class="demo-details">
                                 <div class="demo-name">Patient Portal Dashboard</div>
                                 <div class="demo-description">Complete patient portal with appointment management, medical records, and telehealth access</div>
@@ -342,7 +342,7 @@
                     </li>
                     <li class="demo-item">
                         <a href="patient-portal/telehealth-session.html" class="demo-link">
-                            <span class="icon">🎥</span>
+                            <span class="icon">VIDEO</span>
                             <div class="demo-details">
                                 <div class="demo-name">Patient Telehealth Session</div>
                                 <div class="demo-description">Full telehealth experience with video, chat, and EHR integration</div>
@@ -352,7 +352,7 @@
                     </li>
                     <li class="demo-item">
                         <a href="demo-fhir-r4-appointment-booking.html" class="demo-link">
-                            <span class="icon">📅</span>
+                            <span class="icon">APPT</span>
                             <div class="demo-details">
                                 <div class="demo-name">FHIR R4 Appointment Booking</div>
                                 <div class="demo-description">Standards-compliant appointment scheduling system</div>
@@ -599,7 +599,7 @@
             <p style="font-size: 0.9rem; margin-top: 10px;">
                 🔗 <strong>GitHub:</strong> <a href="https://github.com/WebQx/webqx" style="color: white;">WebQx/webqx</a> | 
                 📚 <strong>Documentation:</strong> Available in /docs/ | 
-                🚀 <strong>Status:</strong> Demo Environment
+                <strong>Status:</strong> Demo Environment
             </p>
         </div>
     </div>
@@ -611,10 +611,10 @@
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
                     .then((registration) => {
-                        console.log('✅ WebQx Service Worker registered:', registration);
+                        console.log('SUCCESS: WebQx Service Worker registered:', registration);
                     })
                     .catch((error) => {
-                        console.log('❌ Service Worker registration failed:', error);
+                        console.log('ERROR: Service Worker registration failed:', error);
                     });
             });
         }
