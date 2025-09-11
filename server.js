@@ -114,6 +114,38 @@ app.use('/auth', authRoutes);
 // Serve static files
 app.use(express.static(path.join(__dirname, '.')));
 
+// Patient Portal API endpoints for module cards
+app.get('/api/patient/dashboard', (req, res) => {
+    res.json({
+        appointments: { count: 2, next: "Tomorrow 2:00 PM" },
+        prescriptions: { active: 3, ready: 1 },
+        messages: { unread: 1 },
+        healthScore: 98,
+        lastUpdated: new Date().toISOString()
+    });
+});
+
+app.get('/api/patient/appointments', (req, res) => {
+    res.json([
+        { id: 1, doctor: "Dr. Smith", date: "2025-01-12T14:00:00Z", type: "Follow-up" },
+        { id: 2, doctor: "Dr. Johnson", date: "2025-01-15T10:00:00Z", type: "Annual Checkup" }
+    ]);
+});
+
+app.get('/api/patient/prescriptions', (req, res) => {
+    res.json([
+        { id: 1, name: "Lisinopril 10mg", status: "Active", refills: 2 },
+        { id: 2, name: "Metformin 500mg", status: "Ready", refills: 1 },
+        { id: 3, name: "Atorvastatin 20mg", status: "Active", refills: 3 }
+    ]);
+});
+
+app.get('/api/patient/messages', (req, res) => {
+    res.json([
+        { id: 1, from: "Dr. Smith", subject: "Lab Results Available", unread: true, date: "2025-01-11" }
+    ]);
+});
+
 // Health check endpoint for Railway
 app.get('/health', (req, res) => {
     const healthData = { 

@@ -241,7 +241,7 @@
         <!-- Services Section -->
         <div class="services-section">
             <div class="services-row">
-                <div class="service-card" onclick="alert('Opening Appointments...')">
+                <div class="service-card" onclick="moduleAPI.openAppointments()">
                     <div class="service-header">
                         <div class="service-icon bg-blue">📅</div>
                         <div class="service-info">
@@ -256,7 +256,7 @@
                     </div>
                 </div>
 
-                <div class="service-card" onclick="alert('Opening Medical Records...')">
+                <div class="service-card" onclick="moduleAPI.openMedicalRecords()">
                     <div class="service-header">
                         <div class="service-icon bg-green">📋</div>
                         <div class="service-info">
@@ -272,7 +272,7 @@
                     </div>
                 </div>
 
-                <div class="service-card" onclick="alert('Opening Prescriptions...')">
+                <div class="service-card" onclick="moduleAPI.openPrescriptions()">
                     <div class="service-header">
                         <div class="service-icon bg-purple">💊</div>
                         <div class="service-info">
@@ -288,7 +288,7 @@
                     </div>
                 </div>
 
-                <div class="service-card" onclick="alert('Opening Telehealth...')">
+                <div class="service-card" onclick="moduleAPI.openTelehealth()">
                     <div class="service-header">
                         <div class="service-icon bg-red">🎥</div>
                         <div class="service-info">
@@ -320,7 +320,7 @@
                     </div>
                 </div>
 
-                <div class="service-card" onclick="alert('Opening Messages...')">
+                <div class="service-card" onclick="moduleAPI.openMessages()">
                     <div class="service-header">
                         <div class="service-icon bg-yellow">💬</div>
                         <div class="service-info">
@@ -364,5 +364,6 @@
             </div>
         </div>
     </div>
+    <script src="js/modules-api.js"></script>
 </body>
 </html>
