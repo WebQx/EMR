@@ -257,32 +257,39 @@
 
         <!-- Social Login -->
         <div class="divider">
-            <span>or continue with</span>
+            <span>or try social login (requires setup)</span>
         </div>
 
         <div class="social-login">
-            <button class="social-btn" onclick="socialLogin('google')">Google</button>
-            <button class="social-btn" onclick="socialLogin('microsoft')">Microsoft</button>
-            <button class="social-btn" onclick="socialLogin('apple')">Apple</button>
+            <button class="social-btn" onclick="socialLogin('google')" disabled style="opacity: 0.5; cursor: not-allowed;">Google (Setup Required)</button>
+            <button class="social-btn" onclick="socialLogin('microsoft')" disabled style="opacity: 0.5; cursor: not-allowed;">Microsoft (Setup Required)</button>
+            <button class="social-btn" onclick="socialLogin('apple')" disabled style="opacity: 0.5; cursor: not-allowed;">Apple (Coming Soon)</button>
         </div>
 
         <!-- Demo Accounts -->
         <div class="demo-section">
-            <h4>Demo Accounts Available (No Registration Required)</h4>
+            <h4>Demo Accounts - Full WebQx EMR Access</h4>
             <div class="demo-accounts">
                 <div class="demo-account">
-                    <span>Patient Access:</span>
-                    <code>demo / patient123</code>
+                    <span>Patient Portal:</span>
+                    <code>demo@patient.com / patient123</code>
                 </div>
                 <div class="demo-account">
-                    <span>Provider Access:</span>
-                    <code>doctor / provider123</code>
+                    <span>Provider Portal:</span>
+                    <code>doctor@webqx.com / provider123</code>
+                </div>
+                <div class="demo-account">
+                    <span>Physician Access:</span>
+                    <code>physician@webqx.com / demo123</code>
                 </div>
                 <div class="demo-account">
                     <span>Administrator:</span>
-                    <code>admin / admin123</code>
+                    <code>admin@webqx.com / admin123</code>
                 </div>
             </div>
+            <p style="font-size: 0.8rem; color: #4a5568; margin-top: 1rem; text-align: center;">
+                💡 Social login requires OAuth2 credentials. Use demo accounts above for immediate access.
+            </p>
         </div>
 
         <a href="index-clean.html" class="back-link">← Back to Homepage</a>
@@ -310,16 +317,16 @@
             const demoAccounts = document.querySelector('.demo-accounts');
             const accounts = {
                 patient: [
-                    { label: 'Patient Access:', cred: 'demo / patient123' },
-                    { label: 'Physician Access:', cred: 'physician / demo123' }
+                    { label: 'Patient Portal:', cred: 'demo@patient.com / patient123' },
+                    { label: 'Physician Access:', cred: 'physician@webqx.com / demo123' }
                 ],
                 provider: [
-                    { label: 'Doctor Access:', cred: 'doctor / provider123' },
-                    { label: 'Nurse Access:', cred: 'nurse / nurse123' }
+                    { label: 'Physician Access:', cred: 'physician@webqx.com / demo123' },
+                    { label: 'Administrator:', cred: 'admin@webqx.com / admin123' }
                 ],
                 admin: [
-                    { label: 'Administrator:', cred: 'admin / admin123' },
-                    { label: 'System Access:', cred: 'system / system123' }
+                    { label: 'Administrator:', cred: 'admin@webqx.com / admin123' },
+                    { label: 'Full System Access:', cred: 'admin@webqx.com / admin123' }
                 ]
             };
 
@@ -332,32 +339,201 @@
         }
 
         function socialLogin(provider) {
-            alert(`${provider} social login integration would redirect to OAuth2 flow`);
+            // Show configuration message
+            const messages = {
+                google: 'Google Sign-In requires OAuth2 credentials to be configured in the backend server. Please use the demo accounts below or contact your administrator.',
+                microsoft: 'Microsoft Sign-In requires OAuth2 credentials to be configured in the backend server. Please use the demo accounts below or contact your administrator.',
+                apple: 'Apple Sign-In is coming soon! Please use the demo accounts below for now.'
+            };
+            
+            alert(messages[provider.toLowerCase()] || 'Social login is not configured. Please use the demo accounts below.');
         }
 
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        // Handle OAuth callback tokens
+        function handleOAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const accessToken = urlParams.get('access_token');
+            const refreshToken = urlParams.get('refresh_token');
+            const provider = urlParams.get('provider');
+            const success = urlParams.get('success');
+            const error = urlParams.get('error');
+
+            if (error) {
+                alert(`Authentication failed: ${error.replace(/_/g, ' ')}`);
+                // Clear URL parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
+            if (success === 'true' && accessToken) {
+                // Store tokens
+                localStorage.setItem('webqx_access_token', accessToken);
+                localStorage.setItem('webqx_refresh_token', refreshToken);
+                localStorage.setItem('webqx_auth_provider', provider);
+                
+                // Show success message
+                const loginContainer = document.querySelector('.login-container');
+                loginContainer.innerHTML = `
+                    <div class="logo">WebQx Healthcare Platform</div>
+                    <div style="text-align: center; padding: 2rem;">
+                        <div style="color: #48bb78; font-size: 3rem; margin-bottom: 1rem;">✓</div>
+                        <h3 style="color: #2d3748; margin-bottom: 1rem;">Successfully Authenticated!</h3>
+                        <p style="color: #4a5568; margin-bottom: 2rem;">
+                            You've been logged in via ${provider}. Redirecting to your dashboard...
+                        </p>
+                        <div style="background: #f0fff4; border: 1px solid #9ae6b4; border-radius: 5px; padding: 1rem; margin-bottom: 2rem;">
+                            <p style="color: #2f855a; font-size: 0.9rem;">
+                                Token stored securely. Your session will remain active.
+                            </p>
+                        </div>
+                    </div>
+                `;
+
+                // Redirect to appropriate dashboard after 3 seconds
+                setTimeout(() => {
+                    window.location.href = 'patient-portal/'; // Default to patient portal
+                }, 3000);
+
+                // Clear URL parameters
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+        }
+
+        // Traditional login with backend integration
+        async function performTraditionalLogin(email, password, role) {
+            const backendUrl = 'http://localhost:3001';
+            
+            try {
+                const response = await fetch(`${backendUrl}/api/v1/auth/token/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        user_type: role.toUpperCase()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.access_token) {
+                    // Store tokens
+                    localStorage.setItem('webqx_access_token', data.access_token);
+                    localStorage.setItem('webqx_refresh_token', data.refresh_token);
+                    localStorage.setItem('webqx_auth_provider', 'email');
+                    
+                    // Redirect based on user role
+                    const dashboardMap = {
+                        patient: 'patient-portal/',
+                        provider: 'provider/',
+                        admin: 'admin-console/'
+                    };
+                    
+                    window.location.href = dashboardMap[role] || 'patient-portal/';
+                } else {
+                    throw new Error(data.error || 'Login failed');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const activeRole = document.querySelector('.role-btn.active').textContent.toLowerCase();
             
-            // Demo login logic
-            if (username === 'demo' && password === 'patient123') {
-                window.location.href = 'patient-portal/';
-            } else if (username === 'physician' && password === 'demo123') {
-                window.location.href = 'provider/';
-            } else if (username === 'doctor' && password === 'provider123') {
-                window.location.href = 'provider/';
-            } else if (username === 'admin' && password === 'admin123') {
-                window.location.href = 'admin-console/';
-            } else {
-                alert('Please use demo credentials or register for a new account');
+            // Show loading state
+            const submitBtn = document.querySelector('.login-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Signing In...';
+            submitBtn.disabled = true;
+
+            try {
+                // Demo login logic (fallback for demo accounts)
+                if (username === 'demo@patient.com' && password === 'patient123') {
+                    window.location.href = 'patient-portal/';
+                } else if (username === 'doctor@webqx.com' && password === 'provider123') {
+                    window.location.href = 'provider/';
+                } else if (username === 'physician@webqx.com' && password === 'demo123') {
+                    window.location.href = 'provider/';
+                } else if (username === 'admin@webqx.com' && password === 'admin123') {
+                    window.location.href = 'admin-console/';
+                } else if (username === 'demo' && password === 'patient123') {
+                    window.location.href = 'patient-portal/';
+                } else if (username === 'doctor' && password === 'provider123') {
+                    window.location.href = 'provider/';
+                } else if (username === 'physician' && password === 'demo123') {
+                    window.location.href = 'provider/';
+                } else if (username === 'admin' && password === 'admin123') {
+                    window.location.href = 'admin-console/';
+                } else {
+                    // Try backend authentication
+                    await performTraditionalLogin(username, password, activeRole);
+                }
+            } catch (error) {
+                alert('Login failed: ' + (error.message || 'Please check your credentials and try again'));
+            } finally {
+                // Reset button state
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
             }
         });
 
-        // Initialize with patient role
-        updateDemoAccounts('patient');
+        // Check if user is already logged in
+        function checkExistingAuth() {
+            const token = localStorage.getItem('webqx_access_token');
+            const provider = localStorage.getItem('webqx_auth_provider');
+            
+            if (token) {
+                const loginContainer = document.querySelector('.login-container');
+                loginContainer.innerHTML = `
+                    <div class="logo">WebQx Healthcare Platform</div>
+                    <div style="text-align: center; padding: 2rem;">
+                        <div style="color: #4299e1; font-size: 2rem; margin-bottom: 1rem;">👋</div>
+                        <h3 style="color: #2d3748; margin-bottom: 1rem;">Welcome Back!</h3>
+                        <p style="color: #4a5568; margin-bottom: 2rem;">
+                            You're already logged in via ${provider}
+                        </p>
+                        <button onclick="goToDashboard()" class="login-btn" style="margin-bottom: 1rem;">
+                            Continue to Dashboard
+                        </button>
+                        <button onclick="logout()" class="social-btn" style="width: 100%; background: #fed7d7; color: #c53030;">
+                            Sign Out
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function goToDashboard() {
+            window.location.href = 'patient-portal/'; // Default dashboard
+        }
+
+        function logout() {
+            localStorage.removeItem('webqx_access_token');
+            localStorage.removeItem('webqx_refresh_token');
+            localStorage.removeItem('webqx_auth_provider');
+            window.location.reload();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle OAuth callback first
+            handleOAuthCallback();
+            
+            // Check for existing authentication
+            checkExistingAuth();
+            
+            // Initialize demo accounts
+            updateDemoAccounts('patient');
+        });
     </script>
 </body>
 </html>

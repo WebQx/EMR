@@ -47,7 +47,26 @@ const OAUTH_CONFIG = {
 
 // GitHub Pages Configuration
 const GITHUB_PAGES_URL = process.env.GITHUB_PAGES_URL || 'https://webqx.github.io/webqx';
+const LOCAL_FRONTEND_URL = process.env.LOCAL_FRONTEND_URL || 'http://localhost:3000';
 const LOCAL_BACKEND_URL = process.env.LOCAL_BACKEND_URL || 'http://localhost:3001';
+
+// Determine redirect URL based on environment and request origin
+const getRedirectUrl = (req) => {
+    const origin = req.get('origin') || req.get('referer');
+    
+    // If request comes from GitHub Pages, redirect back to GitHub Pages
+    if (origin && (origin.includes('.github.io') || origin.includes('github.io'))) {
+        const baseUrl = origin.replace(/\/$/, '');
+        return baseUrl + '/login-clean.html';
+    }
+    
+    // Check if we're in local development
+    if (process.env.NODE_ENV !== 'production') {
+        return LOCAL_FRONTEND_URL + '/login-clean.html';
+    }
+    
+    return GITHUB_PAGES_URL + '/login-clean.html';
+};
 
 // Session configuration
 app.use(session({
@@ -88,17 +107,47 @@ app.use(helmet({
 }));
 
 app.use(cors({
-    origin: [
-        'http://localhost:3000', 
-        'http://localhost:3001', 
-        'http://127.0.0.1:3001',
-        GITHUB_PAGES_URL,
-        'https://webqx.github.io',
-        'https://*.github.io'
-    ],
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        
+        // Allow all GitHub Pages domains
+        if (origin.includes('.github.io') || origin.includes('github.io')) {
+            return callback(null, true);
+        }
+        
+        // Allow localhost and local development
+        if (origin.includes('localhost') || origin.includes('127.0.0.1') || origin.includes('file://')) {
+            return callback(null, true);
+        }
+        
+        // Allow specific domains
+        const allowedOrigins = [
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://127.0.0.1:3001',
+            'http://127.0.0.1:5500',
+            'http://localhost:5500',
+            GITHUB_PAGES_URL,
+            'https://webqx.github.io',
+            'https://webqx-health.github.io'
+        ];
+        
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        
+        // For production, allow any HTTPS origin for GitHub Pages flexibility
+        if (process.env.NODE_ENV === 'production' && origin.startsWith('https://')) {
+            return callback(null, true);
+        }
+        
+        callback(null, true); // Allow all origins for maximum compatibility
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Origin', 'Accept'],
+    exposedHeaders: ['Authorization']
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -542,7 +591,7 @@ function checkPermission(requiredPermission) {
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 app.get('/auth/google/callback', 
-    passport.authenticate('google', { failureRedirect: `${GITHUB_PAGES_URL}/?error=google_auth_failed` }),
+    passport.authenticate('google', { failureRedirect: `${GITHUB_PAGES_URL}/login-clean.html?error=google_auth_failed` }),
     async (req, res) => {
         try {
             const user = req.user;
@@ -563,11 +612,11 @@ app.get('/auth/google/callback',
             logLoginAttempt(user.id, 'SUCCESS', req);
             logSecurityEvent(user.id, 'OAUTH_LOGIN_SUCCESS', 'LOW', 'User logged in via Google OAuth', req);
 
-            // Redirect to GitHub Pages with tokens
-            res.redirect(`${GITHUB_PAGES_URL}/?access_token=${accessToken}&refresh_token=${refreshToken}&provider=google&success=true`);
+            // Redirect to login page with tokens
+            res.redirect(`${getRedirectUrl(req)}?access_token=${accessToken}&refresh_token=${refreshToken}&provider=google&success=true`);
         } catch (error) {
             console.error('Google OAuth callback error:', error);
-            res.redirect(`${GITHUB_PAGES_URL}/?error=oauth_callback_failed`);
+            res.redirect(`${getRedirectUrl()}?error=oauth_callback_failed`);
         }
     }
 );
@@ -575,7 +624,7 @@ app.get('/auth/google/callback',
 app.get('/auth/microsoft', passport.authenticate('microsoft', { scope: ['user.read'] }));
 
 app.get('/auth/microsoft/callback',
-    passport.authenticate('microsoft', { failureRedirect: `${GITHUB_PAGES_URL}/?error=microsoft_auth_failed` }),
+    passport.authenticate('microsoft', { failureRedirect: `${GITHUB_PAGES_URL}/login-clean.html?error=microsoft_auth_failed` }),
     async (req, res) => {
         try {
             const user = req.user;
@@ -595,13 +644,521 @@ app.get('/auth/microsoft/callback',
             logLoginAttempt(user.id, 'SUCCESS', req);
             logSecurityEvent(user.id, 'OAUTH_LOGIN_SUCCESS', 'LOW', 'User logged in via Microsoft OAuth', req);
 
-            res.redirect(`${GITHUB_PAGES_URL}/?access_token=${accessToken}&refresh_token=${refreshToken}&provider=microsoft&success=true`);
+            res.redirect(`${getRedirectUrl(req)}?access_token=${accessToken}&refresh_token=${refreshToken}&provider=microsoft&success=true`);
         } catch (error) {
             console.error('Microsoft OAuth callback error:', error);
-            res.redirect(`${GITHUB_PAGES_URL}/?error=oauth_callback_failed`);
+            res.redirect(`${getRedirectUrl()}?error=oauth_callback_failed`);
         }
     }
 );
+
+// Traditional Authentication Endpoints (Django-style)
+
+// User Registration Endpoint
+app.post('/api/v1/auth/register/', async (req, res) => {
+    try {
+        const {
+            email,
+            password,
+            password_confirm,
+            first_name,
+            last_name,
+            middle_name,
+            date_of_birth,
+            phone_number,
+            user_type,
+            country,
+            timezone,
+            language,
+            terms_accepted,
+            privacy_policy_accepted,
+            hipaa_authorization,
+            gdpr_consent
+        } = req.body;
+
+        // Validation
+        if (!email || !password || !first_name || !last_name) {
+            return res.status(400).json({
+                error: 'Missing required fields',
+                required_fields: ['email', 'password', 'first_name', 'last_name']
+            });
+        }
+
+        if (!validator.isEmail(email)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        if (password !== password_confirm) {
+            return res.status(400).json({ error: 'Passwords do not match' });
+        }
+
+        if (password.length < 12) {
+            return res.status(400).json({ error: 'Password must be at least 12 characters long' });
+        }
+
+        if (!terms_accepted || !privacy_policy_accepted) {
+            return res.status(400).json({ error: 'Terms and privacy policy must be accepted' });
+        }
+
+        // Check if user already exists
+        const existingUser = users.get(email.toLowerCase());
+        if (existingUser) {
+            return res.status(409).json({ error: 'User already exists with this email' });
+        }
+
+        // Hash password
+        const password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+
+        // Create user
+        const userData = {
+            email: email.toLowerCase(),
+            password_hash,
+            first_name,
+            last_name,
+            middle_name: middle_name || '',
+            date_of_birth,
+            phone_number,
+            user_type: user_type || 'PATIENT',
+            country: country || 'US',
+            timezone: timezone || 'UTC',
+            language: language || 'en',
+            terms_accepted: !!terms_accepted,
+            privacy_policy_accepted: !!privacy_policy_accepted,
+            hipaa_authorization: !!hipaa_authorization,
+            gdpr_consent: !!gdpr_consent,
+            verification_status: 'PENDING',
+            is_active: true
+        };
+
+        const newUser = new WebQXUser(userData);
+        users.set(newUser.email, newUser);
+
+        logSecurityEvent(newUser.id, 'ACCOUNT_CREATED', 'LOW', 'New user account created', req);
+
+        // Generate tokens
+        const accessToken = jwt.sign(
+            { user_id: newUser.id, email: newUser.email, user_type: newUser.user_type },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        const refreshToken = jwt.sign(
+            { user_id: newUser.id, type: 'refresh' },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        res.status(201).json({
+            message: 'User created successfully',
+            user: newUser.toJSON(),
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            token_type: 'Bearer',
+            expires_in: 3600
+        });
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ error: 'Internal server error during registration' });
+    }
+});
+
+// User Login Endpoint
+app.post('/api/v1/auth/token/', async (req, res) => {
+    try {
+        const { email, password, user_type } = req.body;
+        const clientIP = getClientIP(req);
+
+        // Validation
+        if (!email || !password) {
+            return res.status(400).json({
+                error: 'Missing credentials',
+                required_fields: ['email', 'password']
+            });
+        }
+
+        if (!validator.isEmail(email)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        // Find user
+        const user = users.get(email.toLowerCase());
+        if (!user) {
+            logSecurityEvent(null, 'LOGIN_FAILED', 'MEDIUM', `Failed login attempt for non-existent user: ${email}`, req);
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+
+        // Check if account is locked
+        if (user.is_locked_out()) {
+            logSecurityEvent(user.id, 'LOGIN_BLOCKED', 'HIGH', 'Login attempt on locked account', req);
+            return res.status(423).json({
+                error: 'Account temporarily locked due to multiple failed login attempts',
+                lockout_until: user.lockout_until,
+                retry_after: Math.ceil((new Date(user.lockout_until) - new Date()) / 1000)
+            });
+        }
+
+        // Check if account is active
+        if (!user.is_active) {
+            logSecurityEvent(user.id, 'LOGIN_FAILED', 'MEDIUM', 'Login attempt on inactive account', req);
+            return res.status(401).json({ error: 'Account is inactive' });
+        }
+
+        // Verify password (skip for OAuth-only users)
+        if (user.password_hash) {
+            const isValidPassword = await bcrypt.compare(password, user.password_hash);
+            if (!isValidPassword) {
+                user.increment_failed_login();
+                users.set(user.email, user);
+                
+                logLoginAttempt(user.id, 'FAILED', req, 'Invalid password');
+                logSecurityEvent(user.id, 'LOGIN_FAILED', 'MEDIUM', 'Invalid password attempt', req);
+                
+                return res.status(401).json({ error: 'Invalid credentials' });
+            }
+        } else {
+            // OAuth-only user trying to use password login
+            return res.status(401).json({ 
+                error: 'This account uses social login only. Please sign in with Google or Microsoft.' 
+            });
+        }
+
+        // Check user type if specified
+        if (user_type && user.user_type !== user_type.toUpperCase()) {
+            logSecurityEvent(user.id, 'LOGIN_FAILED', 'MEDIUM', `User type mismatch: expected ${user_type}, got ${user.user_type}`, req);
+            return res.status(403).json({ 
+                error: 'Access denied for this user type',
+                expected_type: user_type,
+                user_type: user.user_type
+            });
+        }
+
+        // Reset failed login attempts on successful authentication
+        user.reset_failed_login();
+        user.last_login_ip = clientIP;
+        user.last_activity = new Date();
+        users.set(user.email, user);
+
+        // Generate tokens
+        const accessToken = jwt.sign(
+            { user_id: user.id, email: user.email, user_type: user.user_type },
+            JWT_SECRET,
+            { expiresIn: '1h' }
+        );
+
+        const refreshToken = jwt.sign(
+            { user_id: user.id, type: 'refresh' },
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
+
+        // Log successful login
+        logLoginAttempt(user.id, 'SUCCESS', req);
+        logSecurityEvent(user.id, 'LOGIN_SUCCESS', 'LOW', 'User logged in successfully', req);
+
+        res.json({
+            message: 'Login successful',
+            user: user.toJSON(),
+            access_token: accessToken,
+            refresh_token: refreshToken,
+            token_type: 'Bearer',
+            expires_in: 3600,
+            role_info: user.get_role_info()
+        });
+
+    } catch (error) {
+        console.error('Login error:', error);
+        res.status(500).json({ error: 'Internal server error during login' });
+    }
+});
+
+// Token Refresh Endpoint
+app.post('/api/v1/auth/refresh/', async (req, res) => {
+    try {
+        const { refresh_token } = req.body;
+
+        if (!refresh_token) {
+            return res.status(400).json({ error: 'Refresh token required' });
+        }
+
+        jwt.verify(refresh_token, JWT_SECRET, (err, decoded) => {
+            if (err || decoded.type !== 'refresh') {
+                return res.status(403).json({ error: 'Invalid or expired refresh token' });
+            }
+
+            const user = Array.from(users.values()).find(u => u.id === decoded.user_id);
+            if (!user || !user.is_active) {
+                return res.status(403).json({ error: 'User account not found or inactive' });
+            }
+
+            // Generate new access token
+            const accessToken = jwt.sign(
+                { user_id: user.id, email: user.email, user_type: user.user_type },
+                JWT_SECRET,
+                { expiresIn: '1h' }
+            );
+
+            res.json({
+                access_token: accessToken,
+                token_type: 'Bearer',
+                expires_in: 3600
+            });
+        });
+
+    } catch (error) {
+        console.error('Token refresh error:', error);
+        res.status(500).json({ error: 'Internal server error during token refresh' });
+    }
+});
+
+// User Profile Endpoint
+app.get('/api/v1/auth/me/', authenticateToken, (req, res) => {
+    try {
+        const user = req.user;
+        res.json({
+            user: user.toJSON(),
+            role_info: user.get_role_info(),
+            permissions: user.get_permissions()
+        });
+    } catch (error) {
+        console.error('Profile fetch error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// User Profile Management Endpoints
+
+// Get all users (Admin only)
+app.get('/api/v1/users/', authenticateToken, checkPermission('user_management'), (req, res) => {
+    try {
+        const { page = 1, limit = 10, user_type, search } = req.query;
+        let userList = Array.from(users.values());
+        
+        // Filter by user type
+        if (user_type) {
+            userList = userList.filter(u => u.user_type === user_type.toUpperCase());
+        }
+        
+        // Search by name or email
+        if (search) {
+            const searchLower = search.toLowerCase();
+            userList = userList.filter(u => 
+                u.email.toLowerCase().includes(searchLower) ||
+                u.get_full_name().toLowerCase().includes(searchLower)
+            );
+        }
+        
+        // Pagination
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + parseInt(limit);
+        const paginatedUsers = userList.slice(startIndex, endIndex);
+        
+        res.json({
+            users: paginatedUsers.map(u => u.toJSON()),
+            pagination: {
+                current_page: parseInt(page),
+                total_pages: Math.ceil(userList.length / limit),
+                total_users: userList.length,
+                per_page: parseInt(limit)
+            }
+        });
+    } catch (error) {
+        console.error('Users fetch error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Get user by ID (Admin or own profile)
+app.get('/api/v1/users/:userId', authenticateToken, (req, res) => {
+    try {
+        const { userId } = req.params;
+        const requestingUser = req.user;
+        
+        // Check if user can access this profile
+        if (userId !== requestingUser.id && !requestingUser.has_permission('user_management')) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        
+        const user = Array.from(users.values()).find(u => u.id === userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        res.json({
+            user: user.toJSON(),
+            role_info: user.get_role_info(),
+            permissions: user.get_permissions()
+        });
+    } catch (error) {
+        console.error('User fetch error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Update user profile
+app.put('/api/v1/users/:userId', authenticateToken, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const requestingUser = req.user;
+        const updateData = req.body;
+        
+        // Check if user can update this profile
+        if (userId !== requestingUser.id && !requestingUser.has_permission('user_management')) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+        
+        const user = Array.from(users.values()).find(u => u.id === userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Update allowed fields
+        const allowedFields = ['first_name', 'last_name', 'middle_name', 'phone_number', 'country', 'timezone', 'language'];
+        const adminOnlyFields = ['user_type', 'is_active', 'verification_status', 'email_verified', 'phone_verified'];
+        
+        allowedFields.forEach(field => {
+            if (updateData[field] !== undefined) {
+                user[field] = updateData[field];
+            }
+        });
+        
+        // Admin-only fields
+        if (requestingUser.has_permission('user_management')) {
+            adminOnlyFields.forEach(field => {
+                if (updateData[field] !== undefined) {
+                    user[field] = updateData[field];
+                }
+            });
+        }
+        
+        user.updated_at = new Date();
+        users.set(user.email, user);
+        
+        logSecurityEvent(requestingUser.id, 'USER_PROFILE_UPDATED', 'LOW', `User profile updated: ${user.email}`, req);
+        
+        res.json({
+            message: 'Profile updated successfully',
+            user: user.toJSON()
+        });
+    } catch (error) {
+        console.error('Profile update error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Delete user (Admin only)
+app.delete('/api/v1/users/:userId', authenticateToken, checkPermission('user_management'), (req, res) => {
+    try {
+        const { userId } = req.params;
+        const requestingUser = req.user;
+        
+        const user = Array.from(users.values()).find(u => u.id === userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        // Prevent self-deletion
+        if (userId === requestingUser.id) {
+            return res.status(400).json({ error: 'Cannot delete your own account' });
+        }
+        
+        users.delete(user.email);
+        
+        logSecurityEvent(requestingUser.id, 'USER_DELETED', 'HIGH', `User deleted: ${user.email}`, req);
+        
+        res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('User deletion error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// User statistics (Admin only)
+app.get('/api/v1/users/stats/', authenticateToken, checkPermission('user_management'), (req, res) => {
+    try {
+        const userList = Array.from(users.values());
+        
+        const stats = {
+            total_users: userList.length,
+            active_users: userList.filter(u => u.is_active).length,
+            verified_users: userList.filter(u => u.email_verified).length,
+            oauth_users: userList.filter(u => u.oauth_providers.length > 0).length,
+            by_user_type: {},
+            by_verification_status: {},
+            recent_registrations: userList.filter(u => 
+                new Date() - new Date(u.created_at) < 7 * 24 * 60 * 60 * 1000
+            ).length
+        };
+        
+        // Count by user type
+        Object.keys(ROLES).forEach(role => {
+            stats.by_user_type[role] = userList.filter(u => u.user_type === role).length;
+        });
+        
+        // Count by verification status
+        ['PENDING', 'VERIFIED', 'REJECTED'].forEach(status => {
+            stats.by_verification_status[status] = userList.filter(u => u.verification_status === status).length;
+        });
+        
+        res.json(stats);
+    } catch (error) {
+        console.error('User stats error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Change Password Endpoint
+app.post('/api/v1/auth/change-password/', authenticateToken, async (req, res) => {
+    try {
+        const { current_password, new_password, new_password_confirm } = req.body;
+        const user = req.user;
+        
+        if (!current_password || !new_password || !new_password_confirm) {
+            return res.status(400).json({ error: 'All password fields are required' });
+        }
+        
+        if (new_password !== new_password_confirm) {
+            return res.status(400).json({ error: 'New passwords do not match' });
+        }
+        
+        if (new_password.length < 12) {
+            return res.status(400).json({ error: 'New password must be at least 12 characters long' });
+        }
+        
+        // Verify current password
+        if (!user.password_hash || !await bcrypt.compare(current_password, user.password_hash)) {
+            return res.status(401).json({ error: 'Current password is incorrect' });
+        }
+        
+        // Hash new password
+        const new_password_hash = await bcrypt.hash(new_password, BCRYPT_ROUNDS);
+        user.password_hash = new_password_hash;
+        user.updated_at = new Date();
+        users.set(user.email, user);
+        
+        logSecurityEvent(user.id, 'PASSWORD_CHANGED', 'MEDIUM', 'User changed password', req);
+        
+        res.json({ message: 'Password changed successfully' });
+    } catch (error) {
+        console.error('Password change error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// Logout Endpoint
+app.post('/api/v1/auth/logout/', authenticateToken, (req, res) => {
+    try {
+        const user = req.user;
+        
+        // In a real implementation, you'd blacklist the token
+        logSecurityEvent(user.id, 'LOGOUT', 'LOW', 'User logged out', req);
+        
+        res.json({ message: 'Logged out successfully' });
+    } catch (error) {
+        console.error('Logout error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
 
 // Health Check (Django-style)
 app.get('/health/', (req, res) => {
@@ -822,13 +1379,16 @@ app.get('/', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+const HOST = process.env.HOST || 'localhost';
+app.listen(PORT, HOST, () => {
     console.log(`
 🚀 WebQX Authentication Server with Social Login Started
 🔐 Django-style Security + OAuth2/OpenID Connect
-📍 Server: http://localhost:${PORT}
-🏥 Health Check: http://localhost:${PORT}/health/
-👤 Test Interface: http://localhost:${PORT}
+📍 Host: ${HOST}
+📍 Port: ${PORT}
+📍 Server: http://${HOST}:${PORT}
+🏥 Health Check: http://${HOST}:${PORT}/health/
+👤 Test Interface: http://${HOST}:${PORT}
 
 🔑 Authentication Methods:
    • Traditional Email/Password
@@ -844,8 +1404,95 @@ app.listen(PORT, () => {
    • MFA Support
    • HIPAA/GDPR Compliance
 
-✅ Ready to serve millions of users with social login!
+✅ Ready for ${HOST === '0.0.0.0' ? 'external' : 'local'} access with social login!
+🌐 ${HOST === '0.0.0.0' ? 'GitHub Pages users can now connect!' : 'Local development mode'}
     `);
+
+    // Create demo users for testing
+    createDemoUsers();
 });
+
+// Create demo users for testing
+async function createDemoUsers() {
+    try {
+        // Demo patient user
+        const patientPassword = await bcrypt.hash('patient123', BCRYPT_ROUNDS);
+        const demoPatient = new WebQXUser({
+            email: 'demo@patient.com',
+            password_hash: patientPassword,
+            first_name: 'Demo',
+            last_name: 'Patient',
+            user_type: 'PATIENT',
+            verification_status: 'VERIFIED',
+            email_verified: true,
+            terms_accepted: true,
+            privacy_policy_accepted: true,
+            hipaa_authorization: true
+        });
+        users.set(demoPatient.email, demoPatient);
+
+        // Demo physician user
+        const physicianPassword = await bcrypt.hash('demo123', BCRYPT_ROUNDS);
+        const demoPhysician = new WebQXUser({
+            email: 'physician@webqx.com',
+            password_hash: physicianPassword,
+            first_name: 'Dr. Demo',
+            last_name: 'Physician',
+            user_type: 'PHYSICIAN',
+            verification_status: 'VERIFIED',
+            email_verified: true,
+            terms_accepted: true,
+            privacy_policy_accepted: true,
+            mfa_enabled: false // Disabled for demo
+        });
+        users.set(demoPhysician.email, demoPhysician);
+
+        // Demo provider user
+        const providerPassword = await bcrypt.hash('provider123', BCRYPT_ROUNDS);
+        const demoProvider = new WebQXUser({
+            email: 'doctor@webqx.com',
+            password_hash: providerPassword,
+            first_name: 'Dr. Demo',
+            last_name: 'Provider',
+            user_type: 'PHYSICIAN',
+            verification_status: 'VERIFIED',
+            email_verified: true,
+            terms_accepted: true,
+            privacy_policy_accepted: true,
+            mfa_enabled: false // Disabled for demo
+        });
+        users.set(demoProvider.email, demoProvider);
+
+        // Demo admin user
+        const adminPassword = await bcrypt.hash('admin123', BCRYPT_ROUNDS);
+        const demoAdmin = new WebQXUser({
+            email: 'admin@webqx.com',
+            password_hash: adminPassword,
+            first_name: 'System',
+            last_name: 'Administrator',
+            user_type: 'ADMINISTRATOR',
+            verification_status: 'VERIFIED',
+            email_verified: true,
+            terms_accepted: true,
+            privacy_policy_accepted: true,
+            mfa_enabled: false // Disabled for demo
+        });
+        users.set(demoAdmin.email, demoAdmin);
+
+        console.log(`
+📋 Demo Users Created:
+   • Patient: demo@patient.com / patient123
+   • Physician: physician@webqx.com / demo123
+   • Provider: doctor@webqx.com / provider123
+   • Admin: admin@webqx.com / admin123
+
+🌐 Frontend: http://localhost:3000/login-clean.html
+🔐 Backend: http://localhost:3001
+        `);
+
+    } catch (error) {
+        console.error('Error creating demo users:', error);
+    }
+}
 
 module.exports = app;

@@ -59,8 +59,11 @@ const providerSSORoutes = require('./auth/providers/sso-routes');
 // Ottehr Integration imports
 const ottehrRoutes = require('./auth/ottehr/routes');
 
+const { PortManager } = require('./port-manager');
+
 const app = express();
-const PORT = process.env.PORT || 3000;
+const portManager = new PortManager();
+let PORT = process.env.PORT || 3000;
 
 // Security middleware
 app.use(helmet({
@@ -413,8 +416,49 @@ app.get('*', (req, res) => {
     }
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🌐 WebQX Healthcare Platform is running on port ${PORT}`);
-    console.log(`🩺 Patient Portal available at http://localhost:${PORT}`);
-    console.log(`💊 Health check endpoint: http://localhost:${PORT}/health`);
+// Start server with port management
+async function startServer() {
+    try {
+        // Reserve the port for main service
+        PORT = await portManager.reservePort('main', PORT);
+        
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`🌐 WebQX Healthcare Platform is running on port ${PORT}`);
+            console.log(`🩺 Patient Portal available at http://localhost:${PORT}`);
+            console.log(`💊 Health check endpoint: http://localhost:${PORT}/health`);
+            console.log(`🔒 Port ${PORT} is now exclusively reserved for WebQX main service`);
+        });
+    } catch (error) {
+        console.error('❌ Failed to start server:', error.message);
+        console.log('🔄 Trying to find an alternative port...');
+        
+        try {
+            PORT = await portManager.getAvailablePort('main', 3000);
+            app.listen(PORT, '0.0.0.0', () => {
+                console.log(`🌐 WebQX Healthcare Platform is running on port ${PORT}`);
+                console.log(`🩺 Patient Portal available at http://localhost:${PORT}`);
+                console.log(`💊 Health check endpoint: http://localhost:${PORT}/health`);
+                console.log(`🔒 Port ${PORT} is now exclusively reserved for WebQX main service`);
+            });
+        } catch (fallbackError) {
+            console.error('❌ Could not start server on any port:', fallbackError.message);
+            process.exit(1);
+        }
+    }
+}
+
+// Graceful shutdown with port cleanup
+process.on('SIGINT', async () => {
+    console.log('\n🛑 Shutting down WebQX server...');
+    await portManager.releasePort('main');
+    process.exit(0);
 });
+
+process.on('SIGTERM', async () => {
+    console.log('\n🛑 Shutting down WebQX server...');
+    await portManager.releasePort('main');
+    process.exit(0);
+});
+
+// Start the server
+startServer();

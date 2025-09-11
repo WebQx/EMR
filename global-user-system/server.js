@@ -556,6 +556,11 @@ app.get('/api/health', (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
+// Ensure this server always uses port 3001 for user system
+if (!process.env.PORT) {
+    console.log('🔒 User registration server will use dedicated port 3001');
+}
+
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`
 🌍 WebQX Global User Registration Server

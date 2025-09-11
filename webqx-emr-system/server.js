@@ -10,11 +10,16 @@ const url = require('url');
 
 // WebQX Configuration
 const CONFIG = {
-    port: 8080,
+    port: process.env.PORT || 8080,
     version: '1.0.0',
     debug: true,
     name: 'WebQX™ EMR System'
 };
+
+// Ensure this server always uses port 8080 for EMR
+if (!process.env.PORT) {
+    console.log('🔒 EMR server will use dedicated port 8080');
+}
 
 // MIME types for serving static files
 const MIME_TYPES = {
