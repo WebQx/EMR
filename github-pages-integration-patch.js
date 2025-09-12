@@ -1,7 +1,7 @@
-// WebQx GitHub Pages Integration Patch - IMMEDIATE OVERRIDE VERSION
-// This script immediately overrides GitHub Pages functions to prevent red status flash
+// WebQx GitHub Pages Integration Patch - FIXED CLICK HANDLER VERSION
+// This script immediately overrides GitHub Pages functions AND sets up click handler
 
-console.log('🚀 WebQx GitHub Pages Integration - Immediate Override Loading...');
+console.log('🚀 WebQx GitHub Pages Integration - Fixed Click Handler Loading...');
 
 // Immediately override the existing functions before they can run
 (function() {
@@ -43,7 +43,6 @@ console.log('🚀 WebQx GitHub Pages Integration - Immediate Override Loading...
         // Test the working port 8080 endpoint
         try {
             console.log('🌐 Testing primary endpoint:', DEDICATED_SERVER_CONFIG.remoteTriggerUrl);
-            
             // Use OPTIONS to check if remote trigger API is available
             const response = await fetch(`${DEDICATED_SERVER_CONFIG.remoteTriggerUrl}/api/remote-start`, {
                 method: 'OPTIONS',
@@ -154,6 +153,26 @@ console.log('🚀 WebQx GitHub Pages Integration - Immediate Override Loading...
         }
     }
 
+    // CRITICAL FIX: Set up click handler
+    function setupClickHandler() {
+        const startButton = document.getElementById('startBackend');
+        if (startButton) {
+            // Remove any existing click handlers
+            startButton.onclick = null;
+            startButton.removeEventListener('click', startBackend);
+            
+            // Add new click handler
+            startButton.addEventListener('click', startBackend);
+            startButton.onclick = startBackend; // Fallback
+            
+            console.log('✅ Click handler attached to Start WebQx Server button');
+            return true;
+        } else {
+            console.log('⚠️ Start button not found, retrying...');
+            return false;
+        }
+    }
+
     // IMMEDIATE OVERRIDE - Replace functions before page loads
     if (typeof window !== 'undefined') {
         window.checkBackendStatus = checkBackendStatus;
@@ -174,13 +193,30 @@ console.log('🚀 WebQx GitHub Pages Integration - Immediate Override Loading...
             clearInterval(window.webqxStatusInterval);
         }
         
+        // CRITICAL: Set up click handler
+        let clickSetupAttempts = 0;
+        const maxAttempts = 10;
+        
+        function trySetupClick() {
+            if (setupClickHandler() || clickSetupAttempts >= maxAttempts) {
+                if (clickSetupAttempts >= maxAttempts) {
+                    console.error('❌ Failed to set up click handler after', maxAttempts, 'attempts');
+                }
+                return;
+            }
+            clickSetupAttempts++;
+            setTimeout(trySetupClick, 500);
+        }
+        
+        trySetupClick();
+        
         // Run initial status check
         setTimeout(checkBackendStatus, 100);
         
         // Set up enhanced monitoring
         window.webqxStatusInterval = setInterval(checkBackendStatus, 30000);
         
-        console.log('✅ Enhanced integration active');
+        console.log('✅ Enhanced integration active with click handler');
     }
 
     // Initialize immediately if DOM is ready, otherwise wait
@@ -194,5 +230,3 @@ console.log('🚀 WebQx GitHub Pages Integration - Immediate Override Loading...
     setTimeout(initializeEnhancedIntegration, 1000);
 
 })();
-
-console.log('✅ WebQx GitHub Pages integration patch loaded - ENHANCED VERSION');
