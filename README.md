@@ -1,24 +1,44 @@
-# 🌐 WebQX: Healthcare Platform
+# WebQX™ Healthcare Platform
 
-Empowering Patients and Supporting Providers. Free access for Medically Underserved Populations around the Globe.
+> Cloud-based, FHIR-compliant, global healthcare ecosystem with OpenEMR integration
 
----
-
-## 🚀 Overview
-
-WebQX is a modular healthcare stack supporting 12+ specialties, multilingual access, health equity, and global compliance (HIPAA, GDPR, LGPD). Its architecture enables scalable, customizable deployments for clinics and hospitals worldwide.
+## 🌍 Live Demo
+**GitHub Pages:** https://webqx.github.io/webqx/  
+**OpenEMR Instance:** https://fuzzy-goldfish-7vx645x7wgvv3rjxg-8085.app.github.dev
 
 ---
 
-## 🧩 Key Features
+## ✨ Features
 
-### Patient Portal
-- Appointments & Scheduling (LibreHealth/OpenEMR)
-- Pharmacy Access (OpenEMR Rx + FDA APIs)
-- Lab Results Viewer (HL7/FHIR via Mirth Connect)
-- Secure Messaging (Medplum/Matrix)
-- Billing & Insurance (OpenMRS/Bahmni)
-- Health Literacy Assistant (Whisper + spaCy/Haystack)
+### 🏥 **OpenEMR 7.0.3 Integration**
+- Fully branded WebQX EMR system
+- Complete patient management
+- Clinical workflows and documentation
+- HIPAA compliant with audit trails
+
+### 👤 **Patient Portal**
+- Secure patient access to medical records
+- Appointment scheduling and management
+- Prescription tracking and refills
+- Lab results and imaging access
+
+### 👨‍⚕️ **Provider Portal**
+- Complete clinical workflow management
+- EHR integration with OpenEMR
+- Clinical decision support tools
+- Documentation and billing integration
+
+### ⚙️ **Admin Console**
+- System administration and configuration
+- User management and role-based access
+- Integration monitoring and maintenance
+- Compliance reporting and audit logs
+
+### 🌐 **Global Telehealth**
+- 24/7 emergency consultations
+- Scheduled virtual appointments
+- Crisis intervention and support
+- Multi-language support
 - Care Navigation (D3.js/Neo4j)
 
 ### Provider Panel
