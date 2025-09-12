@@ -1,0 +1,200 @@
+/**
+ * WebQX EMR Custom Theme
+ * Modern healthcare design with WebQX branding
+ */
+
+/* WebQX Color Palette */
+:root {
+  --webqx-primary: #0891b2;
+  --webqx-secondary: #164e63;
+  --webqx-accent: #00ffd5;
+  --webqx-success: #10b981;
+  --webqx-warning: #f59e0b;
+  --webqx-danger: #ef4444;
+  --webqx-dark: #1f2937;
+  --webqx-light: #f8fafc;
+  --webqx-gradient: linear-gradient(135deg, #0891b2 0%, #164e63 100%);
+}
+
+/* WebQX Header Branding */
+.webqx-header {
+  background: var(--webqx-gradient);
+  color: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-bottom: 3px solid var(--webqx-accent);
+}
+
+.webqx-logo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.webqx-logo::before {
+  content: "🏥";
+  font-size: 2rem;
+}
+
+.webqx-tagline {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-top: 0.25rem;
+}
+
+/* Override OpenEMR Default Styling */
+#mainBox, .mainBox {
+  background: var(--webqx-light) !important;
+}
+
+.navbar, .navbar-default {
+  background: var(--webqx-primary) !important;
+  border: none !important;
+}
+
+.navbar-brand {
+  color: white !important;
+  font-weight: bold !important;
+}
+
+.nav > li > a {
+  color: white !important;
+}
+
+.nav > li > a:hover {
+  background: var(--webqx-secondary) !important;
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--webqx-primary) !important;
+  border-color: var(--webqx-primary) !important;
+}
+
+.btn-primary:hover {
+  background: var(--webqx-secondary) !important;
+  border-color: var(--webqx-secondary) !important;
+}
+
+.btn-success {
+  background: var(--webqx-success) !important;
+  border-color: var(--webqx-success) !important;
+}
+
+/* Cards and Panels */
+.panel-primary > .panel-heading {
+  background: var(--webqx-gradient) !important;
+  border-color: var(--webqx-primary) !important;
+}
+
+.card, .panel {
+  border-radius: 8px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Login Page */
+.login {
+  background: var(--webqx-gradient) !important;
+  min-height: 100vh;
+}
+
+.login-panel {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: 2rem;
+}
+
+/* Tables */
+.table-striped > tbody > tr:nth-of-type(odd) {
+  background-color: rgba(8, 145, 178, 0.05) !important;
+}
+
+.table-hover > tbody > tr:hover {
+  background-color: rgba(8, 145, 178, 0.1) !important;
+}
+
+/* Forms */
+.form-control:focus {
+  border-color: var(--webqx-primary) !important;
+  box-shadow: 0 0 0 0.2rem rgba(8, 145, 178, 0.25) !important;
+}
+
+/* WebQX Footer */
+.webqx-footer {
+  background: var(--webqx-dark);
+  color: white;
+  padding: 1rem 2rem;
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 2rem;
+}
+
+.webqx-footer p {
+  margin: 0.25rem 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .webqx-header {
+    padding: 0.75rem 1rem;
+  }
+  
+  .webqx-logo {
+    font-size: 1.5rem;
+  }
+}
+
+/* WebQX Loading Animation */
+.webqx-loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(8, 145, 178, 0.3);
+  border-radius: 50%;
+  border-top-color: var(--webqx-primary);
+  animation: webqx-spin 1s ease-in-out infinite;
+}
+
+@keyframes webqx-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* WebQX Success Messages */
+.webqx-alert-success {
+  background: linear-gradient(45deg, var(--webqx-success), #34d399);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+/* Modern Dashboard Styling */
+.webqx-dashboard-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid var(--webqx-primary);
+  transition: transform 0.2s ease;
+}
+
+.webqx-dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.webqx-stat-number {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--webqx-primary);
+}
+
+.webqx-stat-label {
+  color: var(--webqx-dark);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

@@ -1,18 +1,21 @@
-// WebQx GitHub Pages Integration Patch - SIMPLIFIED WORKING VERSION
-// Focus ONLY on the working port 8080 endpoint
+// WebQx GitHub Pages Integration - REAL EMR CONNECTION
+// Connect to OpenEMR 7.0.3 server with WebQX branding
 
-console.log('🚀 WebQx GitHub Pages Integration - Simplified Working Version Loading...');
+console.log('🏥 WebQx EMR Integration Loading - Connecting to OpenEMR 7.0.3...');
 
 (function() {
     'use strict';
     
-    // Configuration - Use Codespace public URLs
-    const WORKING_ENDPOINT = 'https://fuzzy-goldfish-7vx645x7wgvv3rjxg-8080.app.github.dev';
-    const MAIN_GATEWAY = 'https://fuzzy-goldfish-7vx645x7wgvv3rjxg-3000.app.github.dev';
+    // Configuration - Real EMR Server URLs
+    const EMR_SERVER = 'https://fuzzy-goldfish-7vx645x7wgvv3rjxg-8085.app.github.dev';
+    const API_SERVER = 'https://fuzzy-goldfish-7vx645x7wgvv3rjxg-8080.app.github.dev';
     
-    console.log('🔧 Using working endpoint:', WORKING_ENDPOINT);
+    console.log('🏥 EMR Server:', EMR_SERVER);
+    console.log('🔌 API Server:', API_SERVER);
+    
+    console.log('🔧 Using EMR endpoint:', EMR_SERVER);
 
-    // Simplified status checker - ONLY check the working endpoint
+    // EMR Status checker - Check real OpenEMR server
     async function checkBackendStatus() {
         const statusIndicator = document.getElementById('backendStatus');
         const statusText = document.getElementById('statusText');
@@ -24,44 +27,32 @@ console.log('🚀 WebQx GitHub Pages Integration - Simplified Working Version Lo
             return false;
         }
         
-        console.log('🔄 Checking WebQx server status...');
+        console.log('🔄 Checking WebQX EMR server status...');
         
         // Show checking state
         statusIndicator.className = 'status-indicator status-connecting';
-        statusText.textContent = 'WebQx Server: Checking connection...';
+        statusText.textContent = 'WebQX EMR: Checking connection...';
         startButton.style.display = 'none';
         
         try {
-            console.log('🌐 Testing endpoint:', WORKING_ENDPOINT);
+            console.log('🌐 Testing OpenEMR endpoint:', EMR_ENDPOINT);
             
-            // First check the trigger API
-            const response = await fetch(`${WORKING_ENDPOINT}/api/server-status`, {
+            // Check OpenEMR server status
+            const response = await fetch(`${EMR_ENDPOINT}/interface/globals.php`, {
                 method: 'GET',
-                mode: 'cors',
+                mode: 'no-cors',
                 signal: AbortSignal.timeout(8000)
             });
             
-            if (response.ok) {
-                const status = await response.json();
-                console.log('📊 Server status:', status);
-                
-                if (status.success && status.status === 'running' && status.runningPorts?.length === 4) {
-                    console.log('✅ All 4 services confirmed running');
-                    statusIndicator.className = 'status-indicator status-online';
-                    statusText.textContent = 'WebQx Server: All services online ✓';
-                    startButton.style.display = 'none';
-                    return true;
-                } else if (status.runningPorts?.length > 0) {
-                    console.log('⚠️ Partial services running:', status.runningPorts.length);
-                    statusIndicator.className = 'status-indicator status-connecting';
-                    statusText.textContent = `WebQx Server: ${status.runningPorts.length}/4 services running`;
-                    startButton.style.display = 'inline-block';
-                    return false;
-                } else {
-                    throw new Error('No services running');
-                }
+            if (response.type !== 'opaque' || response.status === 0) {
+                // For no-cors requests, we get an opaque response if server is reachable
+                console.log('✅ OpenEMR server is responding');
+                statusIndicator.className = 'status-indicator status-online';
+                statusText.textContent = 'WebQx EMR: Connected to OpenEMR ✓';
+                startButton.style.display = 'none';
+                return true;
             } else {
-                throw new Error(`Status check failed: ${response.status}`);
+                throw new Error('OpenEMR not accessible');
             }
             
         } catch (error) {
@@ -73,65 +64,51 @@ console.log('🚀 WebQx GitHub Pages Integration - Simplified Working Version Lo
         }
     }
 
-    // Simplified server start function
+    // Simplified redirect to OpenEMR function
     async function startBackend() {
         const startButton = document.getElementById('startBackend');
         const statusText = document.getElementById('statusText');
         const statusIndicator = document.getElementById('backendStatus');
         
-        console.log('🚀 Starting WebQx server...');
+        console.log('� Redirecting to OpenEMR...');
         
-        // Update UI
-        const originalText = startButton.textContent;
-        startButton.textContent = 'Starting...';
-        startButton.disabled = true;
-        statusIndicator.className = 'status-indicator status-connecting';
-        statusText.textContent = 'WebQx Server: Starting...';
-        
-        try {
-            console.log('🎯 Sending start command to:', WORKING_ENDPOINT);
-            
-            const response = await fetch(`${WORKING_ENDPOINT}/api/remote-start`, {
-                method: 'POST',
-                mode: 'cors',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    action: 'start',
-                    source: 'github-pages',
-                    timestamp: new Date().toISOString()
-                }),
-                signal: AbortSignal.timeout(10000)
+        // Redirect to OpenEMR login
+        window.open(EMR_ENDPOINT, '_blank');
+    }
+
+    // Set up module click handlers
+    function setupModuleHandlers() {
+        // Patient Portal
+        const patientPortalCard = document.querySelector('[data-module="patient-portal"]');
+        if (patientPortalCard) {
+            patientPortalCard.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('🏥 Opening Patient Portal...');
+                window.open(`${EMR_ENDPOINT}/portal/index.php`, '_blank');
             });
-            
-            if (response.ok) {
-                const result = await response.json();
-                console.log('✅ Server start successful:', result);
-                
-                statusText.textContent = 'WebQx Server: Starting up...';
-                statusIndicator.className = 'status-indicator status-connecting';
-                
-                // Check status after startup delay
-                setTimeout(() => {
-                    statusText.textContent = 'WebQx Server: Checking services...';
-                    setTimeout(checkBackendStatus, 5000);
-                }, 3000);
-                
-            } else {
-                const errorText = await response.text().catch(() => 'Unknown error');
-                throw new Error(`Start failed: ${response.status} - ${errorText}`);
-            }
-            
-        } catch (error) {
-            console.error('❌ Server start failed:', error);
-            statusText.textContent = 'WebQx Server: Start failed - Try again';
-            statusIndicator.className = 'status-indicator status-offline';
-        } finally {
-            startButton.textContent = originalText;
-            startButton.disabled = false;
         }
+        
+        // Provider Portal
+        const providerPortalCard = document.querySelector('[data-module="provider-portal"]');
+        if (providerPortalCard) {
+            providerPortalCard.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('👩‍⚕️ Opening Provider Portal...');
+                window.open(`${EMR_ENDPOINT}/interface/login/login.php`, '_blank');
+            });
+        }
+        
+        // Admin Console
+        const adminConsoleCard = document.querySelector('[data-module="admin-console"]');
+        if (adminConsoleCard) {
+            adminConsoleCard.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('⚙️ Opening Admin Console...');
+                window.open(`${EMR_ENDPOINT}/interface/super/edit_globals.php`, '_blank');
+            });
+        }
+        
+        console.log('🔗 Module handlers configured');
     }
 
     // Set up click handler with retry logic
@@ -171,6 +148,8 @@ console.log('🚀 WebQx GitHub Pages Integration - Simplified Working Version Lo
         let attempts = 0;
         function trySetupClick() {
             if (setupClickHandler() || attempts >= 10) {
+                // Also set up module handlers
+                setupModuleHandlers();
                 return;
             }
             attempts++;
