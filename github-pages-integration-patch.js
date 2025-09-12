@@ -6,8 +6,8 @@ console.log('🚀 WebQx GitHub Pages Integration - Simplified Working Version Lo
 (function() {
     'use strict';
     
-    // Configuration - ONLY the working endpoint
-    const WORKING_ENDPOINT = 'http://10.0.2.148:8080';
+    // Configuration - Use Codespace public URL
+    const WORKING_ENDPOINT = 'https://fuzzy-goldfish-7vx645x7wgvv3rjxg-8080.app.github.dev';
     
     console.log('🔧 Using working endpoint:', WORKING_ENDPOINT);
 
