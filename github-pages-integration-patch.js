@@ -6,8 +6,9 @@ console.log('🚀 WebQx GitHub Pages Integration - Simplified Working Version Lo
 (function() {
     'use strict';
     
-    // Configuration - Use Codespace public URL
+    // Configuration - Use Codespace public URLs
     const WORKING_ENDPOINT = 'https://fuzzy-goldfish-7vx645x7wgvv3rjxg-8080.app.github.dev';
+    const MAIN_GATEWAY = 'https://fuzzy-goldfish-7vx645x7wgvv3rjxg-3000.app.github.dev';
     
     console.log('🔧 Using working endpoint:', WORKING_ENDPOINT);
 
@@ -33,20 +34,34 @@ console.log('🚀 WebQx GitHub Pages Integration - Simplified Working Version Lo
         try {
             console.log('🌐 Testing endpoint:', WORKING_ENDPOINT);
             
-            const response = await fetch(`${WORKING_ENDPOINT}/api/remote-start`, {
-                method: 'OPTIONS',
+            // First check the trigger API
+            const response = await fetch(`${WORKING_ENDPOINT}/api/server-status`, {
+                method: 'GET',
                 mode: 'cors',
-                signal: AbortSignal.timeout(5000)
+                signal: AbortSignal.timeout(8000)
             });
             
-            if (response.ok || response.status === 204) {
-                console.log('✅ Server is accessible and ready');
-                statusIndicator.className = 'status-indicator status-online';
-                statusText.textContent = 'WebQx Server: Online ✓';
-                startButton.style.display = 'none';
-                return true;
+            if (response.ok) {
+                const status = await response.json();
+                console.log('📊 Server status:', status);
+                
+                if (status.success && status.status === 'running' && status.runningPorts?.length === 4) {
+                    console.log('✅ All 4 services confirmed running');
+                    statusIndicator.className = 'status-indicator status-online';
+                    statusText.textContent = 'WebQx Server: All services online ✓';
+                    startButton.style.display = 'none';
+                    return true;
+                } else if (status.runningPorts?.length > 0) {
+                    console.log('⚠️ Partial services running:', status.runningPorts.length);
+                    statusIndicator.className = 'status-indicator status-connecting';
+                    statusText.textContent = `WebQx Server: ${status.runningPorts.length}/4 services running`;
+                    startButton.style.display = 'inline-block';
+                    return false;
+                } else {
+                    throw new Error('No services running');
+                }
             } else {
-                throw new Error(`Server responded with status ${response.status}`);
+                throw new Error(`Status check failed: ${response.status}`);
             }
             
         } catch (error) {
