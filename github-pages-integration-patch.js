@@ -1,27 +1,17 @@
-// WebQx GitHub Pages Integration Patch - FIXED CLICK HANDLER VERSION
-// This script immediately overrides GitHub Pages functions AND sets up click handler
+// WebQx GitHub Pages Integration Patch - SIMPLIFIED WORKING VERSION
+// Focus ONLY on the working port 8080 endpoint
 
-console.log('🚀 WebQx GitHub Pages Integration - Fixed Click Handler Loading...');
+console.log('🚀 WebQx GitHub Pages Integration - Simplified Working Version Loading...');
 
-// Immediately override the existing functions before they can run
 (function() {
     'use strict';
     
-    // Configuration - WORKING ENDPOINTS ONLY
-    const DEDICATED_SERVER_CONFIG = {
-        // Use ONLY the working port 8080 endpoint
-        remoteTriggerUrl: window.location.hostname === 'localhost' ? 
-            'http://localhost:8080' : 'http://192.168.173.251:8080',
-        // Backup endpoints (if main server becomes available)
-        backupUrls: [
-            window.location.hostname === 'localhost' ? 
-                'http://localhost:3001' : 'http://192.168.173.251:3001'
-        ]
-    };
+    // Configuration - ONLY the working endpoint
+    const WORKING_ENDPOINT = 'http://192.168.173.251:8080';
+    
+    console.log('🔧 Using working endpoint:', WORKING_ENDPOINT);
 
-    console.log('🔧 Config loaded:', DEDICATED_SERVER_CONFIG);
-
-    // Enhanced backend status checker - IMMEDIATE OVERRIDE
+    // Simplified status checker - ONLY check the working endpoint
     async function checkBackendStatus() {
         const statusIndicator = document.getElementById('backendStatus');
         const statusText = document.getElementById('statusText');
@@ -33,85 +23,60 @@ console.log('🚀 WebQx GitHub Pages Integration - Fixed Click Handler Loading..
             return false;
         }
         
-        console.log('🔄 Checking WebQx dedicated server status (Enhanced)...');
+        console.log('🔄 Checking WebQx server status...');
         
-        // Show checking state immediately
+        // Show checking state
         statusIndicator.className = 'status-indicator status-connecting';
-        statusText.textContent = 'WebQx Server: Checking enhanced connection...';
+        statusText.textContent = 'WebQx Server: Checking connection...';
         startButton.style.display = 'none';
         
-        // Test the working port 8080 endpoint
         try {
-            console.log('🌐 Testing primary endpoint:', DEDICATED_SERVER_CONFIG.remoteTriggerUrl);
-            // Use OPTIONS to check if remote trigger API is available
-            const response = await fetch(`${DEDICATED_SERVER_CONFIG.remoteTriggerUrl}/api/remote-start`, {
+            console.log('🌐 Testing endpoint:', WORKING_ENDPOINT);
+            
+            const response = await fetch(`${WORKING_ENDPOINT}/api/remote-start`, {
                 method: 'OPTIONS',
                 mode: 'cors',
                 signal: AbortSignal.timeout(5000)
             });
             
             if (response.ok || response.status === 204) {
-                console.log('✅ Remote trigger API accessible');
+                console.log('✅ Server is accessible and ready');
                 statusIndicator.className = 'status-indicator status-online';
-                statusText.textContent = 'WebQx Server: Remote trigger ready ✓';
+                statusText.textContent = 'WebQx Server: Online ✓';
                 startButton.style.display = 'none';
                 return true;
             } else {
-                throw new Error(`API responded with status ${response.status}`);
+                throw new Error(`Server responded with status ${response.status}`);
             }
             
         } catch (error) {
-            console.log('❌ Primary endpoint failed:', error.message);
-            
-            // Try backup endpoint
-            for (const backupUrl of DEDICATED_SERVER_CONFIG.backupUrls) {
-                try {
-                    console.log('🔄 Trying backup endpoint:', backupUrl);
-                    const backupResponse = await fetch(`${backupUrl}/api/health`, {
-                        method: 'GET',
-                        mode: 'cors',
-                        signal: AbortSignal.timeout(3000)
-                    });
-                    
-                    if (backupResponse.ok) {
-                        console.log('✅ Backup endpoint accessible');
-                        statusIndicator.className = 'status-indicator status-online';
-                        statusText.textContent = 'WebQx Server: Connected via backup ✓';
-                        startButton.style.display = 'none';
-                        return true;
-                    }
-                } catch (backupError) {
-                    console.log('❌ Backup endpoint failed:', backupError.message);
-                }
-            }
-            
-            // All endpoints failed
-            console.log('🔴 All endpoints offline, showing start button');
+            console.log('❌ Server offline:', error.message);
             statusIndicator.className = 'status-indicator status-offline';
-            statusText.textContent = 'WebQx Server: Offline';
+            statusText.textContent = 'WebQx Server: Offline - Click to start';
             startButton.style.display = 'inline-block';
             return false;
         }
     }
 
-    // Enhanced server start function - IMMEDIATE OVERRIDE
+    // Simplified server start function
     async function startBackend() {
         const startButton = document.getElementById('startBackend');
         const statusText = document.getElementById('statusText');
         const statusIndicator = document.getElementById('backendStatus');
         
-        console.log('🚀 Enhanced remote start initiated...');
+        console.log('🚀 Starting WebQx server...');
         
-        // Update UI immediately
+        // Update UI
+        const originalText = startButton.textContent;
         startButton.textContent = 'Starting...';
         startButton.disabled = true;
         statusIndicator.className = 'status-indicator status-connecting';
-        statusText.textContent = 'WebQx Server: Starting remote server...';
+        statusText.textContent = 'WebQx Server: Starting...';
         
         try {
-            console.log('🎯 Attempting enhanced remote start...');
+            console.log('🎯 Sending start command to:', WORKING_ENDPOINT);
             
-            const response = await fetch(`${DEDICATED_SERVER_CONFIG.remoteTriggerUrl}/api/remote-start`, {
+            const response = await fetch(`${WORKING_ENDPOINT}/api/remote-start`, {
                 method: 'POST',
                 mode: 'cors',
                 headers: {
@@ -120,7 +85,7 @@ console.log('🚀 WebQx GitHub Pages Integration - Fixed Click Handler Loading..
                 },
                 body: JSON.stringify({
                     action: 'start',
-                    source: 'github-pages-enhanced',
+                    source: 'github-pages',
                     timestamp: new Date().toISOString()
                 }),
                 signal: AbortSignal.timeout(10000)
@@ -128,105 +93,97 @@ console.log('🚀 WebQx GitHub Pages Integration - Fixed Click Handler Loading..
             
             if (response.ok) {
                 const result = await response.json();
-                console.log('✅ Enhanced remote start successful:', result);
+                console.log('✅ Server start successful:', result);
                 
-                statusText.textContent = 'WebQx Server: Remote start initiated ✓';
+                statusText.textContent = 'WebQx Server: Starting up...';
                 statusIndicator.className = 'status-indicator status-connecting';
                 
-                // Check status after a delay
+                // Check status after startup delay
                 setTimeout(() => {
                     statusText.textContent = 'WebQx Server: Checking services...';
-                    setTimeout(checkBackendStatus, 3000);
-                }, 2000);
+                    setTimeout(checkBackendStatus, 5000);
+                }, 3000);
                 
             } else {
-                throw new Error(`Remote start failed: ${response.status}`);
+                const errorText = await response.text().catch(() => 'Unknown error');
+                throw new Error(`Start failed: ${response.status} - ${errorText}`);
             }
             
         } catch (error) {
-            console.error('❌ Enhanced remote start failed:', error);
-            statusText.textContent = 'WebQx Server: Remote start failed';
+            console.error('❌ Server start failed:', error);
+            statusText.textContent = 'WebQx Server: Start failed - Try again';
             statusIndicator.className = 'status-indicator status-offline';
         } finally {
-            startButton.textContent = 'Start WebQx Server';
+            startButton.textContent = originalText;
             startButton.disabled = false;
         }
     }
 
-    // CRITICAL FIX: Set up click handler
+    // Set up click handler with retry logic
     function setupClickHandler() {
         const startButton = document.getElementById('startBackend');
         if (startButton) {
-            // Remove any existing click handlers
+            // Remove existing handlers
             startButton.onclick = null;
-            startButton.removeEventListener('click', startBackend);
+            const newButton = startButton.cloneNode(true);
+            startButton.parentNode.replaceChild(newButton, startButton);
             
-            // Add new click handler
-            startButton.addEventListener('click', startBackend);
-            startButton.onclick = startBackend; // Fallback
+            // Add the click handler
+            newButton.addEventListener('click', startBackend);
             
-            console.log('✅ Click handler attached to Start WebQx Server button');
+            console.log('✅ Click handler set up successfully');
             return true;
         } else {
-            console.log('⚠️ Start button not found, retrying...');
+            console.log('⚠️ Start button not found');
             return false;
         }
     }
 
-    // IMMEDIATE OVERRIDE - Replace functions before page loads
-    if (typeof window !== 'undefined') {
-        window.checkBackendStatus = checkBackendStatus;
-        window.startBackend = startBackend;
-        console.log('✅ Functions immediately overridden');
-    }
-
-    // Override when DOM is ready
-    function initializeEnhancedIntegration() {
-        console.log('🌟 WebQx Enhanced Integration Initializing...');
+    // Initialize everything
+    function initializeIntegration() {
+        console.log('🌟 WebQx Integration Initializing...');
         
-        // Ensure our functions are set
+        // Set global functions
         window.checkBackendStatus = checkBackendStatus;
         window.startBackend = startBackend;
         
-        // Clear any existing intervals
+        // Clear existing intervals
         if (window.webqxStatusInterval) {
             clearInterval(window.webqxStatusInterval);
         }
         
-        // CRITICAL: Set up click handler
-        let clickSetupAttempts = 0;
-        const maxAttempts = 10;
-        
+        // Set up click handler with retries
+        let attempts = 0;
         function trySetupClick() {
-            if (setupClickHandler() || clickSetupAttempts >= maxAttempts) {
-                if (clickSetupAttempts >= maxAttempts) {
-                    console.error('❌ Failed to set up click handler after', maxAttempts, 'attempts');
-                }
+            if (setupClickHandler() || attempts >= 10) {
                 return;
             }
-            clickSetupAttempts++;
+            attempts++;
             setTimeout(trySetupClick, 500);
         }
-        
         trySetupClick();
         
-        // Run initial status check
-        setTimeout(checkBackendStatus, 100);
-        
-        // Set up enhanced monitoring
+        // Start status checking
+        setTimeout(checkBackendStatus, 200);
         window.webqxStatusInterval = setInterval(checkBackendStatus, 30000);
         
-        console.log('✅ Enhanced integration active with click handler');
+        console.log('✅ Integration initialized');
     }
 
-    // Initialize immediately if DOM is ready, otherwise wait
+    // Override existing functions immediately
+    if (typeof window !== 'undefined') {
+        window.checkBackendStatus = checkBackendStatus;
+        window.startBackend = startBackend;
+    }
+
+    // Initialize when ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeEnhancedIntegration);
+        document.addEventListener('DOMContentLoaded', initializeIntegration);
     } else {
-        initializeEnhancedIntegration();
+        initializeIntegration();
     }
-
-    // Also initialize after a short delay to ensure we override any later-loading scripts
-    setTimeout(initializeEnhancedIntegration, 1000);
+    
+    // Also try after a delay to override any other scripts
+    setTimeout(initializeIntegration, 1000);
 
 })();
