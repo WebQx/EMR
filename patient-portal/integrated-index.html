@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebQX Patient Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        [x-cloak] { display: none !important; }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .offline-indicator { background: #fbbf24; color: #92400e; }
+        .online-indicator { background: #10b981; color: #065f46; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-green-50 min-h-screen" x-data="patientPortal()" x-init="initializePortal()">
+    <!-- Header -->
+    <header class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-6">
+                <div class="flex items-center">
+                    <div class="text-3xl font-bold text-blue-600">WebQX</div>
+                    <div class="ml-4 text-lg text-gray-600">Patient Portal</div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2" :class="isOnline ? 'online-indicator' : 'offline-indicator'" 
+                         class="px-3 py-1 rounded-full text-xs font-medium">
+                        <div class="w-2 h-2 rounded-full" :class="isOnline ? 'bg-green-800' : 'bg-yellow-800'"></div>
+                        <span x-text="isOnline ? 'Connected' : 'Offline Mode'"></span>
+                    </div>
+                    <div class="text-gray-700">Welcome, <span x-text="patientName"></span></div>
+                    <button @click="logout()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Health Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-calendar-check text-blue-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Next Appointment</p>
+                        <p class="text-lg font-semibold text-gray-900" x-text="dashboardData.appointments?.next || 'None scheduled'"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-pills text-green-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Active Prescriptions</p>
+                        <p class="text-lg font-semibold text-gray-900" x-text="dashboardData.prescriptions?.active || 0"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-envelope text-yellow-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Unread Messages</p>
+                        <p class="text-lg font-semibold text-gray-900" x-text="dashboardData.messages?.unread || 0"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 card-hover">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-heart text-purple-600"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Health Score</p>
+                        <p class="text-lg font-semibold text-gray-900" x-text="dashboardData.healthScore || 'N/A'"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Service Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Appointments Card -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="bg-blue-500 px-6 py-4">
+                    <h3 class="text-xl font-semibold text-white flex items-center">
+                        <i class="fas fa-calendar-alt mr-3"></i>
+                        Appointments
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">View and manage your medical appointments</p>
+                    <div class="space-y-2 mb-4">
+                        <template x-for="appointment in recentAppointments" :key="appointment.id">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <div>
+                                    <p class="font-medium" x-text="appointment.doctor"></p>
+                                    <p class="text-sm text-gray-500" x-text="formatDate(appointment.date)"></p>
+                                </div>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs" x-text="appointment.type"></span>
+                            </div>
+                        </template>
+                    </div>
+                    <button @click="openModule('appointments')" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg">
+                        View All Appointments
+                    </button>
+                </div>
+            </div>
+
+            <!-- Medical Records Card -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="bg-green-500 px-6 py-4">
+                    <h3 class="text-xl font-semibold text-white flex items-center">
+                        <i class="fas fa-file-medical mr-3"></i>
+                        Medical Records
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Access your complete medical history</p>
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Lab Results</span>
+                            <span class="text-green-600 font-medium">2 New</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Imaging</span>
+                            <span class="text-gray-500">1 Available</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Visit Notes</span>
+                            <span class="text-gray-500">5 Total</span>
+                        </div>
+                    </div>
+                    <button @click="openModule('medical-records')" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg">
+                        View Medical Records
+                    </button>
+                </div>
+            </div>
+
+            <!-- Prescriptions Card -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="bg-purple-500 px-6 py-4">
+                    <h3 class="text-xl font-semibold text-white flex items-center">
+                        <i class="fas fa-prescription-bottle-alt mr-3"></i>
+                        Prescriptions
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Manage your medications and refills</p>
+                    <div class="space-y-2 mb-4">
+                        <template x-for="prescription in recentPrescriptions" :key="prescription.id">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <div>
+                                    <p class="font-medium" x-text="prescription.name"></p>
+                                    <p class="text-sm text-gray-500" x-text="`${prescription.refills} refills left`"></p>
+                                </div>
+                                <span class="px-2 py-1 rounded-full text-xs" 
+                                      :class="prescription.status === 'Ready' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'"
+                                      x-text="prescription.status"></span>
+                            </div>
+                        </template>
+                    </div>
+                    <button @click="openModule('prescriptions')" class="w-full bg-purple-500 hover:bg-purple-600 text-white py-2 px-4 rounded-lg">
+                        View All Prescriptions
+                    </button>
+                </div>
+            </div>
+
+            <!-- Telehealth Card -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="bg-red-500 px-6 py-4">
+                    <h3 class="text-xl font-semibold text-white flex items-center">
+                        <i class="fas fa-video mr-3"></i>
+                        Telehealth
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Connect with your healthcare providers remotely</p>
+                    <div class="space-y-3 mb-4">
+                        <button class="w-full bg-red-100 hover:bg-red-200 text-red-700 py-2 px-4 rounded-lg text-left">
+                            <i class="fas fa-video-slash mr-2"></i>Start Video Call
+                        </button>
+                        <button class="w-full bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 px-4 rounded-lg text-left">
+                            <i class="fas fa-comments mr-2"></i>Send Message
+                        </button>
+                    </div>
+                    <button @click="openModule('telehealth')" class="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg">
+                        Launch Telehealth
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mental Health Card -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="bg-teal-500 px-6 py-4">
+                    <h3 class="text-xl font-semibold text-white flex items-center">
+                        <i class="fas fa-brain mr-3"></i>
+                        Mental Health
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Access mental health resources and support</p>
+                    <div class="space-y-2 mb-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Mood Tracker</span>
+                            <span class="text-teal-600 font-medium">Active</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Therapy Sessions</span>
+                            <span class="text-gray-500">2 Scheduled</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-700">Resources</span>
+                            <span class="text-gray-500">Available</span>
+                        </div>
+                    </div>
+                    <button @click="openModule('mental-health')" class="w-full bg-teal-500 hover:bg-teal-600 text-white py-2 px-4 rounded-lg">
+                        Access Resources
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Card -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="bg-orange-500 px-6 py-4">
+                    <h3 class="text-xl font-semibold text-white flex items-center">
+                        <i class="fas fa-envelope mr-3"></i>
+                        Messages
+                        <span x-show="dashboardData.messages?.unread > 0" 
+                              class="ml-2 bg-red-600 text-white rounded-full px-2 py-1 text-xs" 
+                              x-text="dashboardData.messages.unread"></span>
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Communicate with your healthcare team</p>
+                    <div class="space-y-2 mb-4">
+                        <template x-for="message in recentMessages" :key="message.id">
+                            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                                <div>
+                                    <p class="font-medium" x-text="message.from"></p>
+                                    <p class="text-sm text-gray-500" x-text="message.subject"></p>
+                                </div>
+                                <div class="flex items-center">
+                                    <span x-show="message.unread" class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                                    <span class="text-xs text-gray-400" x-text="message.date"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <button @click="openModule('messages')" class="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg">
+                        View All Messages
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function patientPortal() {
+            return {
+                isOnline: false,
+                patientName: 'John Doe',
+                dashboardData: {},
+                recentAppointments: [],
+                recentPrescriptions: [],
+                recentMessages: [],
+                baseURL: '',
+
+                async initializePortal() {
+                    // Set base URL for unified server
+                    this.baseURL = 'http://localhost:3000';
+                    
+                    // Check authentication
+                    await this.checkAuth();
+                    
+                    // Load dashboard data
+                    await this.loadDashboardData();
+                    await this.loadRecentAppointments();
+                    await this.loadRecentPrescriptions();
+                    await this.loadRecentMessages();
+                },
+
+                async checkAuth() {
+                    const token = localStorage.getItem('webqx_token');
+                    if (!token) {
+                        window.location.href = '/patient-portal/login';
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`${this.baseURL}/api/v1/auth/verify`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        
+                        if (response.ok) {
+                            const userData = await response.json();
+                            this.patientName = userData.user?.name || 'Patient';
+                            this.isOnline = true;
+                        } else {
+                            localStorage.removeItem('webqx_token');
+                            window.location.href = '/patient-portal/login';
+                        }
+                    } catch (error) {
+                        console.warn('Auth check failed, entering offline mode:', error);
+                        this.isOnline = false;
+                        this.patientName = 'Patient (Offline)';
+                    }
+                },
+
+                async loadDashboardData() {
+                    try {
+                        const response = await fetch(`${this.baseURL}/api/patient/dashboard`, {
+                            headers: this.getAuthHeaders()
+                        });
+                        
+                        if (response.ok) {
+                            this.dashboardData = await response.json();
+                            this.isOnline = !this.dashboardData.offline;
+                        }
+                    } catch (error) {
+                        console.warn('Dashboard data load failed:', error);
+                        this.dashboardData = {
+                            appointments: { count: 2, next: "Tomorrow 2:00 PM" },
+                            prescriptions: { active: 3, ready: 1 },
+                            messages: { unread: 1 },
+                            healthScore: 98,
+                            offline: true
+                        };
+                        this.isOnline = false;
+                    }
+                },
+
+                async loadRecentAppointments() {
+                    try {
+                        const response = await fetch(`${this.baseURL}/api/patient/appointments?limit=3`, {
+                            headers: this.getAuthHeaders()
+                        });
+                        
+                        if (response.ok) {
+                            this.recentAppointments = await response.json();
+                        }
+                    } catch (error) {
+                        console.warn('Appointments load failed:', error);
+                        this.recentAppointments = [
+                            { id: 1, doctor: "Dr. Smith", date: "2025-01-12T14:00:00Z", type: "Follow-up" },
+                            { id: 2, doctor: "Dr. Johnson", date: "2025-01-15T10:00:00Z", type: "Annual Checkup" }
+                        ];
+                    }
+                },
+
+                async loadRecentPrescriptions() {
+                    try {
+                        const response = await fetch(`${this.baseURL}/api/patient/prescriptions?limit=3`, {
+                            headers: this.getAuthHeaders()
+                        });
+                        
+                        if (response.ok) {
+                            this.recentPrescriptions = await response.json();
+                        }
+                    } catch (error) {
+                        console.warn('Prescriptions load failed:', error);
+                        this.recentPrescriptions = [
+                            { id: 1, name: "Lisinopril 10mg", status: "Active", refills: 2 },
+                            { id: 2, name: "Metformin 500mg", status: "Ready", refills: 1 },
+                            { id: 3, name: "Atorvastatin 20mg", status: "Active", refills: 3 }
+                        ];
+                    }
+                },
+
+                async loadRecentMessages() {
+                    try {
+                        const response = await fetch(`${this.baseURL}/api/patient/messages?limit=3`, {
+                            headers: this.getAuthHeaders()
+                        });
+                        
+                        if (response.ok) {
+                            this.recentMessages = await response.json();
+                        }
+                    } catch (error) {
+                        console.warn('Messages load failed:', error);
+                        this.recentMessages = [
+                            { id: 1, from: "Dr. Smith", subject: "Lab Results Available", unread: true, date: "2025-01-11" }
+                        ];
+                    }
+                },
+
+                getAuthHeaders() {
+                    const token = localStorage.getItem('webqx_token');
+                    return token ? { 'Authorization': `Bearer ${token}` } : {};
+                },
+
+                formatDate(dateString) {
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                },
+
+                openModule(moduleType) {
+                    // Navigate to specific module pages
+                    const moduleRoutes = {
+                        'appointments': '/patient-portal/appointments',
+                        'medical-records': '/patient-portal/medical-records',
+                        'prescriptions': '/patient-portal/prescriptions',
+                        'telehealth': '/patient-portal/telehealth',
+                        'mental-health': '/patient-portal/mental-health',
+                        'messages': '/patient-portal/messages'
+                    };
+                    
+                    if (moduleRoutes[moduleType]) {
+                        window.location.href = moduleRoutes[moduleType];
+                    }
+                },
+
+                logout() {
+                    localStorage.removeItem('webqx_token');
+                    window.location.href = '/patient-portal/login';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
