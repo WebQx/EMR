@@ -7,7 +7,7 @@ console.log('🚀 WebQx GitHub Pages Integration - Simplified Working Version Lo
     'use strict';
     
     // Configuration - ONLY the working endpoint
-    const WORKING_ENDPOINT = 'http://192.168.173.251:8080';
+    const WORKING_ENDPOINT = 'http://10.0.2.148:8080';
     
     console.log('🔧 Using working endpoint:', WORKING_ENDPOINT);
 
