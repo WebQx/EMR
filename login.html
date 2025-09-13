@@ -407,39 +407,23 @@
 
         // Traditional login with backend integration
         async function performTraditionalLogin(email, password, role) {
-            const localEmrUrl = 'http://localhost:3000';
-            const proxyUrl = 'http://localhost:3001';
+            const publicEmrUrl = 'https://yourdomain.com'; // Replace with your backend domain
+            const proxyUrl = 'https://yourdomain.com';
             
             try {
-                // Try local EMR server first
+                // Always use public backend
                 let response;
-                try {
-                    response = await fetch(`${localEmrUrl}/api/auth/login`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            username: email,
-                            password: password,
-                            role: role
-                        })
-                    });
-                } catch (localError) {
-                    // Fallback to proxy server
-                    console.log('Local server unavailable, trying proxy...');
-                    response = await fetch(`${proxyUrl}/api/auth/login`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            username: email,
-                            password: password,
-                            role: role
-                        })
-                    });
-                }
+                response = await fetch(`${publicEmrUrl}/api/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: email,
+                        password: password,
+                        role: role
+                    })
+                });
 
                 const data = await response.json();
 

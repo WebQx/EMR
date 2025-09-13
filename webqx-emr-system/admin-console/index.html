@@ -331,7 +331,7 @@
         }
         
         function showDBStats() {
-            fetch('/webqx-api.php?action=health')
+            fetch('https://yourdomain.com/webqx-api.php?action=health')
                 .then(response => response.json())
                 .then(data => {
                     alert(`📊 Database Statistics:\n\nStatus: ${data.database || 'Connected'}\nTables: WebQX Community Health tables active\nStorage: Normal\nConnections: Active`);
@@ -437,7 +437,7 @@
         
         // Auto-refresh system status every 30 seconds
         setInterval(() => {
-            fetch('/webqx-api.php?action=status')
+            fetch('https://yourdomain.com/webqx-api.php?action=status')
                 .then(response => response.json())
                 .then(data => {
                     console.log('System status check:', data);

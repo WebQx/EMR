@@ -356,7 +356,7 @@
         }
         
         // Check WebQX EMR connectivity
-        fetch('/webqx-api.php?action=status')
+    fetch('https://yourdomain.com/webqx-api.php?action=status')
             .then(response => response.json())
             .then(data => {
                 console.log('WebQX EMR Status:', data);
