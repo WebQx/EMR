@@ -311,7 +311,7 @@
     <div class="status-bar">
         <span class="status-indicator status-offline" id="backendStatus"></span>
         <span id="statusText">WebQx Server: Checking connection...</span>
-        <button id="startBackend" style="display: none; margin-left: 1rem; padding: 0.25rem 0.75rem; background: #48bb78; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Start WebQx Server</button>
+        <button id="startBackend" onclick="startMariaDBServer()" style="display: inline-block; margin-left: 1rem; padding: 0.25rem 0.75rem; background: #48bb78; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Start MariaDB Server</button>
     </div>
 
     <!-- Header -->
@@ -365,13 +365,13 @@
                     <p>Emergency consultations, scheduled appointments, and crisis support available worldwide.</p>
                 </div>
                 
-                <div class="feature-card" onclick="window.location.href='./patient-portal/'" style="cursor: pointer;">
+                <div class="feature-card" onclick="launchPatientPortal()" style="cursor: pointer;">
                     <div class="feature-icon">👤</div>
                     <h3>Patient Portal</h3>
                     <p>Complete patient management with medical records, appointment scheduling, and secure messaging.</p>
                 </div>
                 
-                <div class="feature-card" onclick="window.location.href='./provider/'" style="cursor: pointer;">
+                <div class="feature-card" onclick="launchProviderPortal()" style="cursor: pointer;">
                     <div class="feature-icon">👨‍⚕️</div>
                     <h3>Provider Portal</h3>
                     <p>Full clinical workflow with EHR integration, FHIR compliance, and OpenEMR connectivity.</p>
@@ -389,7 +389,7 @@
                     <p>Speech-to-text, clinical decision support, and automated documentation assistance.</p>
                 </div>
                 
-                <div class="feature-card" onclick="window.location.href='./admin-console/'" style="cursor: pointer;">
+                <div class="feature-card" onclick="launchAdminConsole()" style="cursor: pointer;">
                     <div class="feature-icon">⚙️</div>
                     <h3>Admin Console</h3>
                     <p>System administration, user management, and OpenEMR configuration tools.</p>
@@ -462,10 +462,97 @@
     </footer>
 
     <script>
-        // Simple working navigation
+        // MariaDB Server Control
+        function startMariaDBServer() {
+            const button = document.getElementById('startBackend');
+            const statusText = document.getElementById('statusText');
+            const statusIndicator = document.getElementById('backendStatus');
+            
+            button.textContent = 'Starting...';
+            button.disabled = true;
+            statusText.textContent = 'MariaDB Server: Starting...';
+            
+            // Simulate server start
+            fetch('/api/start-mariadb', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusIndicator.className = 'status-indicator status-online';
+                    statusText.textContent = 'MariaDB Server: Online - EMR Ready';
+                    button.textContent = 'Server Running';
+                    button.style.background = '#10b981';
+                    
+                    // Auto-redirect to EMR after 2 seconds
+                    setTimeout(() => {
+                        window.open('http://localhost:8080', '_blank');
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Failed to start server');
+                }
+            })
+            .catch(error => {
+                console.error('Server start failed:', error);
+                statusText.textContent = 'MariaDB Server: Failed to start';
+                button.textContent = 'Retry Start';
+                button.disabled = false;
+                button.style.background = '#f56565';
+                
+                // Fallback: Open local EMR directly
+                alert('Starting local EMR server...');
+                window.open('webqx-emr-system/', '_blank');
+            });
+        }
+        
+        // Launch functions for feature cards
+        function launchPatientPortal() {
+            fetch('http://localhost:8080/api/status')
+            .then(() => window.open('http://localhost:8080/patient-portal', '_blank'))
+            .catch(() => {
+                startMariaDBServer();
+                setTimeout(() => window.open('patient-portal/', '_blank'), 3000);
+            });
+        }
+        
+        function launchProviderPortal() {
+            fetch('http://localhost:8080/api/status')
+            .then(() => window.open('http://localhost:8080/provider', '_blank'))
+            .catch(() => {
+                startMariaDBServer();
+                setTimeout(() => window.open('provider/', '_blank'), 3000);
+            });
+        }
+        
+        function launchAdminConsole() {
+            fetch('http://localhost:8080/api/status')
+            .then(() => window.open('http://localhost:8080/admin', '_blank'))
+            .catch(() => {
+                startMariaDBServer();
+                setTimeout(() => window.open('admin-console/', '_blank'), 3000);
+            });
+        }
+        
+        // Check server status on load
         document.addEventListener('DOMContentLoaded', function() {
-            // Remove any broken integration scripts
-            console.log('WebQX Homepage loaded successfully');
+            const statusText = document.getElementById('statusText');
+            const statusIndicator = document.getElementById('backendStatus');
+            
+            // Check if MariaDB is running
+            fetch('http://localhost:8080/api/status')
+            .then(response => response.json())
+            .then(data => {
+                statusIndicator.className = 'status-indicator status-online';
+                statusText.textContent = 'MariaDB Server: Online - EMR Ready';
+                document.getElementById('startBackend').textContent = 'Server Running';
+                document.getElementById('startBackend').style.background = '#10b981';
+            })
+            .catch(error => {
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.textContent = 'MariaDB Server: Offline - Click to start';
+                document.getElementById('startBackend').style.display = 'inline-block';
+            });
         });
     </script>
 </body>
