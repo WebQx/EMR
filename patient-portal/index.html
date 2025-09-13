@@ -364,6 +364,28 @@
             </div>
         </div>
     </div>
+    <script src="js/emr-connector.js"></script>
     <script src="js/modules-api.js"></script>
+    <script>
+        const emr = new EMRConnector();
+        
+        async function updateCards() {
+            const appointments = await emr.getPatientAppointments();
+            const records = await emr.getPatientRecords();
+            const prescriptions = await emr.getPatientPrescriptions();
+            const messages = await emr.getPatientMessages();
+            
+            // Update stat cards
+            document.querySelectorAll('.stat-number')[0].textContent = appointments.count;
+            document.querySelectorAll('.stat-number')[1].textContent = prescriptions.active;
+            document.querySelectorAll('.stat-number')[2].textContent = messages.unread;
+            
+            // Update service details
+            document.querySelector('.service-card .service-details').innerHTML = 
+                `• Next: ${appointments.next}<br>• Total upcoming: ${appointments.count}`;
+        }
+        
+        document.addEventListener('DOMContentLoaded', updateCards);
+    </script>
 </body>
 </html>
