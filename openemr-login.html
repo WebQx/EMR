@@ -139,7 +139,10 @@
             </div>
         </div>
         
-        <a href="index.html" class="back-link">← Back to WebQX Portal</a>
+        <div style="text-align: center; margin-top: 1rem;">
+            <button onclick="startServer()" class="btn" style="background: #10b981; margin-bottom: 1rem;">🚀 Start WebQX Server</button><br>
+            <a href="index.html" class="back-link">← Back to WebQX Portal</a>
+        </div>
     </div>
 
     <script>
@@ -155,35 +158,46 @@
             btn.textContent = 'Connecting to OpenEMR...';
             btn.disabled = true;
             
-            // Simulate OpenEMR login
-            setTimeout(() => {
-                // Demo credentials check
-                const validCredentials = [
-                    {user: 'admin', pass: 'pass'},
-                    {user: 'physician', pass: 'physician'},
-                    {user: 'clinician', pass: 'clinician'},
-                    {user: 'accountant', pass: 'accountant'},
-                    {user: 'receptionist', pass: 'receptionist'}
-                ];
-                
-                const isValid = validCredentials.some(cred => 
-                    cred.user === username && cred.pass === password
-                );
-                
-                if (isValid) {
-                    // Store login info
-                    localStorage.setItem('openemr_user', username);
-                    localStorage.setItem('openemr_facility', facility);
+            // Check if server is running first
+            fetch('http://localhost:8080/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Server is running, proceed with login
+                    const validCredentials = [
+                        {user: 'admin', pass: 'pass'},
+                        {user: 'physician', pass: 'physician'},
+                        {user: 'clinician', pass: 'clinician'},
+                        {user: 'accountant', pass: 'accountant'},
+                        {user: 'receptionist', pass: 'receptionist'}
+                    ];
                     
-                    // Redirect to OpenEMR system
-                    window.location.href = 'webqx-emr-system/';
-                } else {
-                    alert('Invalid credentials. Please use demo accounts shown below.');
+                    const isValid = validCredentials.some(cred => 
+                        cred.user === username && cred.pass === password
+                    );
+                    
+                    if (isValid) {
+                        localStorage.setItem('openemr_user', username);
+                        localStorage.setItem('openemr_facility', facility);
+                        window.open('http://localhost:8080', '_blank');
+                        btn.textContent = 'Login to OpenEMR';
+                        btn.disabled = false;
+                    } else {
+                        alert('Invalid credentials. Please use demo accounts shown below.');
+                        btn.textContent = 'Login to OpenEMR';
+                        btn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    // Server not running
+                    alert('❌ WebQX EMR Server not running!\n\nPlease run: start-servers.bat\n\nOr start manually:\ncd webqx-emr-system\nnode server.js');
                     btn.textContent = 'Login to OpenEMR';
                     btn.disabled = false;
-                }
-            }, 1500);
+                });
         });
+        
+        function startServer() {
+            alert('🚀 Starting WebQX EMR Server...\n\nRun this command in your terminal:\n\ncd webqx-emr-system\nnode server.js\n\nOr double-click: start-servers.bat');
+        }
     </script>
 </body>
 </html>
