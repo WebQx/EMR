@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebQX EMR System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .container { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); max-width: 800px; width: 90%; }
+        h1 { color: #2c3e50; margin-bottom: 30px; text-align: center; font-size: 2.5em; }
+        .modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-top: 30px; }
+        .module { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; text-decoration: none; transition: transform 0.3s; text-align: center; }
+        .module:hover { transform: translateY(-5px); }
+        .module h3 { margin-bottom: 10px; font-size: 1.3em; }
+        .status { background: #27ae60; color: white; padding: 10px 20px; border-radius: 25px; display: inline-block; margin-bottom: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status">✅ System Online</div>
+        <h1>WebQX EMR System</h1>
+        <p style="text-align: center; color: #7f8c8d; margin-bottom: 30px;">
+            FHIR-compliant Electronic Medical Records with OpenEMR Integration
+        </p>
+        
+        <div class="modules">
+            <a href="patient-portal/" class="module">
+                <h3>👤 Patient Portal</h3>
+                <p>Secure patient access and records</p>
+            </a>
+            
+            <a href="provider/" class="module">
+                <h3>👨‍⚕️ Provider Portal</h3>
+                <p>Clinical workflow management</p>
+            </a>
+            
+            <a href="admin-console/" class="module">
+                <h3>⚙️ Admin Console</h3>
+                <p>System administration</p>
+            </a>
+            
+            <a href="../openemr-login.html" class="module">
+                <h3>🏥 OpenEMR Login</h3>
+                <p>Direct EMR system access</p>
+            </a>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px; color: #7f8c8d;">
+            <p>WebQX Healthcare Platform • HIPAA Compliant • FHIR R4</p>
+        </div>
+    </div>
+</body>
+</html>
