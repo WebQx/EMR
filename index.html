@@ -506,31 +506,43 @@
             });
         }
         
-        // Launch functions for feature cards
+        // Launch functions with auto-login
         function launchPatientPortal() {
+            // Auto-login with patient demo credentials
+            const loginData = { username: 'demo@patient.com', password: 'patient123', role: 'patient' };
+            localStorage.setItem('webqx_auto_login', JSON.stringify(loginData));
+            
             fetch('http://localhost:8080/api/status')
-            .then(() => window.open('http://localhost:8080/patient-portal', '_blank'))
+            .then(() => window.open('http://localhost:8080/login?auto=patient', '_blank'))
             .catch(() => {
                 startMariaDBServer();
-                setTimeout(() => window.open('patient-portal/', '_blank'), 3000);
+                setTimeout(() => window.open('patient-portal/?auto=patient', '_blank'), 3000);
             });
         }
         
         function launchProviderPortal() {
+            // Auto-login with physician demo credentials
+            const loginData = { username: 'physician@webqx.com', password: 'demo123', role: 'physician' };
+            localStorage.setItem('webqx_auto_login', JSON.stringify(loginData));
+            
             fetch('http://localhost:8080/api/status')
-            .then(() => window.open('http://localhost:8080/provider', '_blank'))
+            .then(() => window.open('http://localhost:8080/login?auto=physician', '_blank'))
             .catch(() => {
                 startMariaDBServer();
-                setTimeout(() => window.open('provider/', '_blank'), 3000);
+                setTimeout(() => window.open('provider/?auto=physician', '_blank'), 3000);
             });
         }
         
         function launchAdminConsole() {
+            // Auto-login with admin demo credentials
+            const loginData = { username: 'admin@webqx.com', password: 'admin123', role: 'admin' };
+            localStorage.setItem('webqx_auto_login', JSON.stringify(loginData));
+            
             fetch('http://localhost:8080/api/status')
-            .then(() => window.open('http://localhost:8080/admin', '_blank'))
+            .then(() => window.open('http://localhost:8080/login?auto=admin', '_blank'))
             .catch(() => {
                 startMariaDBServer();
-                setTimeout(() => window.open('admin-console/', '_blank'), 3000);
+                setTimeout(() => window.open('admin-console/?auto=admin', '_blank'), 3000);
             });
         }
         
