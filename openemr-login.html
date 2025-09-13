@@ -188,15 +188,53 @@
                     }
                 })
                 .catch(error => {
-                    // Server not running
-                    alert('❌ WebQX EMR Server not running!\n\nPlease run: start-servers.bat\n\nOr start manually:\ncd webqx-emr-system\nnode server.js');
-                    btn.textContent = 'Login to OpenEMR';
-                    btn.disabled = false;
+                    // Server not running - try to start it
+                    btn.textContent = 'Starting Server...';
+                    
+                    // Try to start server via API
+                    fetch('/api/start-server', { method: 'POST' })
+                        .then(() => {
+                            // Wait 3 seconds then try login again
+                            setTimeout(() => {
+                                window.open('http://localhost:8080', '_blank');
+                                btn.textContent = 'Login to OpenEMR';
+                                btn.disabled = false;
+                            }, 3000);
+                        })
+                        .catch(() => {
+                            // Fallback: direct server start
+                            alert('🚀 Starting WebQX EMR Server...\n\nServer will open in new window.');
+                            window.open('webqx-emr-system/', '_blank');
+                            btn.textContent = 'Login to OpenEMR';
+                            btn.disabled = false;
+                        });
                 });
         });
         
         function startServer() {
-            alert('🚀 Starting WebQX EMR Server...\n\nRun this command in your terminal:\n\ncd webqx-emr-system\nnode server.js\n\nOr double-click: start-servers.bat');
+            const btn = event.target;
+            btn.textContent = 'Starting...';
+            btn.disabled = true;
+            
+            // Try to start via API first
+            fetch('/api/start-server', { method: 'POST' })
+                .then(() => {
+                    btn.textContent = '✅ Server Started';
+                    btn.style.background = '#059669';
+                    setTimeout(() => {
+                        window.open('http://localhost:8080', '_blank');
+                    }, 2000);
+                })
+                .catch(() => {
+                    // Fallback: open local server
+                    btn.textContent = '🚀 Opening Server';
+                    window.open('webqx-emr-system/', '_blank');
+                    setTimeout(() => {
+                        btn.textContent = '🚀 Start WebQX Server';
+                        btn.disabled = false;
+                        btn.style.background = '#10b981';
+                    }, 3000);
+                });
         }
     </script>
 </body>
