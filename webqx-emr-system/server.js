@@ -476,12 +476,12 @@ function serveDashboard(req, res) {
         
         <div class="card">
             <h3>🏥 Quick Actions</h3>
-            <a href="#" class="btn">New Patient</a>
-            <a href="#" class="btn">Schedule Appointment</a>
-            <a href="#" class="btn">View Calendar</a>
-            <a href="#" class="btn">Lab Results</a>
-            <a href="#" class="btn">Billing</a>
-            <a href="#" class="btn">Reports</a>
+            <a href="/new-patient" class="btn" onclick="newPatient()">New Patient</a>
+            <a href="/schedule" class="btn" onclick="scheduleAppointment()">Schedule Appointment</a>
+            <a href="/calendar" class="btn" onclick="viewCalendar()">View Calendar</a>
+            <a href="/lab-results" class="btn" onclick="labResults()">Lab Results</a>
+            <a href="/billing" class="btn" onclick="billing()">Billing</a>
+            <a href="/reports" class="btn" onclick="reports()">Reports</a>
         </div>
         
         <div class="card">
@@ -507,6 +507,162 @@ function serveDashboard(req, res) {
     </div>
 
     <script>
+        // EMR Functions
+        function newPatient() {
+            event.preventDefault();
+            const modal = createModal('New Patient Registration', `
+                <form onsubmit="submitNewPatient(event)">
+                    <div style="margin-bottom: 1rem;">
+                        <label>First Name:</label>
+                        <input type="text" id="firstName" required style="width: 100%; padding: 8px; margin-top: 4px;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label>Last Name:</label>
+                        <input type="text" id="lastName" required style="width: 100%; padding: 8px; margin-top: 4px;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label>Date of Birth:</label>
+                        <input type="date" id="dob" required style="width: 100%; padding: 8px; margin-top: 4px;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label>Phone:</label>
+                        <input type="tel" id="phone" style="width: 100%; padding: 8px; margin-top: 4px;">
+                    </div>
+                    <button type="submit" class="btn">Register Patient</button>
+                </form>
+            `);
+        }
+        
+        function scheduleAppointment() {
+            event.preventDefault();
+            const modal = createModal('Schedule Appointment', `
+                <form onsubmit="submitAppointment(event)">
+                    <div style="margin-bottom: 1rem;">
+                        <label>Patient:</label>
+                        <select id="patientSelect" required style="width: 100%; padding: 8px; margin-top: 4px;">
+                            <option value="">Select Patient</option>
+                            <option value="1">John Doe</option>
+                            <option value="2">Jane Smith</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label>Date:</label>
+                        <input type="date" id="apptDate" required style="width: 100%; padding: 8px; margin-top: 4px;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label>Time:</label>
+                        <input type="time" id="apptTime" required style="width: 100%; padding: 8px; margin-top: 4px;">
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <label>Provider:</label>
+                        <select id="provider" required style="width: 100%; padding: 8px; margin-top: 4px;">
+                            <option value="">Select Provider</option>
+                            <option value="dr-smith">Dr. Smith</option>
+                            <option value="dr-johnson">Dr. Johnson</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Schedule</button>
+                </form>
+            `);
+        }
+        
+        function viewCalendar() {
+            event.preventDefault();
+            const modal = createModal('Appointment Calendar', `
+                <div style="text-align: center;">
+                    <h3>Today's Appointments</h3>
+                    <div style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <strong>10:00 AM</strong> - John Doe (Routine Checkup)<br>
+                        <strong>2:30 PM</strong> - Jane Smith (Follow-up)
+                    </div>
+                    <button class="btn" onclick="alert('Full calendar view would open here')">View Full Calendar</button>
+                </div>
+            `);
+        }
+        
+        function labResults() {
+            event.preventDefault();
+            const modal = createModal('Lab Results', `
+                <div>
+                    <h3>Recent Lab Results</h3>
+                    <div style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <strong>John Doe</strong> - CBC Panel<br>
+                        <small>Completed: Today 9:15 AM</small><br>
+                        <span style="color: green;">✅ Normal</span>
+                    </div>
+                    <div style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <strong>Jane Smith</strong> - Lipid Panel<br>
+                        <small>Completed: Yesterday 3:45 PM</small><br>
+                        <span style="color: orange;">⚠️ Review Required</span>
+                    </div>
+                    <button class="btn" onclick="alert('Full lab results system would open here')">View All Results</button>
+                </div>
+            `);
+        }
+        
+        function billing() {
+            event.preventDefault();
+            const modal = createModal('Billing Management', `
+                <div>
+                    <h3>Billing Overview</h3>
+                    <div style="margin: 1rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                        <strong>Outstanding Claims:</strong> $12,450<br>
+                        <strong>Pending Payments:</strong> $3,200<br>
+                        <strong>Today's Revenue:</strong> $8,750
+                    </div>
+                    <button class="btn" onclick="alert('Full billing system would open here')">Open Billing System</button>
+                </div>
+            `);
+        }
+        
+        function reports() {
+            event.preventDefault();
+            const modal = createModal('Reports & Analytics', `
+                <div>
+                    <h3>Available Reports</h3>
+                    <div style="margin: 1rem 0;">
+                        <button class="btn" style="display: block; margin: 0.5rem 0; width: 100%;" onclick="alert('Patient Demographics Report')">Patient Demographics</button>
+                        <button class="btn" style="display: block; margin: 0.5rem 0; width: 100%;" onclick="alert('Appointment Statistics')">Appointment Statistics</button>
+                        <button class="btn" style="display: block; margin: 0.5rem 0; width: 100%;" onclick="alert('Revenue Report')">Revenue Report</button>
+                        <button class="btn" style="display: block; margin: 0.5rem 0; width: 100%;" onclick="alert('Clinical Quality Measures')">Clinical Quality Measures</button>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function createModal(title, content) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000;';
+            modal.innerHTML = `
+                <div style="background: white; padding: 2rem; border-radius: 10px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2>${title}</h2>
+                        <button onclick="this.closest('div[style*="position: fixed"]').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+                    </div>
+                    ${content}
+                </div>
+            `;
+            document.body.appendChild(modal);
+            return modal;
+        }
+        
+        function submitNewPatient(event) {
+            event.preventDefault();
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            alert(`Patient ${firstName} ${lastName} registered successfully!`);
+            event.target.closest('div[style*="position: fixed"]').remove();
+        }
+        
+        function submitAppointment(event) {
+            event.preventDefault();
+            const patient = document.getElementById('patientSelect').selectedOptions[0].text;
+            const date = document.getElementById('apptDate').value;
+            const time = document.getElementById('apptTime').value;
+            alert(`Appointment scheduled for ${patient} on ${date} at ${time}`);
+            event.target.closest('div[style*="position: fixed"]').remove();
+        }
+        
         // Load API status
         fetch('/api/status')
             .then(response => response.json())
