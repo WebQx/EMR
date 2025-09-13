@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebQX EMR - Patient Portal</title>
+    <link rel="stylesheet" href="../themes/webqx-modern.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--webqx-light);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .patient-portal-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .welcome-banner {
+            background: var(--webqx-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .portal-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .portal-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .portal-card h3 {
+            color: var(--webqx-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .portal-card .icon {
+            font-size: 1.5rem;
+        }
+        
+        .portal-card p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+        
+        .portal-btn {
+            background: var(--webqx-primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            transition: background 0.2s ease;
+        }
+        
+        .portal-btn:hover {
+            background: var(--webqx-secondary);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .quick-access {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .quick-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .quick-link {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            color: var(--webqx-primary);
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+        
+        .quick-link:hover {
+            background: var(--webqx-primary);
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- WebQX Header -->
+    <div class="webqx-header">
+        <div class="container-fluid" style="max-width: 1200px; margin: 0 auto; padding: 1rem 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="webqx-logo">
+                    🏥 WebQX EMR - Patient Portal
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <a href="../" style="color: white; text-decoration: none;">← Back to Main</a>
+                    <a href="#" onclick="showLoginModal()" style="color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 4px;">Login</a>
+                </div>
+            </div>
+            <div class="webqx-tagline">
+                Empowering patients with easy access to their healthcare information
+            </div>
+        </div>
+    </div>
+
+    <div class="patient-portal-container">
+        <div class="welcome-banner">
+            <h1>Welcome to WebQX Patient Portal</h1>
+            <p>Your gateway to comprehensive healthcare management and community health services</p>
+        </div>
+
+        <div class="quick-access">
+            <h3 style="color: var(--webqx-primary); margin-bottom: 1rem;">Quick Access</h3>
+            <div class="quick-links">
+                <a href="#appointments" class="quick-link">📅 Appointments</a>
+                <a href="#records" class="quick-link">📋 Medical Records</a>
+                <a href="#messages" class="quick-link">💬 Messages</a>
+                <a href="#prescriptions" class="quick-link">💊 Prescriptions</a>
+                <a href="#billing" class="quick-link">💳 Billing</a>
+            </div>
+        </div>
+
+        <div class="portal-grid">
+            <div class="portal-card">
+                <h3><span class="icon">📅</span> Appointment Management</h3>
+                <p>Schedule, reschedule, or cancel appointments with your healthcare providers. View upcoming appointments and receive reminders.</p>
+                <a href="#appointments" class="portal-btn">Manage Appointments</a>
+            </div>
+
+            <div class="portal-card">
+                <h3><span class="icon">📋</span> Medical Records</h3>
+                <p>Access your complete medical history, test results, diagnoses, and treatment plans in one secure location.</p>
+                <a href="#records" class="portal-btn">View Records</a>
+            </div>
+
+            <div class="portal-card">
+                <h3><span class="icon">💬</span> Secure Messaging</h3>
+                <p>Communicate directly with your healthcare team. Ask questions, request prescription refills, and get non-urgent medical advice.</p>
+                <a href="#messages" class="portal-btn">Check Messages</a>
+            </div>
+
+            <div class="portal-card">
+                <h3><span class="icon">💊</span> Prescription Management</h3>
+                <p>View current medications, request refills, and track prescription history. Get medication reminders and interaction alerts.</p>
+                <a href="#prescriptions" class="portal-btn">Manage Prescriptions</a>
+            </div>
+
+            <div class="portal-card">
+                <h3><span class="icon">🔬</span> Test Results</h3>
+                <p>Review lab results, imaging reports, and other diagnostic tests. Track trends in your health metrics over time.</p>
+                <a href="#results" class="portal-btn">View Results</a>
+            </div>
+
+            <div class="portal-card">
+                <h3><span class="icon">💳</span> Billing & Insurance</h3>
+                <p>View statements, make payments, and manage insurance information. Access financial assistance programs for qualified patients.</p>
+                <a href="#billing" class="portal-btn">Manage Billing</a>
+            </div>
+
+            <div class="portal-card">
+                <h3><span class="icon">📹</span> Telehealth</h3>
+                <p>Join virtual consultations with your providers. Access telehealth services and emergency consultations when needed.</p>
+                <a href="#telehealth" class="portal-btn">Join Video Call</a>
+            </div>
+
+            <div class="portal-card">
+                <h3><span class="icon">🌍</span> Community Health</h3>
+                <p>Access community health resources, mobile clinic schedules, and information about free healthcare services in your area.</p>
+                <a href="#community" class="portal-btn">Community Resources</a>
+            </div>
+        </div>
+
+        <!-- Community Health Resources Section -->
+        <div style="margin-top: 3rem; background: white; border-radius: 8px; padding: 2rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+            <h2 style="color: var(--webqx-primary); margin-bottom: 1.5rem;">🌍 Community Health Resources</h2>
+            <div class="portal-grid">
+                <div style="text-align: center;">
+                    <h3 style="color: var(--webqx-success);">892</h3>
+                    <p>Underserved Patients Helped</p>
+                </div>
+                <div style="text-align: center;">
+                    <h3 style="color: var(--webqx-success);">2,341</h3>
+                    <p>Free Services Provided</p>
+                </div>
+                <div style="text-align: center;">
+                    <h3 style="color: var(--webqx-success);">156</h3>
+                    <p>Mobile Clinic Visits</p>
+                </div>
+                <div style="text-align: center;">
+                    <h3 style="color: var(--webqx-success);">89</h3>
+                    <p>Telemedicine Consults</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 8px; max-width: 400px; width: 90%;">
+            <h3 style="color: var(--webqx-primary); margin-bottom: 1rem;">Patient Portal Login</h3>
+            <p style="margin-bottom: 1.5rem; color: #666;">Please enter your patient portal credentials</p>
+            
+            <form>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: #333;">Email or Patient ID</label>
+                    <input type="text" placeholder="Enter your email or patient ID" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: #333;">Password</label>
+                    <input type="password" placeholder="Enter your password" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button type="button" onclick="connectToEMR()" style="flex: 1; background: var(--webqx-primary); color: white; padding: 0.75rem; border: none; border-radius: 4px; cursor: pointer;">Connect to EMR</button>
+                    <button type="button" onclick="hideLoginModal()" style="flex: 1; background: #6b7280; color: white; padding: 0.75rem; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                </div>
+            </form>
+            
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb; font-size: 0.9rem; color: #666;">
+                <p><strong>Demo Account:</strong><br>
+                Email: demo@patient.com<br>
+                Password: patient123</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLoginModal() {
+            document.getElementById('loginModal').style.display = 'block';
+        }
+        
+        function hideLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+        
+        function connectToEMR() {
+            // Redirect to OpenEMR login with patient portal access
+            window.location.href = '../core/interface/login/login.php?site=default&patient_portal=1';
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('loginModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideLoginModal();
+            }
+        });
+        
+        // Check if EMR is accessible
+    fetch('https://yourdomain.com/webqx-api.php?action=status')
+            .then(response => response.json())
+            .then(data => {
+                console.log('WebQX EMR Status:', data);
+                if (data.status === 'online') {
+                    // Enable portal functionality
+                    document.body.classList.add('emr-connected');
+                }
+            })
+            .catch(error => {
+                console.log('EMR not accessible, using demo mode');
+            });
+    </script>
+</body>
+</html>

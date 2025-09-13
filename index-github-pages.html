@@ -3,178 +3,466 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebQX Healthcare Platform</title>
+    <title>WebQx - Global Healthcare Platform</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
-            color: white;
-            min-height: 100vh;
-            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* Header */
         .header {
-            background: rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 30px;
-            text-align: center;
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 1rem 0;
         }
-        .platform-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        .platform-card {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px;
-            padding: 25px;
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c5282;
         }
-        .platform-card:hover { background: rgba(255,255,255,0.2); }
-        .btn {
-            background: #0d9488;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin: 10px;
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-menu a {
             text-decoration: none;
+            color: #4a5568;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-menu a:hover {
+            color: #2c5282;
+        }
+
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background: white;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            z-index: 1;
+            top: 100%;
+            right: 0;
+        }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-content a {
+            color: #4a5568;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .dropdown-content a:hover {
+            background: #f8f9fa;
+            color: #2c5282;
+        }
+
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .hero-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        /* CTA Buttons */
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
             display: inline-block;
         }
-        .btn:hover { background: #0f766e; }
-        .status-panel {
-            background: rgba(0,0,0,0.3);
-            border-radius: 8px;
-            padding: 20px;
-            margin: 20px 0;
+
+        .btn-primary {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 4rem 0;
+            background: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #2d3748;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 10px;
+            background: #f7fafc;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: #4299e1;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 1rem;
+            color: #2d3748;
+        }
+
+        .feature-card p {
+            color: #4a5568;
+            line-height: 1.6;
+        }
+
+        /* Stats Section */
+        .stats {
+            background: #2d3748;
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .stat-item h3 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #48bb78;
+        }
+
+        .stat-item p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Footer */
+        .footer {
+            background: #1a202c;
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .footer p {
+            opacity: 0.8;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            background: #2d3748;
+            color: white;
+            padding: 0.5rem 0;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .status-online {
+            background: #48bb78;
+        }
+
+        .status-offline {
+            background: #f56565;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .nav-menu {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>WebQX Healthcare Platform</h1>
-            <p>Empowering Patients and Supporting Providers</p>
-            <div id="backend-status" style="margin-top: 15px;">
-                <span>Checking backend connection...</span>
-            </div>
-        </div>
-
-        <div class="platform-grid">
-            <div class="platform-card" data-card-type="ADMIN_CONSOLE">
-                <h3>Admin Console</h3>
-                <p>EMR Integration Testing & System Management</p>
-                <a href="admin-console-clean.html" class="btn">Open Admin Console</a>
-            </div>
-
-            <div class="platform-card" data-card-type="CONNECTION_TEST">
-                <h3>Connection Test</h3>
-                <p>Test connection to your local WebQX server</p>
-                <a href="github-pages-test.html" class="btn">Test Connection</a>
-            </div>
-
-            <div class="platform-card" data-card-type="PATIENT_PORTAL">
-                <h3>Patient Portal</h3>
-                <p>Appointments, Records, Prescriptions</p>
-                <button class="btn" onclick="loginAsPatient()">Login as Patient</button>
-            </div>
-
-            <div class="platform-card" data-card-type="PROVIDER_PORTAL">
-                <h3>Provider Portal</h3>
-                <p>EHR Management, Telehealth Console</p>
-                <button class="btn" onclick="loginAsProvider()">Login as Provider</button>
-            </div>
-
-            <div class="platform-card" data-card-type="TELEHEALTH">
-                <h3>Telehealth</h3>
-                <p>Video Consultations, Real-time Chat</p>
-                <button class="btn" onclick="openTelehealth()">Start Session</button>
-            </div>
-
-            <div class="platform-card" onclick="showSystemInfo()">
-                <h3>System Status</h3>
-                <p>Health Check, Performance Metrics</p>
-                <button class="btn" onclick="checkSystemHealth()">Check Status</button>
-            </div>
-        </div>
-
-        <div class="status-panel" id="system-info" style="display: none;">
-            <h3>System Information</h3>
-            <div id="system-details">Loading system information...</div>
-        </div>
-
-        <div class="status-panel">
-            <h3>Quick Access</h3>
-            <p>Demo Credentials:</p>
-            <ul style="list-style: none; padding: 0;">
-                <li>Patient: demo@patient.com / patient123</li>
-                <li>Physician: physician@webqx.com / demo123</li>
-                <li>Provider: doctor@webqx.com / provider123</li>
-                <li>Administrator: admin@webqx.com / admin123</li>
-            </ul>
-        </div>
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <span class="status-indicator status-offline" id="backendStatus"></span>
+        <span id="statusText">WebQx Server: Checking connection...</span>
+        <button id="startBackend" style="display: none; margin-left: 1rem; padding: 0.25rem 0.75rem; background: #48bb78; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Start WebQx Server</button>
     </div>
 
-    <script src="github-pages-config-clean.js"></script>
-    <script src="deployment-config.js"></script>
+    <!-- Header -->
+    <header class="header">
+        <div class="nav-container">
+            <div class="logo">WebQx Healthcare Platform</div>
+            <nav>
+                <ul class="nav-menu">
+                    <li><a href="#features">Features</a></li>
+                    <li class="dropdown">
+                        <a href="#">Modules ▼</a>
+                        <div class="dropdown-content">
+                            <a href="patient-portal/">👤 Patient Portal</a>
+                            <a href="provider/">👨‍⚕️ Provider Portal</a>
+                            <a href="admin-console/">⚙️ Admin Console</a>
+                            <a href="telehealth.html">📹 Telehealth</a>
+                        </div>
+                    </li>
+                    <li><a href="#support">Support</a></li>
+                    <li><a href="login.html">Login</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <h1 style="font-size: 28px; line-height: 1.4;">An open-source healthcare platform built to bridge the gap between expensive commercial systems and the underserved communities that need them most. Offering affordable, multilingual, and customizable solutions for safety-net clinics and community hospitals</h1>
+            <p>Cloud-based, FHIR-compliant, global healthcare ecosystem with telehealth, patient portals, and provider tools.</p>
+            
+            <div class="cta-buttons">
+                <a href="login.html" class="btn btn-primary">Get Started</a>
+                <a href="#features" class="btn btn-secondary">Learn More</a>
+                <a href="patient-portal/" class="btn btn-secondary">Patient Portal</a>
+                <a href="provider/" class="btn btn-secondary">Provider Portal</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2 class="section-title">Complete Healthcare Solution</h2>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3>Global Telehealth</h3>
+                    <p>Emergency consultations, scheduled appointments, and crisis support available worldwide.</p>
+                </div>
+                
+                <div class="feature-card" data-module="patient-portal" style="cursor: pointer;">
+                    <div class="feature-icon">👤</div>
+                    <h3>Patient Portal</h3>
+                    <p>Complete patient management with medical records, appointment scheduling, and secure messaging.</p>
+                </div>
+                
+                <div class="feature-card" data-module="provider-portal" style="cursor: pointer;">
+                    <div class="feature-icon">👨‍⚕️</div>
+                    <h3>Provider Portal</h3>
+                    <p>Full clinical workflow with EHR integration, FHIR compliance, and OpenEMR connectivity.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔗</div>
+                    <h3>FHIR Integration</h3>
+                    <p>Standards-compliant FHIR R4 APIs for seamless interoperability with existing healthcare systems.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🛠️</div>
+                    <h3>Clinical Tools</h3>
+                    <p>Speech-to-text, clinical decision support, and automated documentation assistance.</p>
+                </div>
+                
+                <div class="feature-card" data-module="admin-console" style="cursor: pointer;">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Admin Console</h3>
+                    <p>System administration, user management, and OpenEMR configuration tools.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>HIPAA Compliant</h3>
+                    <p>Enterprise-grade security with encryption, audit trails, and compliance monitoring built-in.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <h3>24/7</h3>
+                    <p>Global Availability</p>
+                </div>
+                <div class="stat-item">
+                    <h3>FHIR</h3>
+                    <p>R4 Compliant</p>
+                </div>
+                <div class="stat-item">
+                    <h3>12+</h3>
+                    <p>Medical Specialties</p>
+                </div>
+                <div class="stat-item">
+                    <h3>100%</h3>
+                    <p>HIPAA Secure</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Support Section -->
+    <section class="features" id="support">
+        <div class="container">
+            <h2 class="section-title">Demo Accounts Available</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">👤</div>
+                    <h3>Patient Access</h3>
+                    <p><strong>demo@patient.com</strong><br>Password: patient123</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">👨‍⚕️</div>
+                    <h3>Physician Access</h3>
+                    <p><strong>physician@webqx.com</strong><br>Password: demo123</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Administrator</h3>
+                    <p><strong>admin@webqx.com</strong><br>Password: admin123</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>© 2025 WebQx Healthcare Platform - Global Healthcare Ecosystem</p>
+        </div>
+    </footer>
+
     <script>
-        async function loginAsPatient() {
-            try {
-                const result = await WebQXAPI.login('demo@patient.com', 'patient123');
-                alert('Login successful! Redirecting to patient portal...');
-                // Redirect to patient portal or show patient interface
-            } catch (error) {
-                alert('Login failed: ' + error.message);
-            }
-        }
-
-        async function loginAsProvider() {
-            try {
-                const result = await WebQXAPI.login('physician@webqx.com', 'demo123');
-                alert('Login successful! Redirecting to provider portal...');
-                // Redirect to provider portal or show provider interface
-            } catch (error) {
-                alert('Login failed: ' + error.message);
-            }
-        }
-
-        function openTelehealth() {
-            window.open('telehealth-server-test.html', '_blank', 'width=1200,height=800');
-        }
-
-        async function checkSystemHealth() {
-            try {
-                const health = await WebQXAPI.healthCheck();
-                document.getElementById('system-details').innerHTML = `
-                    <p>Status: ${health.status}</p>
-                    <p>Version: ${health.version}</p>
-                    <p>Users: ${health.users_count}</p>
-                    <p>OAuth Providers: ${health.oauth_enabled.join(', ')}</p>
-                `;
-                document.getElementById('system-info').style.display = 'block';
-            } catch (error) {
-                document.getElementById('system-details').innerHTML = `
-                    <p style="color: #ef4444;">Health check failed: ${error.message}</p>
-                `;
-                document.getElementById('system-info').style.display = 'block';
-            }
-        }
-
-        function showSystemInfo() {
-            checkSystemHealth();
-        }
-
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('WebQX GitHub Pages Platform loaded');
-        });
     </script>
+    <!-- Enhanced WebQx Remote Triggering Integration -->
+    <script src="integrations/github-pages-integration-patch.js"></script>
 </body>
 </html>

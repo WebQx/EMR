@@ -340,7 +340,7 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-container">
-            <h1>The World's Most Complete Healthcare Platform</h1>
+            <h1 style="font-size: 28px; line-height: 1.4;">An open-source healthcare platform built to bridge the gap between expensive commercial systems and the underserved communities that need them most. Offering affordable, multilingual, and customizable solutions for safety-net clinics and community hospitals</h1>
             <p>Cloud-based, FHIR-compliant, global healthcare ecosystem with telehealth, patient portals, and provider tools.</p>
             
             <div class="cta-buttons">
@@ -364,13 +364,13 @@
                     <p>Emergency consultations, scheduled appointments, and crisis support available worldwide.</p>
                 </div>
                 
-                <div class="feature-card">
+                <div class="feature-card" data-module="patient-portal" style="cursor: pointer;">
                     <div class="feature-icon">👤</div>
                     <h3>Patient Portal</h3>
                     <p>Complete patient management with medical records, appointment scheduling, and secure messaging.</p>
                 </div>
                 
-                <div class="feature-card">
+                <div class="feature-card" data-module="provider-portal" style="cursor: pointer;">
                     <div class="feature-icon">👨‍⚕️</div>
                     <h3>Provider Portal</h3>
                     <p>Full clinical workflow with EHR integration, FHIR compliance, and OpenEMR connectivity.</p>
@@ -386,6 +386,12 @@
                     <div class="feature-icon">🛠️</div>
                     <h3>Clinical Tools</h3>
                     <p>Speech-to-text, clinical decision support, and automated documentation assistance.</p>
+                </div>
+                
+                <div class="feature-card" data-module="admin-console" style="cursor: pointer;">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Admin Console</h3>
+                    <p>System administration, user management, and OpenEMR configuration tools.</p>
                 </div>
                 
                 <div class="feature-card">
@@ -455,100 +461,8 @@
     </footer>
 
     <script>
-        // Check backend connectivity
-        async function checkBackendStatus() {
-            const statusIndicator = document.getElementById('backendStatus');
-            const statusText = document.getElementById('statusText');
-            const startButton = document.getElementById('startBackend');
-            
-            const backendUrl = window.location.hostname.includes('github.io') ? 
-                'http://192.168.173.251:3001' : 'http://localhost:3001';
-            
-            try {
-                const response = await fetch(`${backendUrl}/api/health`, {
-                    method: 'GET',
-                    timeout: 5000
-                });
-                
-                if (response.ok) {
-                    statusIndicator.className = 'status-indicator status-online';
-                    statusText.textContent = 'WebQx Server: Connected ✓';
-                    startButton.style.display = 'none';
-                } else {
-                    throw new Error('WebQx Server unavailable');
-                }
-            } catch (error) {
-                statusIndicator.className = 'status-indicator status-offline';
-                statusText.textContent = 'WebQx Server: Offline';
-                startButton.style.display = 'inline-block';
-            }
-        }
-        
-        // Start WebQx server remotely
-        async function startBackend() {
-            const startButton = document.getElementById('startBackend');
-            const statusText = document.getElementById('statusText');
-            
-            startButton.textContent = 'Starting...';
-            startButton.disabled = true;
-            statusText.textContent = 'WebQx Server: Initiating remote start...';
-            
-            try {
-                // Try remote server start via webhook
-                const response = await fetch('https://api.github.com/repos/WebQx/webqx/dispatches', {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        event_type: 'start-server',
-                        client_payload: {
-                            server_ip: '192.168.173.251',
-                            port: 3001
-                        }
-                    })
-                });
-                
-                if (response.ok || response.status === 204) {
-                    statusText.textContent = 'WebQx Server: Remote start initiated...';
-                    
-                    // Wait and check for server
-                    setTimeout(() => {
-                        statusText.textContent = 'WebQx Server: Checking connection...';
-                        checkBackendStatus();
-                    }, 5000);
-                } else {
-                    throw new Error('Remote start failed');
-                }
-                
-            } catch (error) {
-                // Fallback: Direct server wake attempt
-                try {
-                    const backendUrl = 'http://192.168.173.251:3001';
-                    await fetch(`${backendUrl}/api/start`, { 
-                        method: 'POST',
-                        mode: 'no-cors'
-                    });
-                    statusText.textContent = 'WebQx Server: Start command sent...';
-                    setTimeout(checkBackendStatus, 3000);
-                } catch (fallbackError) {
-                    statusText.textContent = 'WebQx Server: Remote start unavailable';
-                }
-            } finally {
-                startButton.textContent = 'Start WebQx Server';
-                startButton.disabled = false;
-            }
-        }
-        
-        // Check status on page load
-        document.addEventListener('DOMContentLoaded', checkBackendStatus);
-        
-        // Add click handler for start button
-        document.getElementById('startBackend').addEventListener('click', startBackend);
-        
-        // Recheck every 30 seconds
-        setInterval(checkBackendStatus, 30000);
     </script>
+    <!-- Enhanced WebQx Remote Triggering Integration -->
+    <script src="integrations/github-pages-integration-patch.js"></script>
 </body>
 </html>

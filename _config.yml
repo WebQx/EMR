@@ -1,0 +1,70 @@
+# WebQX Healthcare - GitHub Pages Configuration
+title: "WebQX Healthcare Platform"
+description: "Complete OpenEMR 7.x system with MariaDB 10.5 integration"
+url: "https://webqx.github.io"
+baseurl: "/webqx"
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+# SEO and social
+twitter:
+  username: webqx_healthcare
+  card: summary_large_image
+
+logo: /assets/webqx-logo.png
+
+# Navigation
+header_pages:
+  - README.md
+  - webqx-emr-system/OPENEMR_COMPONENTS.md
+  - docs/INTEGRATION.md
+
+# Exclude from processing
+exclude:
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - Dockerfile
+  - docker-compose.yml
+  - .env
+  - "*.log"
+
+# Include additional files
+include:
+  - _pages
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "page"
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Performance
+compress_html:
+  clippings: all
+  comments: all
+  endings: all
+  ignore:
+    envs: development

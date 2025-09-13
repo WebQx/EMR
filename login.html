@@ -217,11 +217,16 @@
 </head>
 <body>
     <div class="login-container">
-        <div class="logo">WebQx Healthcare Platform</div>
+        <div class="logo">🔐 WebQX EMR</div>
         <p class="subtitle">
             <span class="status-indicator"></span>
-            Secure Access Portal
+            Secure access to your health records
         </p>
+        <div style="margin-bottom: 1.5rem;">
+            <a href="patient-portal/" style="color: #4299e1; text-decoration: none; margin-right: 1rem;">Patient Portal</a>
+            <a href="provider/" style="color: #4299e1; text-decoration: none; margin-right: 1rem;">Provider Portal</a>
+            <a href="admin-console/" style="color: #4299e1; text-decoration: none;">Admin Console</a>
+        </div>
 
         <!-- Role Selector -->
         <div class="role-selector">
@@ -402,45 +407,63 @@
 
         // Traditional login with backend integration
         async function performTraditionalLogin(email, password, role) {
-            const backendUrl = window.location.hostname.includes('github.io') ? 
-                'http://192.168.173.251:3001' : 'http://localhost:3001';
+            const publicEmrUrl = 'https://yourdomain.com'; // Replace with your backend domain
+            const proxyUrl = 'https://yourdomain.com';
             
             try {
-                const response = await fetch(`${backendUrl}/api/v1/auth/token/`, {
+                // Always use public backend
+                let response;
+                response = await fetch(`${publicEmrUrl}/api/auth/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        email: email,
+                        username: email,
                         password: password,
-                        user_type: role.toUpperCase()
+                        role: role
                     })
                 });
 
                 const data = await response.json();
 
-                if (response.ok && data.access_token) {
-                    // Store tokens
-                    localStorage.setItem('webqx_access_token', data.access_token);
-                    localStorage.setItem('webqx_refresh_token', data.refresh_token);
-                    localStorage.setItem('webqx_auth_provider', 'email');
+                if (response.ok && data.success) {
+                    // Store authentication data
+                    localStorage.setItem('webqx_token', data.token);
+                    localStorage.setItem('webqx_user', JSON.stringify(data.user));
+                    localStorage.setItem('webqx_auth_provider', 'local');
                     
-                    // Redirect based on user role
-                    const dashboardMap = {
-                        patient: 'patient-portal/',
-                        provider: 'provider/',
-                        admin: 'admin-console/'
-                    };
+                    // Use redirectUrl from server response or default mapping
+                    const redirectUrl = data.redirectUrl || getDashboardUrl(role);
                     
-                    window.location.href = dashboardMap[role] || 'patient-portal/';
+                    // Check if redirect URL is specified in query params
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const requestedRedirect = urlParams.get('redirect');
+                    
+                    if (requestedRedirect) {
+                        window.location.href = decodeURIComponent(requestedRedirect);
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
                 } else {
-                    throw new Error(data.error || 'Login failed');
+                    throw new Error(data.message || 'Login failed');
                 }
             } catch (error) {
                 console.error('Login error:', error);
                 throw error;
             }
+        }
+        
+        function getDashboardUrl(role) {
+            const dashboardMap = {
+                patient: 'http://localhost:3000/patient-portal/',
+                provider: 'http://localhost:3000/provider/',
+                doctor: 'http://localhost:3000/provider/',
+                nurse: 'http://localhost:3000/provider/',
+                admin: 'http://localhost:3000/admin-console/'
+            };
+            
+            return dashboardMap[role] || 'http://localhost:3000/patient-portal/';
         }
 
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -475,7 +498,7 @@
                 } else if (username === 'admin' && password === 'admin123') {
                     window.location.href = 'admin-console/';
                 } else {
-                    // Try backend authentication
+                    // Try backend authentication with local server
                     await performTraditionalLogin(username, password, activeRole);
                 }
             } catch (error) {
@@ -514,13 +537,18 @@
         }
 
         function goToDashboard() {
-            window.location.href = 'patient-portal/'; // Default dashboard
+            const user = JSON.parse(localStorage.getItem('webqx_user') || '{}');
+            const role = user.role || 'patient';
+            window.location.href = getDashboardUrl(role);
         }
 
         function logout() {
+            localStorage.removeItem('webqx_token');
+            localStorage.removeItem('webqx_user');
+            localStorage.removeItem('webqx_auth_provider');
+            // Legacy cleanup
             localStorage.removeItem('webqx_access_token');
             localStorage.removeItem('webqx_refresh_token');
-            localStorage.removeItem('webqx_auth_provider');
             window.location.reload();
         }
 

@@ -251,17 +251,36 @@ if (window.location.pathname === '/login' || window.location.pathname === '/webq
 fs.writeFileSync(path.join(distDir, 'api-mock.js'), mockApiScript);
 console.log('Created: api-mock.js');
 
-// Update HTML files to include mock API
+// Copy GitHub Pages integration patch
+const integrationPatchSrc = path.join(__dirname, '..', 'integrations', 'github-pages-integration-patch.js');
+if (fs.existsSync(integrationPatchSrc)) {
+    const integrationPatchDest = path.join(distDir, 'github-pages-integration-patch.js');
+    fs.copyFileSync(integrationPatchSrc, integrationPatchDest);
+    console.log('Copied: github-pages-integration-patch.js');
+}
+
+// Copy service worker
+const swSrc = path.join(__dirname, '..', 'webqx-sw.js');
+if (fs.existsSync(swSrc)) {
+    const swDest = path.join(distDir, 'webqx-sw.js');
+    fs.copyFileSync(swSrc, swDest);
+    console.log('Copied: webqx-sw.js');
+}
+
+// Update HTML files to include mock API and integration patch
 htmlFiles.forEach(file => {
     const filePath = path.join(distDir, file);
     if (fs.existsSync(filePath)) {
         let content = fs.readFileSync(filePath, 'utf8');
         
-        // Add mock API script before closing head tag
+        // Add mock API script and integration patch before closing head tag
         if (content.includes('</head>') && !content.includes('api-mock.js')) {
-            content = content.replace('</head>', '    <script src="api-mock.js"></script>\n</head>');
+            content = content.replace('</head>', 
+                '    <script src="api-mock.js"></script>\n' +
+                '    <script src="github-pages-integration-patch.js"></script>\n' +
+                '</head>');
             fs.writeFileSync(filePath, content);
-            console.log(`Updated: ${file} with mock API`);
+            console.log(`Updated: ${file} with mock API and integration patch`);
         }
     }
 });
