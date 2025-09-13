@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebQX EMR - Telehealth Services</title>
+    <link rel="stylesheet" href="themes/webqx-modern.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--webqx-light);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .telehealth-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .telehealth-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .telehealth-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .telehealth-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .telehealth-card h3 {
+            color: var(--webqx-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .icon {
+            font-size: 1.5rem;
+        }
+        
+        .telehealth-btn {
+            background: var(--webqx-primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            transition: background 0.2s ease;
+            cursor: pointer;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .telehealth-btn:hover {
+            background: var(--webqx-secondary);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .telehealth-btn.emergency {
+            background: var(--webqx-danger);
+        }
+        
+        .telehealth-btn.emergency:hover {
+            background: #dc2626;
+        }
+        
+        .consultation-area {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .video-placeholder {
+            background: #f3f4f6;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 1.1rem;
+            margin: 1rem 0;
+        }
+        
+        .consultation-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid var(--webqx-primary);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--webqx-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- WebQX Header -->
+    <div class="webqx-header">
+        <div class="container-fluid" style="max-width: 1200px; margin: 0 auto; padding: 1rem 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="webqx-logo">
+                    📹 WebQX EMR - Telehealth Services
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <a href="index.html" style="color: white; text-decoration: none;">← Back to Home</a>
+                    <a href="provider/" style="color: white; text-decoration: none;">Provider Portal</a>
+                </div>
+            </div>
+            <div class="webqx-tagline">
+                Comprehensive telemedicine and virtual care solutions
+            </div>
+        </div>
+    </div>
+
+    <div class="telehealth-container">
+        <!-- Telehealth Statistics -->
+        <h2 style="color: var(--webqx-primary); margin-bottom: 1rem;">📊 Telehealth Impact</h2>
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-number">89</div>
+                <div class="stat-label">Telemedicine Consults</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Emergency Support</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">98%</div>
+                <div class="stat-label">Connection Success</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">4.8/5</div>
+                <div class="stat-label">Quality Rating</div>
+            </div>
+        </div>
+
+        <!-- Video Consultation Area -->
+        <div class="consultation-area">
+            <h2 style="color: var(--webqx-primary); margin-bottom: 1rem;">🎥 Video Consultation</h2>
+            <div class="video-placeholder">
+                📹 Video consultation area - WebQX Telehealth Platform
+                <br>
+                <small>Secure, HIPAA-compliant video conferencing</small>
+            </div>
+            <div class="consultation-controls">
+                <button onclick="startConsultation()" class="telehealth-btn">Start Video Call</button>
+                <button onclick="joinWaitingRoom()" class="telehealth-btn">Join Waiting Room</button>
+                <button onclick="emergencyConsult()" class="telehealth-btn emergency">Emergency Consult</button>
+                <button onclick="scheduleAppointment()" class="telehealth-btn">Schedule Later</button>
+            </div>
+        </div>
+
+        <!-- Telehealth Services -->
+        <div class="telehealth-grid">
+            <div class="telehealth-card">
+                <h3><span class="icon">👨‍⚕️</span> Virtual Consultations</h3>
+                <p>Connect with healthcare providers through secure video consultations. Schedule appointments or join emergency consultations as needed.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="bookConsultation()" class="telehealth-btn">Book Consultation</button>
+                    <button onclick="viewProviders()" class="telehealth-btn">Available Providers</button>
+                </div>
+            </div>
+
+            <div class="telehealth-card">
+                <h3><span class="icon">🚨</span> Emergency Telehealth</h3>
+                <p>24/7 emergency telemedicine services for urgent medical needs. Immediate access to emergency care providers worldwide.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="emergencyConsult()" class="telehealth-btn emergency">Emergency Access</button>
+                    <button onclick="showEmergencyInfo()" class="telehealth-btn">Emergency Info</button>
+                </div>
+            </div>
+
+            <div class="telehealth-card">
+                <h3><span class="icon">🏥</span> Specialist Consultations</h3>
+                <p>Access to medical specialists across various fields. Get expert opinions and specialized care from leading healthcare professionals.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="findSpecialist()" class="telehealth-btn">Find Specialist</button>
+                    <button onclick="viewSpecialties()" class="telehealth-btn">View Specialties</button>
+                </div>
+            </div>
+
+            <div class="telehealth-card">
+                <h3><span class="icon">💊</span> Remote Monitoring</h3>
+                <p>Continuous health monitoring and remote patient care. Track vital signs, medication adherence, and health metrics remotely.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="setupMonitoring()" class="telehealth-btn">Setup Monitoring</button>
+                    <button onclick="viewHealthData()" class="telehealth-btn">View Health Data</button>
+                </div>
+            </div>
+
+            <div class="telehealth-card">
+                <h3><span class="icon">🌍</span> Global Health Access</h3>
+                <p>Connect with international healthcare providers and access global medical expertise. Support for multiple languages and time zones.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="globalConsult()" class="telehealth-btn">Global Consult</button>
+                    <button onclick="languageSupport()" class="telehealth-btn">Language Support</button>
+                </div>
+            </div>
+
+            <div class="telehealth-card">
+                <h3><span class="icon">📱</span> Mobile Telehealth</h3>
+                <p>Access telehealth services from mobile devices. Optimized for smartphones and tablets with offline capability support.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="mobileApp()" class="telehealth-btn">Mobile App</button>
+                    <button onclick="offlineMode()" class="telehealth-btn">Offline Mode</button>
+                </div>
+            </div>
+
+            <div class="telehealth-card">
+                <h3><span class="icon">🔒</span> Secure Platform</h3>
+                <p>HIPAA-compliant video platform with end-to-end encryption. Secure messaging, file sharing, and consultation recording.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="securityInfo()" class="telehealth-btn">Security Details</button>
+                    <button onclick="privacyPolicy()" class="telehealth-btn">Privacy Policy</button>
+                </div>
+            </div>
+
+            <div class="telehealth-card">
+                <h3><span class="icon">🏘️</span> Community Health</h3>
+                <p>Community-focused telehealth services for underserved populations. Group consultations and health education programs.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="communityPrograms()" class="telehealth-btn">Community Programs</button>
+                    <button onclick="healthEducation()" class="telehealth-btn">Health Education</button>
+                </div>
+            </div>
+
+            <div class="telehealth-card">
+                <h3><span class="icon">💳</span> Affordable Care</h3>
+                <p>Sliding scale pricing and financial assistance for qualified patients. Making healthcare accessible to underserved communities.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="pricingInfo()" class="telehealth-btn">Pricing Info</button>
+                    <button onclick="financialAid()" class="telehealth-btn">Financial Aid</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Integration Notice -->
+        <div style="margin-top: 3rem; background: #f0f9ff; border: 1px solid #0891b2; border-radius: 8px; padding: 2rem; text-align: center;">
+            <h3 style="color: var(--webqx-primary); margin-bottom: 1rem;">🔗 WebQX EMR Integration</h3>
+            <p style="color: #0891b2; margin-bottom: 1rem;">
+                This telehealth platform is fully integrated with your WebQX EMR system. 
+                All consultations are automatically documented in patient records.
+            </p>
+            <button onclick="openEMRIntegration()" class="telehealth-btn">EMR Integration</button>
+            <button onclick="viewConsultationHistory()" class="telehealth-btn">Consultation History</button>
+        </div>
+    </div>
+
+    <script>
+        function startConsultation() {
+            alert('🎥 Starting Video Consultation...\n\nConnecting to WebQX Telehealth Platform\n• Camera: Checking\n• Microphone: Checking\n• Connection: Secure\n\nYou will be connected shortly.');
+        }
+        
+        function joinWaitingRoom() {
+            alert('⏳ Joining Waiting Room...\n\nYou have been placed in the virtual waiting room.\nEstimated wait time: 5 minutes\n\nA provider will be with you shortly.');
+        }
+        
+        function emergencyConsult() {
+            if (confirm('🚨 Emergency Consultation Request\n\nThis will connect you immediately with an emergency healthcare provider.\n\nProceed with emergency consultation?')) {
+                alert('🚨 EMERGENCY CONSULTATION ACTIVE\n\nConnecting to emergency provider...\nConnection established in 30 seconds\n\nFor life-threatening emergencies, call 911');
+            }
+        }
+        
+        function scheduleAppointment() {
+            alert('📅 Schedule Telehealth Appointment\n\nAvailable time slots:\n• Today 3:00 PM\n• Tomorrow 10:00 AM\n• Tomorrow 2:30 PM\n\nSelect a time slot to book your appointment.');
+        }
+        
+        function bookConsultation() {
+            alert('📝 Book Virtual Consultation\n\n1. Select your provider\n2. Choose consultation type\n3. Pick appointment time\n4. Complete intake forms\n\nBooking system opening...');
+        }
+        
+        function viewProviders() {
+            alert('👨‍⚕️ Available Providers:\n\n• Dr. Sarah Johnson - Family Medicine\n• Dr. Michael Chen - Internal Medicine\n• Dr. Lisa Rodriguez - Pediatrics\n• Dr. James Wilson - Emergency Medicine\n\nAll providers are currently online');
+        }
+        
+        function showEmergencyInfo() {
+            alert('🚨 Emergency Telehealth Information:\n\n• 24/7 emergency provider access\n• Average response time: 2 minutes\n• Covered conditions: Non-life threatening emergencies\n• Languages: 12 supported\n\nFor life-threatening emergencies, always call 911');
+        }
+        
+        function findSpecialist() {
+            alert('🏥 Find Medical Specialist:\n\nAvailable Specialties:\n• Cardiology\n• Dermatology\n• Mental Health\n• Endocrinology\n• Neurology\n• Oncology\n\nSelect specialty to view available doctors');
+        }
+        
+        function setupMonitoring() {
+            alert('💊 Remote Health Monitoring Setup:\n\n✅ Blood Pressure Monitoring\n✅ Heart Rate Tracking\n✅ Medication Reminders\n✅ Symptom Tracking\n✅ Glucose Monitoring\n\nMonitoring devices can be shipped to your address');
+        }
+        
+        function globalConsult() {
+            alert('🌍 Global Healthcare Access:\n\n• International providers: 500+\n• Languages supported: 25\n• Time zones covered: 24/7\n• Specialties: All major fields\n\nConnect with global medical expertise');
+        }
+        
+        function mobileApp() {
+            alert('📱 WebQX Telehealth Mobile App:\n\n✅ iOS and Android support\n✅ Offline consultation notes\n✅ Emergency button\n✅ Health data sync\n✅ Push notifications\n\nDownload from App Store or Google Play');
+        }
+        
+        function securityInfo() {
+            alert('🔒 Security & Privacy:\n\n✅ HIPAA Compliant\n✅ End-to-end encryption\n✅ Secure data storage\n✅ Authentication required\n✅ Audit logging\n\nYour health data is protected');
+        }
+        
+        function communityPrograms() {
+            alert('🏘️ Community Health Programs:\n\n• Free health screenings\n• Group education sessions\n• Mobile clinic integration\n• Multilingual support\n• Sliding scale pricing\n\nServing underserved communities');
+        }
+        
+        function openEMRIntegration() {
+            window.open('webqx-api.php?action=status', '_blank');
+        }
+        
+        function viewConsultationHistory() {
+            alert('📋 Consultation History:\n\n• Last consultation: Sept 10, 2025\n• Provider: Dr. Johnson\n• Type: Follow-up\n• Duration: 15 minutes\n• Rating: 5/5\n\nView full history in patient portal');
+        }
+        
+        // Check WebQX EMR connectivity
+        fetch('/webqx-api.php?action=status')
+            .then(response => response.json())
+            .then(data => {
+                console.log('WebQX EMR Status:', data);
+                if (data.status === 'online') {
+                    // Show integration status
+                    document.body.classList.add('emr-connected');
+                }
+            })
+            .catch(error => {
+                console.log('EMR integration check failed:', error);
+            });
+    </script>
+</body>
+</html>

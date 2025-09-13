@@ -9,9 +9,9 @@ console.log('🏥 WebQx Enhanced GitHub Pages Integration Loading...');
     const isDev = window.location.hostname.includes('localhost');
     
     // Configuration
-    const PROXY_SERVER = isDev ? 'http://localhost:3001' : 'https://webqx-api-proxy.railway.app';
-    const LOCAL_EMR_SERVER = 'http://localhost:3000';
-    const LOCAL_TELEHEALTH_SERVER = 'http://localhost:3003';
+    const PROXY_SERVER = 'http://localhost:8080';
+    const LOCAL_EMR_SERVER = 'http://localhost:8085';
+    const LOCAL_TELEHEALTH_SERVER = 'http://localhost:8085';
     
     console.log('Environment:', isGitHubPages ? 'GitHub Pages' : isDev ? 'Development' : 'Production');
     console.log('Proxy Server:', PROXY_SERVER);
@@ -34,9 +34,8 @@ console.log('🏥 WebQx Enhanced GitHub Pages Integration Loading...');
         btnEl.style.display = 'none';
         
         const services = {
-            emr: { url: `${LOCAL_EMR_SERVER}/health`, name: 'EMR' },
-            telehealth: { url: `${LOCAL_TELEHEALTH_SERVER}/health`, name: 'Telehealth' },
-            proxy: { url: `${PROXY_SERVER}/health`, name: 'Proxy' }
+            emr: { url: `${LOCAL_EMR_SERVER}/webqx-api.php?action=health`, name: 'EMR' },
+            proxy: { url: `${PROXY_SERVER}/api/server-status`, name: 'Proxy' }
         };
         
         const results = {};
@@ -89,11 +88,11 @@ console.log('🏥 WebQx Enhanced GitHub Pages Integration Loading...');
         }
         
         try {
-            // Try to start services through proxy
-            const response = await fetch(`${PROXY_SERVER}/api/system/start`, {
+            // Try to start services through remote trigger
+            const response = await fetch(`${PROXY_SERVER}/api/remote-start`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ services: ['emr', 'telehealth'] })
+                body: JSON.stringify({ action: 'start_webqx_emr' })
             });
             
             if (response.ok) {
@@ -101,18 +100,11 @@ console.log('🏥 WebQx Enhanced GitHub Pages Integration Loading...');
                 return;
             }
         } catch (error) {
-            console.log('Remote start failed, opening local portals');
+            console.log('Remote start failed, opening EMR portal');
         }
         
-        // Fallback: open local service URLs directly
-        const urls = [
-            `${LOCAL_EMR_SERVER}/admin-console/`,
-            `${LOCAL_TELEHEALTH_SERVER}/admin/`
-        ];
-        
-        urls.forEach(url => {
-            window.open(url, '_blank');
-        });
+        // Fallback: open WebQX EMR directly
+        window.open(`${LOCAL_EMR_SERVER}/`, '_blank');
         
         setTimeout(checkBackendStatus, 5000);
         
@@ -125,11 +117,11 @@ console.log('🏥 WebQx Enhanced GitHub Pages Integration Loading...');
     // Setup module handlers for local servers
     function setupModuleHandlers() {
         const modules = {
-            'patient-portal': `${LOCAL_EMR_SERVER}/patient-portal/`,
-            'provider-portal': `${LOCAL_EMR_SERVER}/provider/`,
-            'admin-console': `${LOCAL_EMR_SERVER}/admin-console/`,
-            'telehealth': `${LOCAL_TELEHEALTH_SERVER}/`,
-            'login': `${LOCAL_EMR_SERVER}/login.html`
+            'patient-portal': `${LOCAL_EMR_SERVER}/`,
+            'provider-portal': `${LOCAL_EMR_SERVER}/`,
+            'admin-console': `${LOCAL_EMR_SERVER}/`,
+            'telehealth': `${LOCAL_EMR_SERVER}/`,
+            'login': `${LOCAL_EMR_SERVER}/`
         };
         
         // Handle placement cards

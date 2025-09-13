@@ -217,11 +217,16 @@
 </head>
 <body>
     <div class="login-container">
-        <div class="logo">WebQx Healthcare Platform</div>
+        <div class="logo">🔐 WebQX EMR</div>
         <p class="subtitle">
             <span class="status-indicator"></span>
-            Secure Access Portal
+            Secure access to your health records
         </p>
+        <div style="margin-bottom: 1.5rem;">
+            <a href="patient-portal/" style="color: #4299e1; text-decoration: none; margin-right: 1rem;">Patient Portal</a>
+            <a href="provider/" style="color: #4299e1; text-decoration: none; margin-right: 1rem;">Provider Portal</a>
+            <a href="admin-console/" style="color: #4299e1; text-decoration: none;">Admin Console</a>
+        </div>
 
         <!-- Role Selector -->
         <div class="role-selector">
@@ -493,21 +498,21 @@
             try {
                 // Demo login logic (fallback for demo accounts)
                 if (username === 'demo@patient.com' && password === 'patient123') {
-                    window.location.href = 'http://localhost:3000/patient-portal/';
+                    window.location.href = 'patient-portal/';
                 } else if (username === 'doctor@webqx.com' && password === 'provider123') {
-                    window.location.href = 'http://localhost:3000/provider/';
+                    window.location.href = 'provider/';
                 } else if (username === 'physician@webqx.com' && password === 'demo123') {
-                    window.location.href = 'http://localhost:3000/provider/';
+                    window.location.href = 'provider/';
                 } else if (username === 'admin@webqx.com' && password === 'admin123') {
-                    window.location.href = 'http://localhost:3000/admin-console/';
+                    window.location.href = 'admin-console/';
                 } else if (username === 'demo' && password === 'patient123') {
-                    window.location.href = 'http://localhost:3000/patient-portal/';
+                    window.location.href = 'patient-portal/';
                 } else if (username === 'doctor' && password === 'provider123') {
-                    window.location.href = 'http://localhost:3000/provider/';
+                    window.location.href = 'provider/';
                 } else if (username === 'physician' && password === 'demo123') {
-                    window.location.href = 'http://localhost:3000/provider/';
+                    window.location.href = 'provider/';
                 } else if (username === 'admin' && password === 'admin123') {
-                    window.location.href = 'http://localhost:3000/admin-console/';
+                    window.location.href = 'admin-console/';
                 } else {
                     // Try backend authentication with local server
                     await performTraditionalLogin(username, password, activeRole);

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebQX EMR - Provider Portal</title>
+    <link rel="stylesheet" href="../themes/webqx-modern.css">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--webqx-light);
+            margin: 0;
+            padding: 0;
+        }
+        
+        .provider-portal-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .dashboard-card {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .dashboard-card h3 {
+            color: var(--webqx-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .dashboard-card .icon {
+            font-size: 1.5rem;
+        }
+        
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid var(--webqx-primary);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--webqx-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .provider-btn {
+            background: var(--webqx-primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            transition: background 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .provider-btn:hover {
+            background: var(--webqx-secondary);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .provider-btn.secondary {
+            background: #6b7280;
+        }
+        
+        .provider-btn.secondary:hover {
+            background: #4b5563;
+        }
+        
+        .urgent-alerts {
+            background: linear-gradient(45deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        
+        .alert-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- WebQX Header -->
+    <div class="webqx-header">
+        <div class="container-fluid" style="max-width: 1400px; margin: 0 auto; padding: 1rem 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div class="webqx-logo">
+                    🏥 WebQX EMR - Provider Portal
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <span style="color: rgba(255,255,255,0.9);">Dr. Sarah Johnson</span>
+                    <a href="../" style="color: white; text-decoration: none;">← Dashboard</a>
+                    <a href="#" onclick="logout()" style="color: white; text-decoration: none; background: rgba(255,255,255,0.2); padding: 0.5rem 1rem; border-radius: 4px;">Logout</a>
+                </div>
+            </div>
+            <div class="webqx-tagline">
+                Complete clinical workflow and patient management system
+            </div>
+        </div>
+    </div>
+
+    <div class="provider-portal-container">
+        <!-- Urgent Alerts -->
+        <div class="urgent-alerts">
+            <h4 style="color: #92400e; margin-bottom: 0.5rem;">⚠️ Urgent Alerts & Notifications</h4>
+            <div class="alert-item">
+                <span>🔴</span>
+                <span>Critical lab result for Patient #1247 requires immediate attention</span>
+            </div>
+            <div class="alert-item">
+                <span>🟡</span>
+                <span>Mobile clinic equipment check due in 2 hours</span>
+            </div>
+            <div class="alert-item">
+                <span>🟢</span>
+                <span>Community health screening scheduled for tomorrow</span>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-number">23</div>
+                <div class="stat-label">Today's Patients</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">7</div>
+                <div class="stat-label">Pending Reviews</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">156</div>
+                <div class="stat-label">This Month</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Active Cases</div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <h3><span class="icon">👥</span> Patient Management</h3>
+                <p>Access patient charts, review medical histories, and manage patient care plans. View appointments and update treatment protocols.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="openEMR('patient_finder')" class="provider-btn">Find Patient</button>
+                    <button onclick="openEMR('calendar')" class="provider-btn secondary">Schedule</button>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="icon">📋</span> Clinical Documentation</h3>
+                <p>Create and update clinical notes, SOAP notes, and treatment plans. Access templates and clinical decision support tools.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="openEMR('clinical_notes')" class="provider-btn">New Note</button>
+                    <button onclick="openEMR('templates')" class="provider-btn secondary">Templates</button>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="icon">🔬</span> Lab Results & Reports</h3>
+                <p>Review laboratory results, imaging reports, and diagnostic tests. Track trends and flag abnormal values for follow-up.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="openEMR('lab_results')" class="provider-btn">View Results</button>
+                    <button onclick="openEMR('pending_results')" class="provider-btn secondary">Pending</button>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="icon">💊</span> Prescription Management</h3>
+                <p>Prescribe medications, manage drug interactions, and send electronic prescriptions. Access formulary and dosing guidelines.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="openEMR('prescriptions')" class="provider-btn">Prescribe</button>
+                    <button onclick="openEMR('drug_interactions')" class="provider-btn secondary">Interactions</button>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="icon">📅</span> Appointment Scheduling</h3>
+                <p>Manage your schedule, view upcoming appointments, and coordinate with other providers. Handle cancellations and rescheduling.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="openEMR('calendar')" class="provider-btn">My Schedule</button>
+                    <button onclick="openEMR('availability')" class="provider-btn secondary">Availability</button>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="icon">📊</span> Clinical Reports</h3>
+                <p>Generate clinical reports, quality measures, and population health analytics. Track performance metrics and outcomes.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="openEMR('reports')" class="provider-btn">Generate Report</button>
+                    <button onclick="openEMR('analytics')" class="provider-btn secondary">Analytics</button>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="icon">📹</span> Telehealth Consultations</h3>
+                <p>Conduct virtual patient consultations, emergency teleconsults, and remote monitoring. Access telemedicine tools and protocols.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="startTelehealth()" class="provider-btn">Start Video Call</button>
+                    <button onclick="openEMR('telehealth_history')" class="provider-btn secondary">History</button>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="icon">🌍</span> Community Health</h3>
+                <p>Access community health programs, mobile clinic schedules, and population health data. Coordinate outreach services.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="openCommunityHealth()" class="provider-btn">Community Programs</button>
+                    <button onclick="openEMR('mobile_clinic')" class="provider-btn secondary">Mobile Clinic</button>
+                </div>
+            </div>
+
+            <div class="dashboard-card">
+                <h3><span class="icon">🔐</span> FHIR & Interoperability</h3>
+                <p>Access FHIR APIs, manage health information exchange, and coordinate care with external providers and systems.</p>
+                <div style="margin-top: 1rem;">
+                    <button onclick="openFHIR()" class="provider-btn">FHIR Console</button>
+                    <button onclick="openEMR('care_coordination')" class="provider-btn secondary">Care Coordination</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Community Impact Section -->
+        <div style="margin-top: 3rem; background: white; border-radius: 8px; padding: 2rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+            <h2 style="color: var(--webqx-primary); margin-bottom: 1.5rem;">🌍 Community Health Impact</h2>
+            <div class="stats-row">
+                <div class="stat-card" style="border-left-color: var(--webqx-success);">
+                    <div class="stat-number" style="color: var(--webqx-success);">892</div>
+                    <div class="stat-label">Underserved Patients</div>
+                </div>
+                <div class="stat-card" style="border-left-color: var(--webqx-success);">
+                    <div class="stat-number" style="color: var(--webqx-success);">2,341</div>
+                    <div class="stat-label">Free Services</div>
+                </div>
+                <div class="stat-card" style="border-left-color: var(--webqx-success);">
+                    <div class="stat-number" style="color: var(--webqx-success);">156</div>
+                    <div class="stat-label">Mobile Clinic Visits</div>
+                </div>
+                <div class="stat-card" style="border-left-color: var(--webqx-success);">
+                    <div class="stat-number" style="color: var(--webqx-success);">89</div>
+                    <div class="stat-label">Telemedicine Consults</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openEMR(module) {
+            // Redirect to specific OpenEMR module
+            const moduleUrls = {
+                'patient_finder': '../core/interface/main/finder/patient_select.php',
+                'calendar': '../core/interface/main/calendar/index.php',
+                'clinical_notes': '../core/interface/forms/note/new.php',
+                'templates': '../core/interface/forms/',
+                'lab_results': '../core/interface/orders/orders_results.php',
+                'pending_results': '../core/interface/orders/pending_orders.php',
+                'prescriptions': '../core/interface/drugs/drug_inventory.php',
+                'drug_interactions': '../core/interface/drugs/',
+                'reports': '../core/interface/reports/',
+                'analytics': '../core/interface/reports/',
+                'telehealth_history': '../core/interface/main/finder/patient_select.php',
+                'mobile_clinic': '../core/interface/main/calendar/index.php',
+                'care_coordination': '../core/interface/main/'
+            };
+            
+            const url = moduleUrls[module] || '../core/';
+            window.open(url, '_blank');
+        }
+        
+        function startTelehealth() {
+            alert('🔗 Connecting to Telehealth Service...\n\nThis would normally open the integrated video consultation platform.');
+        }
+        
+        function openCommunityHealth() {
+            // Open community health dashboard
+            window.open('../includes/webqx-dashboard.php', '_blank');
+        }
+        
+        function openFHIR() {
+            // Open FHIR API console
+            window.open('../webqx-api.php', '_blank');
+        }
+        
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = '../core/interface/logout.php';
+            }
+        }
+        
+        // Check WebQX EMR status
+        fetch('/webqx-api.php?action=status')
+            .then(response => response.json())
+            .then(data => {
+                console.log('WebQX EMR Status:', data);
+                if (data.status === 'online') {
+                    document.body.classList.add('emr-connected');
+                    
+                    // Update stats with real data if available
+                    fetch('/webqx-api.php?action=community-stats')
+                        .then(response => response.json())
+                        .then(stats => {
+                            console.log('Community Stats:', stats);
+                        });
+                }
+            })
+            .catch(error => {
+                console.log('EMR not accessible, using demo data');
+            });
+    </script>
+</body>
+</html>
