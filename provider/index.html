@@ -519,10 +519,29 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadUserData();
             
+            // Auto-login to MariaDB EMR dashboard
+            setTimeout(() => {
+                const loginData = { username: 'admin', password: 'webqx123', role: 'physician' };
+                localStorage.setItem('webqx_auto_login', JSON.stringify(loginData));
+                
+                // Check if server is running and auto-open dashboard
+                fetch('http://localhost:8080/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    showNotification('✅ MariaDB EMR Server Online - Opening Dashboard...');
+                    setTimeout(() => {
+                        window.open('http://localhost:8080/dashboard', '_blank');
+                    }, 2000);
+                })
+                .catch(error => {
+                    showNotification('⚠️ MariaDB EMR Server offline. Please start the server first.');
+                });
+            }, 1000);
+            
             // Debug: Check OpenEMR integration status
             setTimeout(() => {
                 checkOpenEMRIntegration();
-            }, 1000);
+            }, 2000);
         });
 
         function checkOpenEMRIntegration() {
