@@ -2,36 +2,39 @@
 # Complete Docker Composition for Development and Production
 
 services:
-  # MySQL Database Server
-  mysql:
-    image: mysql:8.0
-    container_name: webqx-mysql
+  # MariaDB Database Server (OpenEMR Compatible)
+  mariadb:
+    image: mariadb:10.5
+    container_name: webqx-mariadb
     restart: unless-stopped
     environment:
+      MARIADB_ROOT_PASSWORD: webqx_root_2024!
+      MARIADB_DATABASE: openemr
+      MARIADB_USER: openemr
+      MARIADB_PASSWORD: openemr_password
       MYSQL_ROOT_PASSWORD: webqx_root_2024!
-      MYSQL_DATABASE: webqx_emr
-      MYSQL_USER: webqx_user
-      MYSQL_PASSWORD: webqx_pass_2024!
-      MYSQL_CHARSET: utf8mb4
-      MYSQL_COLLATION: utf8mb4_unicode_ci
+      MYSQL_DATABASE: openemr
+      MYSQL_USER: openemr
+      MYSQL_PASSWORD: openemr_password
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
-      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+      - mariadb_data:/var/lib/mysql
+      - ./docker/mariadb/my.cnf:/etc/mysql/conf.d/my.cnf
+      - ./docker/mariadb/init:/docker-entrypoint-initdb.d
       - ./backups:/backups
     ports:
       - "3306:3306"
     networks:
       - webqx-network
     command: >
-      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
       --innodb-buffer-pool-size=512M
       --innodb-log-file-size=256M
       --max-connections=200
       --bind-address=0.0.0.0
       --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pwebqx_root_2024!"]
       timeout: 20s
       retries: 10
 
@@ -68,17 +71,17 @@ services:
     container_name: webqx-emr-app
     restart: unless-stopped
     depends_on:
-      mysql:
+      mariadb:
         condition: service_healthy
       redis:
         condition: service_healthy
     environment:
       # Database Configuration
-      DB_HOST: mysql
+      DB_HOST: mariadb
       DB_PORT: 3306
-      DB_NAME: webqx_emr
-      DB_USER: webqx_user
-      DB_PASSWORD: webqx_pass_2024!
+      DB_NAME: openemr
+      DB_USER: openemr_user
+      DB_PASSWORD: openemr_pass_2024!
       DB_CHARSET: utf8mb4
       
       # Redis Configuration
@@ -203,7 +206,7 @@ networks:
 
 # Volumes
 volumes:
-  mysql_data:
+  mariadb_data:
     driver: local
   redis_data:
     driver: local
