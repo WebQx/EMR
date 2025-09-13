@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebQx EMR - Patient Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        .header {
+            background: #2c5282;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 70px;
+            width: 250px;
+            height: calc(100vh - 70px);
+            background: white;
+            border-right: 1px solid #e2e8f0;
+            padding: 1rem 0;
+        }
+
+        .sidebar-item {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-item:hover {
+            background: #f7fafc;
+        }
+
+        .sidebar-item.active {
+            background: #ebf8ff;
+            border-left-color: #4299e1;
+            color: #2b6cb0;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2rem;
+            color: #2d3748;
+            margin-bottom: 0.5rem;
+        }
+
+        .breadcrumb {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #4299e1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #3182ce;
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+        }
+
+        .patient-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .patient-card {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            background: white;
+        }
+
+        .patient-info h4 {
+            margin-bottom: 0.25rem;
+            color: #2d3748;
+        }
+
+        .patient-info p {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .patient-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .close {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #718096;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #4299e1;
+        }
+
+        .stat-label {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">WebQx EMR System</div>
+        <div class="user-info">
+            <span>Dr. Sarah Johnson</span>
+            <button class="btn btn-primary" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-item active" onclick="showSection('dashboard')">
+            📊 Dashboard
+        </div>
+        <div class="sidebar-item" onclick="showSection('patients')">
+            👥 Patients
+        </div>
+        <div class="sidebar-item" onclick="showSection('appointments')">
+            📅 Appointments
+        </div>
+        <div class="sidebar-item" onclick="showSection('prescriptions')">
+            💊 Prescriptions
+        </div>
+        <div class="sidebar-item" onclick="showSection('lab-results')">
+            🧪 Lab Results
+        </div>
+        <div class="sidebar-item" onclick="showSection('imaging')">
+            🏥 Imaging
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Dashboard Section -->
+        <div id="dashboard-section" class="section">
+            <div class="page-header">
+                <h1 class="page-title">Dashboard</h1>
+                <div class="breadcrumb">Home > Dashboard</div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-patients">0</div>
+                    <div class="stat-label">Total Patients</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="today-appointments">0</div>
+                    <div class="stat-label">Today's Appointments</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="pending-labs">0</div>
+                    <div class="stat-label">Pending Lab Results</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="active-prescriptions">0</div>
+                    <div class="stat-label">Active Prescriptions</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Recent Activity</h3>
+                </div>
+                <div class="card-content">
+                    <div id="recent-activity">
+                        <p>Loading recent activity...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patients Section -->
+        <div id="patients-section" class="section" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Patient Management</h1>
+                <div class="breadcrumb">Home > Patients</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Patient List</h3>
+                    <button class="btn btn-primary" onclick="showAddPatientModal()">Add New Patient</button>
+                </div>
+                <div class="card-content">
+                    <div id="patient-list" class="patient-list">
+                        <!-- Patients will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointments Section -->
+        <div id="appointments-section" class="section" style="display: none;">
+            <div class="page-header">
+                <h1 class="page-title">Appointments</h1>
+                <div class="breadcrumb">Home > Appointments</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Today's Schedule</h3>
+                    <button class="btn btn-primary" onclick="scheduleAppointment()">Schedule New</button>
+                </div>
+                <div class="card-content">
+                    <div id="appointments-list">
+                        <!-- Appointments will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Other sections will be similar -->
+    </div>
+
+    <!-- Add Patient Modal -->
+    <div id="add-patient-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Patient</h3>
+                <span class="close" onclick="closeModal('add-patient-modal')">&times;</span>
+            </div>
+            <form id="add-patient-form">
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input type="text" class="form-input" id="first-name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" class="form-input" id="last-name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date of Birth</label>
+                    <input type="date" class="form-input" id="dob" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="tel" class="form-input" id="phone" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="email">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success">Add Patient</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // EMR Data Storage
+        let patients = JSON.parse(localStorage.getItem('webqx-patients') || '[]');
+        let appointments = JSON.parse(localStorage.getItem('webqx-appointments') || '[]');
+
+        // Initialize EMR
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboard();
+            loadPatients();
+        });
+
+        // Navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remove active class from all sidebar items
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName + '-section').style.display = 'block';
+            
+            // Add active class to clicked item
+            event.target.classList.add('active');
+            
+            // Load section data
+            switch(sectionName) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'patients':
+                    loadPatients();
+                    break;
+                case 'appointments':
+                    loadAppointments();
+                    break;
+            }
+        }
+
+        // Dashboard Functions
+        function loadDashboard() {
+            document.getElementById('total-patients').textContent = patients.length;
+            document.getElementById('today-appointments').textContent = getTodayAppointments();
+            document.getElementById('pending-labs').textContent = '3';
+            document.getElementById('active-prescriptions').textContent = '12';
+            
+            loadRecentActivity();
+        }
+
+        function getTodayAppointments() {
+            const today = new Date().toDateString();
+            return appointments.filter(apt => new Date(apt.date).toDateString() === today).length;
+        }
+
+        function loadRecentActivity() {
+            const activities = [
+                'New patient John Doe registered',
+                'Lab results received for Jane Smith',
+                'Prescription updated for Mike Johnson',
+                'Appointment scheduled for Sarah Wilson'
+            ];
+            
+            document.getElementById('recent-activity').innerHTML = activities
+                .map(activity => `<p>• ${activity}</p>`)
+                .join('');
+        }
+
+        // Patient Management
+        function loadPatients() {
+            const patientList = document.getElementById('patient-list');
+            
+            if (patients.length === 0) {
+                patientList.innerHTML = '<p>No patients found. Add your first patient to get started.</p>';
+                return;
+            }
+            
+            patientList.innerHTML = patients.map(patient => `
+                <div class="patient-card">
+                    <div class="patient-info">
+                        <h4>${patient.firstName} ${patient.lastName}</h4>
+                        <p>DOB: ${patient.dob} | Phone: ${patient.phone}</p>
+                        <p>Email: ${patient.email || 'Not provided'}</p>
+                    </div>
+                    <div class="patient-actions">
+                        <button class="btn btn-primary" onclick="viewPatient('${patient.id}')">View</button>
+                        <button class="btn btn-success" onclick="scheduleForPatient('${patient.id}')">Schedule</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showAddPatientModal() {
+            document.getElementById('add-patient-modal').style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Add Patient Form Handler
+        document.getElementById('add-patient-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newPatient = {
+                id: Date.now().toString(),
+                firstName: document.getElementById('first-name').value,
+                lastName: document.getElementById('last-name').value,
+                dob: document.getElementById('dob').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                createdAt: new Date().toISOString()
+            };
+            
+            patients.push(newPatient);
+            localStorage.setItem('webqx-patients', JSON.stringify(patients));
+            
+            // Reset form and close modal
+            this.reset();
+            closeModal('add-patient-modal');
+            
+            // Reload patients if on patients page
+            if (document.getElementById('patients-section').style.display !== 'none') {
+                loadPatients();
+            }
+            
+            // Update dashboard stats
+            loadDashboard();
+            
+            alert('Patient added successfully!');
+        });
+
+        function viewPatient(patientId) {
+            const patient = patients.find(p => p.id === patientId);
+            if (patient) {
+                alert(`Patient Details:\n\nName: ${patient.firstName} ${patient.lastName}\nDOB: ${patient.dob}\nPhone: ${patient.phone}\nEmail: ${patient.email || 'Not provided'}`);
+            }
+        }
+
+        function scheduleForPatient(patientId) {
+            alert('Appointment scheduling feature coming soon!');
+        }
+
+        // Appointments
+        function loadAppointments() {
+            const appointmentsList = document.getElementById('appointments-list');
+            appointmentsList.innerHTML = '<p>No appointments scheduled for today.</p>';
+        }
+
+        function scheduleAppointment() {
+            alert('Appointment scheduling feature coming soon!');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Sample data for demo
+        if (patients.length === 0) {
+            const samplePatients = [
+                {
+                    id: '1',
+                    firstName: 'John',
+                    lastName: 'Doe',
+                    dob: '1985-06-15',
+                    phone: '(555) 123-4567',
+                    email: 'john.doe@email.com',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: '2',
+                    firstName: 'Jane',
+                    lastName: 'Smith',
+                    dob: '1990-03-22',
+                    phone: '(555) 987-6543',
+                    email: 'jane.smith@email.com',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            
+            patients = samplePatients;
+            localStorage.setItem('webqx-patients', JSON.stringify(patients));
+        }
+    </script>
+</body>
+</html>
