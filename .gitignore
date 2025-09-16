@@ -1,3 +1,11 @@
+# Python
+__pycache__/
+*.py[cod]
+$WEBQX_IGNORE$
+django-auth-backend/keys/private.pem
+django-auth-backend/keys/private-*.pem
+django-auth-backend/keys/*.key
+!django-auth-backend/keys/public.pem
 # Dependencies
 node_modules/
 npm-debug.log*

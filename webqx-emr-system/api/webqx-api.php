@@ -1,4 +1,7 @@
 <?php
+// Early include for JWT session bridging
+@include __DIR__ . '/auth/session_bridge.php';
+// ...existing code...
 /**
  * WebQX™ EMR API v2
  * Enhanced RESTful API for WebQX Electronic Medical Records

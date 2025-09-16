@@ -1,0 +1,29 @@
+name: Transcription Service CI
+
+on:
+  push:
+    paths:
+      - 'services/transcription/**'
+      - '.github/workflows/transcription.yml'
+  pull_request:
+    paths:
+      - 'services/transcription/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install system deps
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r services/transcription/requirements.txt
+      - name: Run tests
+        run: pytest services/transcription/tests -q

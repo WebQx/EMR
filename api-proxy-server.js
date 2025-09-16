@@ -30,26 +30,50 @@ class WebQXAPIProxy {
     constructor() {
         this.app = express();
         this.server = http.createServer(this.app);
-        this.port = process.env.PROXY_PORT || 3001;
+    // Support common hosting env var PORT (Railway, Render, etc.)
+    this.port = process.env.PROXY_PORT || process.env.PORT || 3001;
         
         // Configuration
         this.config = {
             // CORS configuration for GitHub Pages
-            cors: {
-                origin: [
-                    'https://webqx.github.io',
-                    'https://webqx.com',
-                    'http://localhost:3000',
-                    'http://localhost:8080',
-                    'http://127.0.0.1:5500', // Live Server
-                    /\.github\.io$/, // Any GitHub Pages domain
-                    /\.vercel\.app$/, // Vercel deployments
-                    /\.netlify\.app$/ // Netlify deployments
-                ],
-                credentials: true,
-                methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-                allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
-            },
+            cors: (() => {
+                // Allow override via env: comma separated list, or *
+                const raw = process.env.ALLOWED_ORIGINS;
+                if (raw) {
+                    if (raw.trim() === '*') {
+                        return {
+                            origin: '*',
+                            credentials: true,
+                            methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+                            allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+                        };
+                    }
+                    const split = raw.split(',').map(o => o.trim()).filter(Boolean);
+                    if (split.length) {
+                        return {
+                            origin: split,
+                            credentials: true,
+                            methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+                            allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+                        };
+                    }
+                }
+                return {
+                    origin: [
+                        'https://webqx.github.io',
+                        'https://webqx.com',
+                        'http://localhost:3000',
+                        'http://localhost:8080',
+                        'http://127.0.0.1:5500', // Live Server
+                        /\.github\.io$/,
+                        /\.vercel\.app$/,
+                        /\.netlify\.app$/
+                    ],
+                    credentials: true,
+                    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+                    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
+                };
+            })(),
             
             // EMR system endpoints
             emr: {
@@ -125,6 +149,24 @@ class WebQXAPIProxy {
                     telehealth: 'http://localhost:3003',
                     proxy: 'http://localhost:3001'
                 }
+            });
+        });
+
+        // Backwards compatibility alias (some infra tooling may call /healthz)
+        this.app.get('/healthz', (req, res) => {
+            res.redirect(307, '/health');
+        });
+
+        // Runtime environment metadata (safe public info)
+        this.app.get('/api/env', (req, res) => {
+            res.json({
+                name: process.env.SERVICE_NAME || 'webqx-proxy',
+                environment: process.env.NODE_ENV || 'development',
+                commit: process.env.GIT_COMMIT || null,
+                region: process.env.DEPLOY_REGION || null,
+                timestamp: new Date().toISOString(),
+                proxy_port: this.port,
+                cors_mode: Array.isArray(this.config.cors.origin) ? 'restricted' : (this.config.cors.origin === '*' ? 'open' : 'custom'),
             });
         });
 

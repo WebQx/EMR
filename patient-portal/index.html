@@ -1,26 +1,93 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-no-webqx-theme>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebQX™ Patient Portal - Simple Layout</title>
+    <title>WebQX Patient Portal</title>
+    <link rel="stylesheet" href="../assets/webqx-emr-theme.css" />
+    <script src="../assets/webqx-theme-init.js" defer></script>
     <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
-            color: white;
-            min-height: 100vh;
+        body.webqx-theme {
+            margin:0;
+            padding:0;
+            min-height:100vh;
         }
+        .wqx-app-shell { display:flex; flex-direction:column; min-height:100vh; }
+        .wqx-main { flex:1; padding:32px 28px 56px; max-width:1280px; margin:0 auto; }
+        .header { background: var(--wqx-surface); border:1px solid var(--wqx-border); border-radius: var(--wqx-radius-lg); padding:24px; margin-bottom:32px; }
+        .title { font-size:22px; font-weight:600; color: var(--wqx-primary); margin:0 0 6px; }
+        .subtitle { font-size:14px; color: var(--wqx-text-soft); }
+        .wqx-topbar { justify-content:space-between; }
+        .theme-toggle { background: var(--wqx-primary-soft); color: var(--wqx-primary); border:1px solid var(--wqx-primary); padding:4px 10px; font-size:12px; border-radius: var(--wqx-radius-pill); cursor:pointer; }
+        .theme-toggle:hover { background: var(--wqx-primary-fade); }
+        .nav-group { display:flex; align-items:center; gap:12px; }
+        .nav-group a { text-decoration:none; font-size:13px; color: var(--wqx-text-soft); padding:6px 10px; border-radius: var(--wqx-radius-sm); }
+        .nav-group a:hover { background: var(--wqx-primary-soft); color: var(--wqx-primary); }
+        .nav-brand { font-weight:600; font-size:15px; color: var(--wqx-primary); letter-spacing:.5px; }
+        /* Legacy sections below reuse previous styling tokens with adjustments */
+        .stats-row, .services-row { display:flex; flex-wrap:wrap; gap:20px; }
+        .stat-card, .service-card, .activity-section { background: var(--wqx-surface); border:1px solid var(--wqx-border); color: var(--wqx-text); }
+        .stat-card { border-radius: var(--wqx-radius-lg); padding:20px; text-align:center; flex:1; min-width:180px; }
+        .stat-number { font-size:30px; font-weight:600; color: var(--wqx-primary); }
+        .stat-label { font-size:13px; color: var(--wqx-text-soft); }
+        .service-card { border-radius: var(--wqx-radius-lg); padding:20px; flex:1; min-width:260px; cursor:pointer; transition: var(--wqx-transition); position:relative; }
+        .service-card:hover { box-shadow: var(--wqx-shadow-lg); transform: translateY(-3px); }
+        .service-header { display:flex; align-items:center; margin-bottom:14px; }
+        .service-icon { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; background: var(--wqx-primary-soft); color: var(--wqx-primary); }
+        .service-info h3 { margin:0 0 4px; font-size:16px; font-weight:600; }
+        .service-info p { margin:0; font-size:13px; color: var(--wqx-text-soft); }
+        .service-status { font-size:12px; color: var(--wqx-accent-green); font-weight:500; margin-bottom:6px; }
+        .service-details { font-size:12px; color: var(--wqx-text-fade); line-height:1.4; }
+        .activity-section { border-radius: var(--wqx-radius-lg); padding:22px; margin-top:32px; }
+        .activity-title { font-size:18px; font-weight:600; margin:0 0 18px; color: var(--wqx-primary); }
+        .activity-item { display:flex; align-items:center; padding:10px 0; border-bottom:1px solid var(--wqx-border); }
+        .activity-item:last-child { border-bottom:none; }
+        .activity-icon { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; background: var(--wqx-primary-soft); color: var(--wqx-primary); margin-right:14px; }
+        .activity-text { font-size:13px; color: var(--wqx-text); margin-bottom:2px; }
+        .activity-time { font-size:11px; color: var(--wqx-text-fade); }
+        @media (max-width: 768px) { .wqx-main { padding:24px 18px 48px; } .stats-row, .services-row { flex-direction:column; } .service-card { min-width:auto; } }
+    </style>
         
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+<body class="webqx-theme">
+    <div class="wqx-app-shell">
+        <div class="wqx-topbar">
+            <div class="nav-brand">WebQX Patient</div>
+            <div class="nav-group">
+                <a href="../index.html">Home</a>
+                <a href="#appointments">Appointments</a>
+                <a href="#records">Records</a>
+                <a href="#telehealth">Telehealth</a>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">Dark</button>
+                                <button class="theme-toggle" id="loginToggle" aria-label="Toggle login panel">Auth</button>
+            </div>
+        </div>
+                <div id="loginPanel" style="position:fixed;top:64px;left:16px;width:300px;background:var(--wqx-surface,#fff);border:1px solid var(--wqx-border,#ccc);border-radius:12px;box-shadow:0 4px 14px rgba(0,0,0,.15);display:none;flex-direction:column;z-index:1200;font-family:system-ui,sans-serif;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--wqx-border,#ddd);">
+                        <strong style="font-size:14px;color:var(--wqx-primary,#0f766e);">Authentication</strong>
+                        <button id="loginClose" style="background:transparent;border:none;font-size:16px;cursor:pointer;color:var(--wqx-text-soft,#555);">×</button>
+                    </div>
+                    <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;font-size:12px;">
+                        <input type="email" id="loginUser" class="wqx-input" placeholder="patient1@webqx.com" value="patient1@webqx.com"/>
+                        <input type="password" id="loginPass" class="wqx-input" placeholder="demo123" value="demo123"/>
+                        <input type="text" id="loginBase" class="wqx-input" placeholder="(auto /auth prefix)" value="auto"/>
+                        <button class="wqx-btn wqx-btn-primary" id="loginBtn" style="font-size:12px;">Login & Store Token</button>
+                        <button class="wqx-btn wqx-btn-outline" id="logoutBtn" style="font-size:12px;">Logout</button>
+                        <div style="font-size:10px;color:var(--wqx-text-fade,#777);">Token saved to localStorage (webqx-jwt).</div>
+                        <div id="loginStatus" style="font-size:11px;color:var(--wqx-text-soft,#555);"></div>
+                    </div>
+                </div>
+        <main class="wqx-main">
+            <div class="header">
+                <div class="title">Patient Portal</div>
+                <div class="subtitle">Welcome back, Demo Patient</div>
+            </div>
+            <div class="stats-section">
+                <div class="stats-row">
+                    <!-- existing stat cards preserved below -->
         
-        .header {
-            background: rgba(255, 255, 255, 0.1);
+        <!-- Existing Stats Section (trimmed markers) -->
+        
+        
             border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 10px;
             padding: 20px;
@@ -216,9 +283,6 @@
             <div class="subtitle">Welcome back, Demo Patient</div>
         </div>
 
-        <!-- Stats Section -->
-        <div class="stats-section">
-            <div class="stats-row">
                 <div class="stat-card">
                     <span class="stat-number">2</span>
                     <div class="stat-label">Upcoming Appointments</div>
@@ -238,8 +302,7 @@
             </div>
         </div>
 
-        <!-- Services Section -->
-        <div class="services-section">
+        <div class="services-section" id="services">
             <div class="services-row">
                 <div class="service-card" onclick="moduleAPI.openAppointments()">
                     <div class="service-header">
@@ -338,8 +401,7 @@
             </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="activity-section">
+    <div class="activity-section">
             <div class="activity-title">Recent Activity</div>
             <div class="activity-item">
                 <div class="activity-icon bg-green">🧪</div>
@@ -363,7 +425,100 @@
                 </div>
             </div>
         </div>
-    </div>
-    <script src="js/modules-api.js"></script>
+                </main>
+        </div>
+                <div id="literacyPanel" style="position:fixed;bottom:16px;right:16px;width:340px;max-width:90%;background:var(--wqx-surface);border:1px solid var(--wqx-border);border-radius:var(--wqx-radius-lg);box-shadow:var(--wqx-shadow-lg);display:none;flex-direction:column;z-index:900;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--wqx-border);">
+                        <strong style="font-size:13px;color:var(--wqx-primary);">Health Literacy</strong>
+                        <button id="literacyClose" style="background:transparent;border:none;font-size:16px;cursor:pointer;color:var(--wqx-text-soft);">×</button>
+                    </div>
+                    <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;font-size:12px;">
+                        <input id="litTerm" class="wqx-input" placeholder="Enter term (e.g. hypertension)" />
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="wqx-btn wqx-btn-primary" id="btnExplain" style="font-size:11px;">Explain</button>
+                        </div>
+                        <div id="litOut" style="border:1px solid var(--wqx-border);border-radius:var(--wqx-radius-md);padding:6px 8px;min-height:60px;background:var(--wqx-surface-alt);font-family:ui-monospace,monospace;white-space:pre-wrap;line-height:1.4;"></div>
+                        <div style="font-size:10px;color:var(--wqx-text-fade);">Educational use only.</div>
+                    </div>
+                </div>
+                <button id="literacyToggle" style="position:fixed;bottom:16px;right:16px;background:var(--wqx-primary);color:#fff;border:none;border-radius:var(--wqx-radius-pill);padding:10px 14px;font-size:12px;box-shadow:var(--wqx-shadow-md);cursor:pointer;z-index:880;">Literacy</button>
+        <script src="js/modules-api.js"></script>
+        <script>
+            // Theme toggle persistence
+            (function(){
+                const btn = document.getElementById('themeToggle');
+                const stored = localStorage.getItem('wqx-theme');
+                function apply(mode){
+                    document.body.classList.toggle('dark', mode==='dark');
+                    btn.textContent = mode==='dark' ? 'Light' : 'Dark';
+                    btn.setAttribute('aria-pressed', mode==='dark');
+                }
+                if (stored) apply(stored); else if (window.matchMedia('(prefers-color-scheme: dark)').matches) { apply('dark'); }
+                btn.addEventListener('click', () => {
+                    const isDark = document.body.classList.contains('dark');
+                        const next = isDark ? 'light' : 'dark';
+                        localStorage.setItem('wqx-theme', next);
+                        apply(next);
+                });
+            })();
+        </script>
+                <script>
+                    // Literacy widget logic
+                    (function(){
+                        const toggle = document.getElementById('literacyToggle');
+                        const panel = document.getElementById('literacyPanel');
+                        const closeBtn = document.getElementById('literacyClose');
+                        const term = document.getElementById('litTerm');
+                        const out = document.getElementById('litOut');
+                        const explainBtn = document.getElementById('btnExplain');
+                        function show(){ panel.style.display='flex'; }
+                        function hide(){ panel.style.display='none'; }
+                        toggle.addEventListener('click', ()=> panel.style.display==='none'?show():hide());
+                        closeBtn.addEventListener('click', hide);
+                        async function callExplain(){
+                            const value = term.value.trim();
+                            if(!value){ out.textContent='Enter a term.'; return; }
+                            out.textContent='Working...';
+                            try {
+                                const token = localStorage.getItem('webqx-jwt') || 'demo.fake.token';
+                                const res = await fetch('/v1/literacy/explain', {method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body: JSON.stringify({term:value})});
+                                if(!res.ok) throw new Error('HTTP '+res.status);
+                                const data = await res.json();
+                                out.textContent = data.result || JSON.stringify(data,null,2);
+                            } catch(e){ out.textContent='Error: '+e.message; }
+                        }
+                        explainBtn.addEventListener('click', callExplain);
+                        term.addEventListener('keydown', e=>{ if(e.key==='Enter'){ callExplain(); }});
+                    })();
+                </script>
+                                <script src="../assets/webqx-token-auth.js"></script>
+                                <script>
+                                    // Auth panel logic for patient portal
+                                    (function(){
+                                        const toggle = document.getElementById('loginToggle');
+                                        const panel = document.getElementById('loginPanel');
+                                        const closeBtn = document.getElementById('loginClose');
+                                        const btnLogin = document.getElementById('loginBtn');
+                                        const btnLogout = document.getElementById('logoutBtn');
+                                        const user = document.getElementById('loginUser');
+                                        const pass = document.getElementById('loginPass');
+                                        const base = document.getElementById('loginBase');
+                                        const status = document.getElementById('loginStatus');
+                                        function show(){ panel.style.display='flex'; }
+                                        function hide(){ panel.style.display='none'; }
+                                        toggle && toggle.addEventListener('click', ()=> panel.style.display==='none'?show():hide());
+                                        closeBtn && closeBtn.addEventListener('click', hide);
+                                        function setStatus(msg, ok=true){ status.textContent = msg; status.style.color = ok? 'var(--wqx-accent-green,#059669)' : 'var(--wqx-accent-red,#dc2626)'; }
+                                        btnLogin.addEventListener('click', async ()=> {
+                                            try {
+                                                setStatus('Authenticating...', true);
+                                                const token = await window.WebQXAuth.login(base.value, user.value, pass.value);
+                                                setStatus('Token stored ('+token.slice(0,18)+'...)');
+                                            } catch(e){ setStatus('Error: '+e.message, false); }
+                                        });
+                                        btnLogout.addEventListener('click', ()=> { window.WebQXAuth.logout(); setStatus('Logged out', true); });
+                                        if(window.WebQXAuth.getToken()) setStatus('Active token present');
+                                    })();
+                                </script>
 </body>
 </html>

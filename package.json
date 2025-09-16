@@ -31,7 +31,8 @@
     "build:pages": "node scripts/build-pages.js",
     "deploy:pages": "npm run build:css:prod && npm run build:pages",
     "deploy:quick": "git add . && git commit -m \"Deploy WebQx Global Healthcare Platform\" && git push origin main",
-    "deploy:full": "npm run deploy:pages && npm run deploy:quick"
+    "deploy:full": "npm run deploy:pages && npm run deploy:quick",
+    "test:e2e": "playwright test"
   },
   "keywords": [
     "healthcare",
@@ -100,6 +101,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@types/uuid": "^9.0.7",
+    "@playwright/test": "^1.48.2",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",

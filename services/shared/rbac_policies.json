@@ -1,0 +1,8 @@
+{
+  "assist.summary": {"roles": ["provider", "admin"], "specialties_any": []},
+  "assist.plan": {"roles": ["provider", "admin"], "specialties_any": []},
+  "assist.triage": {"roles": ["provider", "admin", "nurse"], "specialties_any": []},
+  "literacy.explain": {"roles": ["patient", "caregiver", "provider"], "specialties_any": []},
+  "literacy.checklist": {"roles": ["patient", "caregiver", "provider"], "specialties_any": []},
+  "literacy.medication": {"roles": ["patient", "caregiver", "provider"], "specialties_any": []}
+}

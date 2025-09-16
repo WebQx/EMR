@@ -19,6 +19,8 @@ from authentication.views import (
     revoke_session,
     password_reset_request,
     health_check,
+    token_introspect,
+    jwks_view,
 )
 
 # API Router
@@ -29,6 +31,8 @@ auth_patterns = [
     # JWT Token endpoints
     path('token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('token/introspect/', token_introspect, name='token_introspect'),
+    path('.well-known/jwks.json', jwks_view, name='jwks'),
     
     # User management
     path('register/', UserRegistrationView.as_view(), name='user_register'),
@@ -54,6 +58,10 @@ auth_patterns = [
 urlpatterns = [
     # Admin interface
     path('admin/', admin.site.urls),
+    # Short auth API alias for frontend helper (maps to v1 auth endpoints)
+    path('auth/api/token/', CustomTokenObtainPairView.as_view(), name='short_token_obtain'),
+    path('auth/api/token/refresh/', TokenRefreshView.as_view(), name='short_token_refresh'),
+    path('auth/.well-known/jwks.json', jwks_view, name='short_jwks'),
     
     # API endpoints
     path('api/v1/auth/', include(auth_patterns)),

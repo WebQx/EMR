@@ -1,4 +1,150 @@
-name: Deploy WebQx Global Healthcare Platform
+name: WebQX CI & Deployment
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  pages: write
+  id-token: write
+
+env:
+  NODE_VERSION: '20'
+  REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: ${{ github.repository_owner }}
+  WEBQX_VERSION: ${{ github.sha }}
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm ci
+      - name: Run Tests
+        run: npm test -- --ci --reporters=default --reporters=jest-junit
+      - name: Upload Test Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: junit.xml
+          if-no-files-found: ignore
+
+  build-docker:
+    name: Build & Publish Docker Images
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract Metadata (EMR)
+        id: meta_emr
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.IMAGE_NAMESPACE }}/webqx-emr
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+      - name: Extract Metadata (Auth)
+        id: meta_auth
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ env.IMAGE_NAMESPACE }}/webqx-auth
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha
+      - name: Build & Push EMR Image
+        uses: docker/build-push-action@v6
+        with:
+          context: webqx-emr-system
+          file: webqx-emr-system/Dockerfile
+          push: true
+          tags: ${{ steps.meta_emr.outputs.tags }}
+          labels: ${{ steps.meta_emr.outputs.labels }}
+      - name: Build & Push Django Auth Image
+        uses: docker/build-push-action@v6
+        with:
+          context: django-auth-backend
+          push: true
+          tags: ${{ steps.meta_auth.outputs.tags }}
+          labels: ${{ steps.meta_auth.outputs.labels }}
+
+  build-pages:
+    name: Build Static Pages
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - name: Install Dependencies
+        run: npm ci
+      - name: Build CSS & Pages
+        run: |
+          npm run build:css:prod
+          if [ -f scripts/build-pages.js ]; then npm run build:pages; fi
+      - name: Prepare Pages Artifact
+        run: |
+          mkdir -p dist
+          cp -r index.html assets sw.js webqx-remote-config.js integrations dist/ 2>/dev/null || true
+          if [ -d github-pages-frontend ]; then cp -r github-pages-frontend/* dist/; fi
+          if [ -f index-github-pages.html ]; then cp index-github-pages.html dist/; fi
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy-pages:
+    name: Deploy GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build-pages
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [build-docker, deploy-pages]
+    steps:
+      - name: Summary
+        run: |
+          echo 'CI & Deployment complete.'
+          echo 'EMR Image Tags:'
+          echo '${{ needs.build-docker.outputs.emr }}'name: Deploy WebQx Global Healthcare Platform
 
 on:
   push:

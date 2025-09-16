@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'django_otp',
     'django_otp.plugins.otp_totp',
     'django_otp.plugins.otp_static',
@@ -213,25 +214,41 @@ REST_FRAMEWORK = {
 
 # JWT Configuration
 from datetime import timedelta
+JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'RS256')
+PRIVATE_KEY_PATH = os.getenv('JWT_PRIVATE_KEY_PATH', str(BASE_DIR / 'keys' / 'private.pem'))
+PUBLIC_KEY_PATH = os.getenv('JWT_PUBLIC_KEY_PATH', str(BASE_DIR / 'keys' / 'public.pem'))
+
+SIGNING_KEY = None
+VERIFYING_KEY = None
+if JWT_ALGORITHM.startswith('RS'):
+    try:
+        if os.path.exists(PRIVATE_KEY_PATH):
+            with open(PRIVATE_KEY_PATH, 'r') as f:
+                SIGNING_KEY = f.read()
+        if os.path.exists(PUBLIC_KEY_PATH):
+            with open(PUBLIC_KEY_PATH, 'r') as f:
+                VERIFYING_KEY = f.read()
+    except Exception:
+        pass
+else:
+    SIGNING_KEY = SECRET_KEY
+
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=int(os.getenv('JWT_ACCESS_MINUTES', '60'))),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=int(os.getenv('JWT_REFRESH_DAYS', '7'))),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'VERIFYING_KEY': None,
-    'AUDIENCE': None,
-    'ISSUER': 'webqx.healthcare',
-    'JSON_ENCODER': None,
-    'JWK_URL': None,
-    'LEEWAY': 0,
+    'ALGORITHM': JWT_ALGORITHM,
+    'SIGNING_KEY': SIGNING_KEY or SECRET_KEY,
+    'VERIFYING_KEY': VERIFYING_KEY,
+    'AUDIENCE': os.getenv('JWT_AUDIENCE', 'webqx.emr'),
+    'ISSUER': os.getenv('JWT_ISSUER', 'webqx.healthcare'),
     'AUTH_HEADER_TYPES': ('Bearer',),
     'AUTH_HEADER_NAME': 'HTTP_AUTHORIZATION',
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
-    'USER_AUTHENTICATION_RULE': 'rest_framework_simplejwt.authentication.default_user_authentication_rule',
+    'LEEWAY': 0,
 }
 
 # Django Allauth Configuration
