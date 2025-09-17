@@ -239,8 +239,8 @@ class TLSConfig {
                 return fs.readFileSync(this.config.certPath);
             }
             
-            // Development fallback
-            if (process.env.NODE_ENV === 'development') {
+            // Development or testing fallback
+            if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
                 return this.getDefaultDevCertificate();
             }
             
@@ -259,8 +259,8 @@ class TLSConfig {
                 return fs.readFileSync(this.config.keyPath);
             }
             
-            // Development fallback
-            if (process.env.NODE_ENV === 'development') {
+            // Development or testing fallback
+            if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
                 return this.getDefaultDevPrivateKey();
             }
             

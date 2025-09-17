@@ -1,0 +1,19 @@
+{
+  "name": "webqx-patient-portal",
+  "version": "1.0.0",
+  "description": "Patient portal for WebQX EMR.",
+  "scripts": {
+    "dev": "parcel index.html",
+    "build": "parcel build index.html"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "styled-components": "^5.3.11"
+  },
+  "devDependencies": {
+    "parcel": "^2.10.3"
+  }
+}

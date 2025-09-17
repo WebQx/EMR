@@ -1,10 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-no-webqx-theme>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebQX™ Provider Portal - Dashboard</title>
+    <title>WebQX Provider Portal</title>
+    <link rel="stylesheet" href="../assets/webqx-emr-theme.css" />
+    <script src="../assets/webqx-theme-init.js" defer></script>
     <style>
+        body.webqx-theme { background: linear-gradient(140deg,var(--wqx-bg) 0%,var(--wqx-bg-alt) 100%); color: var(--wqx-text); }
+        .wqx-topbar { justify-content: space-between; }
+        .nav-group { display:flex; align-items:center; gap:12px; }
+        .nav-group a { text-decoration:none; font-size:13px; color: var(--wqx-text-soft); padding:6px 10px; border-radius: var(--wqx-radius-sm); }
+        .nav-group a:hover { background: var(--wqx-primary-soft); color: var(--wqx-primary); }
+        .theme-toggle { background: var(--wqx-primary-soft); color: var(--wqx-primary); border:1px solid var(--wqx-primary); padding:4px 10px; font-size:12px; border-radius: var(--wqx-radius-pill); cursor:pointer; }
+        .theme-toggle:hover { background: var(--wqx-primary-fade); }
+        /* retain existing styles below */
         /* Reset and base styles */
         * {
             margin: 0;
@@ -12,12 +22,7 @@
             box-sizing: border-box;
         }
         
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f766e 0%, #0891b2 50%, #164e63 100%);
-            min-height: 100vh;
-            color: white;
-        }
+        body { font-family: var(--wqx-font-sans); }
         
         .container {
             max-width: 1200px;
@@ -374,7 +379,57 @@
         }
     </style>
 </head>
-<body>
+<body class="webqx-theme">
+    <div class="wqx-topbar">
+        <div class="nav-brand">WebQX Provider</div>
+        <div class="nav-group">
+            <a href="../index.html">Home</a>
+            <a href="#patients">Patients</a>
+            <a href="#schedule">Schedule</a>
+            <a href="#telehealth">Telehealth</a>
+            <button class="theme-toggle" id="themeToggleProv" aria-label="Toggle dark mode">Dark</button>
+            <button class="theme-toggle" id="assistantToggle" aria-label="Toggle assistant panel">Assistant</button>
+                        <button class="theme-toggle" id="loginToggle" aria-label="Toggle login panel">Auth</button>
+        </div>
+    </div>
+        <div id="loginPanel" style="position:fixed;top:64px;left:16px;width:300px;background:var(--wqx-surface);border:1px solid var(--wqx-border);border-radius:var(--wqx-radius-lg);box-shadow:var(--wqx-shadow-lg);display:none;flex-direction:column;z-index:1000;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--wqx-border);">
+                <strong style="font-size:14px;color:var(--wqx-primary);">Authentication</strong>
+                <button id="loginClose" style="background:transparent;border:none;font-size:16px;cursor:pointer;color:var(--wqx-text-soft);">×</button>
+            </div>
+            <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;font-size:12px;">
+                <input type="email" id="loginUser" class="wqx-input" placeholder="physician@webqx.com" value="physician@webqx.com"/>
+                <input type="password" id="loginPass" class="wqx-input" placeholder="demo123" value="demo123"/>
+                <input type="text" id="loginBase" class="wqx-input" placeholder="(auto /auth prefix)" value="auto"/>
+                <button class="wqx-btn wqx-btn-primary" id="loginBtn" style="font-size:12px;">Login & Store Token</button>
+                <button class="wqx-btn wqx-btn-outline" id="logoutBtn" style="font-size:12px;">Logout</button>
+                <div style="font-size:10px;color:var(--wqx-text-fade);">Token saved to localStorage (webqx-jwt).</div>
+                <div id="loginStatus" style="font-size:11px;color:var(--wqx-text-soft);"></div>
+            </div>
+        </div>
+    <div id="assistantPanel" style="position:fixed;top:64px;right:16px;width:360px;max-width:90%;background:var(--wqx-surface);border:1px solid var(--wqx-border);border-radius:var(--wqx-radius-lg);box-shadow:var(--wqx-shadow-lg);display:none;flex-direction:column;z-index:1000;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--wqx-border);">
+            <strong style="font-size:14px;color:var(--wqx-primary);">Provider Assistant</strong>
+            <button id="assistantClose" style="background:transparent;border:none;font-size:16px;cursor:pointer;color:var(--wqx-text-soft);">×</button>
+        </div>
+        <div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;font-size:13px;">
+            <label style="display:flex;flex-direction:column;gap:4px;">
+                <span style="font-size:11px;font-weight:600;color:var(--wqx-text-soft);letter-spacing:.5px;">PATIENT ID</span>
+                <input id="assistPatient" type="text" class="wqx-input" placeholder="demo-patient-1" value="demo-patient-1"/>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:4px;">
+                <span style="font-size:11px;font-weight:600;color:var(--wqx-text-soft);letter-spacing:.5px;">CONTEXT (optional)</span>
+                <textarea id="assistContext" class="wqx-input" rows="3" placeholder="Paste recent notes..." style="resize:vertical"></textarea>
+            </label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="wqx-btn wqx-btn-primary" id="btnSummary" style="font-size:12px;">Summary</button>
+                <button class="wqx-btn wqx-btn-outline" id="btnPlan" style="font-size:12px;">Plan</button>
+                <button class="wqx-btn wqx-btn-subtle" id="btnTriage" style="font-size:12px;">Triage</button>
+            </div>
+            <div id="assistOutput" style="border:1px solid var(--wqx-border);border-radius:var(--wqx-radius-md);padding:8px 10px;min-height:80px;background:var(--wqx-surface-alt);font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap;line-height:1.4;"></div>
+            <div style="font-size:10px;color:var(--wqx-text-fade);">Prototype only – do not use for real clinical decisions.</div>
+        </div>
+    </div>
     <!-- Header -->
     <header class="header">
         <div class="container">
@@ -1241,3 +1296,85 @@
     </script>
 </body>
 </html>
+<script>
+ (function(){
+     const btn = document.getElementById('themeToggleProv');
+     if(!btn) return;
+     const stored = localStorage.getItem('wqx-theme');
+     function apply(mode){
+         document.body.classList.toggle('dark', mode==='dark');
+         btn.textContent = mode==='dark' ? 'Light' : 'Dark';
+         btn.setAttribute('aria-pressed', mode==='dark');
+     }
+     if (stored) apply(stored); else if (window.matchMedia('(prefers-color-scheme: dark)').matches) apply('dark');
+     btn.addEventListener('click', ()=>{
+         const next = document.body.classList.contains('dark') ? 'light' : 'dark';
+         localStorage.setItem('wqx-theme', next); apply(next);
+     });
+ })();
+</script>
+<script src="../assets/webqx-token-auth.js"></script>
+<script>
+// Auth panel logic
+(function(){
+    const toggle = document.getElementById('loginToggle');
+    const panel = document.getElementById('loginPanel');
+    const closeBtn = document.getElementById('loginClose');
+    const btnLogin = document.getElementById('loginBtn');
+    const btnLogout = document.getElementById('logoutBtn');
+    const user = document.getElementById('loginUser');
+    const pass = document.getElementById('loginPass');
+    const base = document.getElementById('loginBase');
+    const status = document.getElementById('loginStatus');
+    function show(){ panel.style.display='flex'; }
+    function hide(){ panel.style.display='none'; }
+    toggle && toggle.addEventListener('click', ()=> panel.style.display==='none'?show():hide());
+    closeBtn && closeBtn.addEventListener('click', hide);
+    function setStatus(msg, ok=true){ status.textContent=msg; status.style.color = ok? 'var(--wqx-accent-green)' : 'var(--wqx-accent-red)'; }
+    btnLogin.addEventListener('click', async ()=>{
+        try {
+            setStatus('Authenticating...', true);
+            const token = await window.WebQXAuth.login(base.value, user.value, pass.value);
+            setStatus('Token stored ('+token.slice(0,18)+'...)');
+        } catch(e){ setStatus('Error: '+e.message, false); }
+    });
+    btnLogout.addEventListener('click', ()=>{ window.WebQXAuth.logout(); setStatus('Logged out', true); });
+    if(window.WebQXAuth.getToken()) setStatus('Active token present');
+})();
+</script>
+<script>
+// Assistant panel logic
+(function(){
+    const toggle = document.getElementById('assistantToggle');
+    const panel = document.getElementById('assistantPanel');
+    const closeBtn = document.getElementById('assistantClose');
+    const out = document.getElementById('assistOutput');
+    const patientEl = document.getElementById('assistPatient');
+    const ctxEl = document.getElementById('assistContext');
+    const buttons = {
+        summary: document.getElementById('btnSummary'),
+        plan: document.getElementById('btnPlan'),
+        triage: document.getElementById('btnTriage')
+    };
+    function show(){ panel.style.display='flex'; }
+    function hide(){ panel.style.display='none'; }
+    toggle && toggle.addEventListener('click', ()=>{ panel.style.display === 'none' ? show() : hide(); });
+    closeBtn && closeBtn.addEventListener('click', hide);
+
+    async function call(endpoint, body){
+        out.textContent = 'Working...';
+        try {
+            const token = localStorage.getItem('demo-jwt') || 'demo.fake.token'; // Placeholder
+            const res = await fetch(endpoint, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, body: JSON.stringify(body) });
+            if(!res.ok) throw new Error('HTTP '+res.status);
+            const data = await res.json();
+            out.textContent = data.result || JSON.stringify(data, null, 2);
+        } catch(e){
+            out.textContent = 'Error: '+e.message;
+        }
+    }
+    buttons.summary && buttons.summary.addEventListener('click', ()=> call('/v1/assist/summary', { patient_id: patientEl.value, context: ctxEl.value || null }));
+    buttons.plan && buttons.plan.addEventListener('click', ()=> call('/v1/assist/plan', { patient_id: patientEl.value, problem_list: [] }));
+    buttons.triage && buttons.triage.addEventListener('click', ()=> call('/v1/assist/triage', { complaint: ctxEl.value || 'general concern' }));
+})();
+</script>

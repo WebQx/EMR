@@ -35,7 +35,7 @@ const sendOpenEHRResponse = (res, data, statusCode = 200) => {
  * POST /openehr/v1/ehr/:ehr_id/composition
  * Create a new composition
  */
-router.post('/:ehr_id/composition', [
+router.post('/ehr/:ehr_id/composition', [
     param('ehr_id').isString().notEmpty(),
     body('name').isObject(),
     body('name.value').isString().notEmpty(),
@@ -74,7 +74,7 @@ router.post('/:ehr_id/composition', [
  * GET /openehr/v1/composition/:uid
  * Get composition by UID
  */
-router.get('/:uid', [
+router.get('/composition/:uid', [
     param('uid').isString().notEmpty()
 ], async (req, res) => {
     try {
@@ -99,7 +99,7 @@ router.get('/:uid', [
  * PUT /openehr/v1/ehr/:ehr_id/composition/:uid
  * Update composition
  */
-router.put('/:ehr_id/composition/:uid', [
+router.put('/ehr/:ehr_id/composition/:uid', [
     param('ehr_id').isString().notEmpty(),
     param('uid').isString().notEmpty(),
     body('name').optional().isObject(),
@@ -135,7 +135,7 @@ router.put('/:ehr_id/composition/:uid', [
  * DELETE /openehr/v1/ehr/:ehr_id/composition/:uid
  * Delete composition
  */
-router.delete('/:ehr_id/composition/:uid', [
+router.delete('/ehr/:ehr_id/composition/:uid', [
     param('ehr_id').isString().notEmpty(),
     param('uid').isString().notEmpty()
 ], async (req, res) => {
@@ -169,7 +169,7 @@ router.delete('/:ehr_id/composition/:uid', [
  * GET /openehr/v1/composition
  * Search compositions
  */
-router.get('/', [
+router.get('/composition', [
     query('ehr_id').optional().isString(),
     query('archetype_node_id').optional().isString(),
     query('composer').optional().isString(),
@@ -206,7 +206,7 @@ router.get('/', [
  * GET /openehr/v1/composition/$count
  * Get total composition count (WebQx extension)
  */
-router.get('/$count', async (req, res) => {
+router.get('/composition/$count', async (req, res) => {
     try {
         const count = openEHRService.getCompositionCount();
         
@@ -225,7 +225,7 @@ router.get('/$count', async (req, res) => {
  * GET /openehr/v1/composition/:uid/$summary
  * Get composition summary (WebQx extension)
  */
-router.get('/:uid/$summary', [
+router.get('/composition/:uid/$summary', [
     param('uid').isString().notEmpty()
 ], async (req, res) => {
     try {

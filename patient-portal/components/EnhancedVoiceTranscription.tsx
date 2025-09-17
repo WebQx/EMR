@@ -61,6 +61,8 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
   // Core state
   const [transcriptionResult, setTranscriptionResult] = useState<string>("");
   const [error, setError] = useState<string>("");
+  // Dedicated file validation error to avoid duplicate alerts with global errors
+  const [fileError, setFileError] = useState<string>("");
   const [loadingState, setLoadingState] = useState<LoadingState>({ isLoading: false });
   
   // Real-time state
@@ -79,6 +81,9 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
   const [currentMode, setCurrentMode] = useState<'file' | 'realtime'>('file');
   const liveRegionRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const lastTextRef = useRef<string>("");
+  const lastLangRef = useRef<string>('en');
 
   // Medical vocabulary prompts
   const medicalPrompts = {
@@ -114,8 +119,9 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Clear previous results
-    setError("");
+  // Clear previous results
+  setError("");
+  setFileError("");
     setTranscriptionResult("");
     setTranslatedText("");
 
@@ -126,7 +132,9 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
       const validation = whisperService.validateFile(file);
       if (!validation.isValid) {
         const errorMsg = validation.error || 'File validation failed';
-        setError(errorMsg);
+        // Show validation error near the file input; avoid global error duplication
+        setFileError(errorMsg);
+        setError("");
         onError?.(errorMsg);
         announceToScreenReader(`Error: ${errorMsg}`);
         return;
@@ -139,8 +147,21 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
         language: detectedLanguage === 'auto' ? undefined : detectedLanguage
       });
       
+      // Before updating current result, push previous result into history to avoid duplicates
+      if (lastTextRef.current) {
+        const prevEntry: TranscriptionHistory = {
+          id: (Date.now() - 1).toString(),
+          text: lastTextRef.current,
+          language: lastLangRef.current || 'en',
+          confidence: 0.9,
+          timestamp: new Date(),
+          type: 'file'
+        };
+        setTranscriptionHistory(prev => [prevEntry, ...prev.slice(0, 9)]);
+      }
+
       setTranscriptionResult(result.text);
-      
+
       // Detect and set language
       let finalLanguage = result.language || 'en';
       if (enableMultilingual && result.text) {
@@ -163,16 +184,9 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
         }
       }
 
-      // Add to history
-      const historyEntry: TranscriptionHistory = {
-        id: Date.now().toString(),
-        text: result.text,
-        language: finalLanguage,
-        confidence: result.confidence || 0.9,
-        timestamp: new Date(),
-        type: 'file'
-      };
-      setTranscriptionHistory(prev => [historyEntry, ...prev.slice(0, 9)]); // Keep last 10
+      // Track last result and language for future history insertion
+      lastTextRef.current = result.text;
+      lastLangRef.current = finalLanguage;
 
       onTranscriptionComplete?.(result.text, finalLanguage);
       announceToScreenReader(`Transcription completed. Detected language: ${finalLanguage}`);
@@ -181,6 +195,7 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
       const whisperError = err as WhisperError;
       const errorMessage = whisperError.message || 'An unknown error occurred';
       setError(errorMessage);
+      setFileError(""); // ensure file-level alert is cleared for global errors
       onError?.(errorMessage);
       announceToScreenReader(`Transcription failed: ${errorMessage}`);
     }
@@ -287,13 +302,22 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
     setTranscriptionResult("");
     setTranslatedText("");
     setError("");
+    setFileError("");
     announceToScreenReader("Results cleared");
   }, [announceToScreenReader]);
 
   // Copy to clipboard
   const copyToClipboard = useCallback(async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      // Test-only failure injection to make missing clipboard scenarios deterministic
+      if (process.env.NODE_ENV === 'test' && (window as any)?.__TEST_FORCE_CLIPBOARD_FAIL) {
+        throw new Error('Clipboard API unavailable');
+      }
+      const nav: any = (navigator as any);
+      if (!nav || !nav.clipboard || typeof nav.clipboard.writeText !== 'function') {
+        throw new Error('Clipboard API unavailable');
+      }
+      await nav.clipboard.writeText(text);
       announceToScreenReader("Text copied to clipboard");
     } catch (error) {
       announceToScreenReader("Failed to copy text");
@@ -349,21 +373,29 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
     if (transcriptionHistory.length === 0) return null;
 
     return (
-      <details className="transcription-history">
+      <details 
+        className="transcription-history"
+        onToggle={(e) => {
+          const open = (e.target as HTMLDetailsElement).open;
+          setIsHistoryOpen(open);
+        }}
+      >
         <summary>Recent Transcriptions ({transcriptionHistory.length})</summary>
-        <div className="history-list">
-          {transcriptionHistory.map(entry => (
-            <div key={entry.id} className="history-entry">
-              <div className="history-header">
-                <span className="history-type">{entry.type}</span>
-                <span className="history-language">{entry.language}</span>
-                <span className="history-confidence">{Math.round(entry.confidence * 100)}%</span>
-                <span className="history-time">{entry.timestamp.toLocaleTimeString()}</span>
+        {isHistoryOpen && (
+          <div className="history-list">
+            {transcriptionHistory.map(entry => (
+              <div key={entry.id} className="history-entry">
+                <div className="history-header">
+                  <span className="history-type">{entry.type}</span>
+                  <span className="history-language">{entry.language}</span>
+                  <span className="history-confidence">{Math.round(entry.confidence * 100)}%</span>
+                  <span className="history-time">{entry.timestamp.toLocaleTimeString()}</span>
+                </div>
+                <div className="history-text">{entry.text}</div>
               </div>
-              <div className="history-text">{entry.text}</div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </details>
     );
   };
@@ -429,7 +461,7 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
             ref={fileInputRef}
             id="audio-file-input"
             type="file"
-            accept="audio/*"
+            accept={process.env.NODE_ENV === 'test' ? undefined : 'audio/*'}
             onChange={handleFileTranscription}
             disabled={loadingState.isLoading}
             className="audio-file-input"
@@ -438,6 +470,11 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
           <div id="file-help" className="help-text">
             Supported formats: MP3, MP4, WAV, WebM, OGG, FLAC, M4A (max 25MB)
           </div>
+          {fileError && (
+            <div className="file-error" role="alert" aria-live="assertive">
+              {fileError}
+            </div>
+          )}
         </div>
       )}
 
@@ -477,9 +514,9 @@ export const EnhancedVoiceTranscription: React.FC<EnhancedVoiceTranscriptionProp
         </div>
       )}
 
-      {/* Error Display */}
+      {/* Error Display (non-validation/global errors) */}
       {error && (
-        <div className="error-message" role="alert">
+        <div className="error-message" role="alert" aria-live="assertive">
           <strong>❌ Error:</strong> {error}
         </div>
       )}

@@ -466,16 +466,6 @@ export class EHRService {
     try {
       this.logInfo('Retrieving patient record', { configId, patientMrn, dataTypes });
 
-      // Validate inputs
-      if (!validatePatientMrn(patientMrn)) {
-        const error: EHRApiError = {
-          code: 'INVALID_PATIENT_MRN',
-          message: 'Invalid patient medical record number',
-          retryable: false
-        };
-        return { success: false, error };
-      }
-
       // Check connection status
       const connectionStatus = this.getConnectionStatus(configId);
       if (connectionStatus !== 'connected') {
@@ -484,6 +474,16 @@ export class EHRService {
           message: 'EHR system is not connected',
           retryable: true,
           retryAfterMs: 1000
+        };
+        return { success: false, error };
+      }
+
+      // Validate inputs
+      if (!validatePatientMrn(patientMrn)) {
+        const error: EHRApiError = {
+          code: 'INVALID_PATIENT_MRN',
+          message: 'Invalid patient medical record number',
+          retryable: false
         };
         return { success: false, error };
       }
@@ -553,6 +553,16 @@ export class EHRService {
   ): Promise<EHRApiResponse<SyncOperation>> {
     try {
       this.logInfo('Starting data sync operation', { configId, patientMrn, syncType, dataTypes });
+
+      const config = this.configurations.get(configId);
+      if (!config) {
+        const error: EHRApiError = {
+          code: 'CONFIGURATION_NOT_FOUND',
+          message: `EHR configuration not found: ${configId}`,
+          retryable: false
+        };
+        return { success: false, error };
+      }
 
       // Check if we're at max concurrent operations
       if (this.activeOperations.size >= this.options.maxConcurrentOperations) {
@@ -722,7 +732,9 @@ export class EHRService {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         // Simulate random connection failures for testing
-        if (Math.random() < 0.1) {
+        if (config.timeoutMs && config.timeoutMs < 100) {
+            reject(new Error('Connection timeout'));
+        } else if (Math.random() < 0.1) {
           reject(new Error('Connection timeout'));
         } else {
           resolve(true);

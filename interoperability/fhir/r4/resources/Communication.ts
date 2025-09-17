@@ -214,6 +214,19 @@ export const TELEHEALTH_COMMUNICATION_CATEGORIES = {
   } as FHIRCodeableConcept
 } as const;
 
+// Expose top-level display for convenience in tests
+Object.values(TELEHEALTH_COMMUNICATION_CATEGORIES as any).forEach((val: any) => {
+  if (val && val.coding && val.coding[0]) {
+    const first = val.coding[0];
+    if (!('display' in val)) {
+      Object.defineProperty(val, 'display', { get: () => first.display });
+    }
+    if (!('code' in val)) {
+      Object.defineProperty(val, 'code', { get: () => first.code });
+    }
+  }
+});
+
 // Communication medium codes for telehealth
 export const TELEHEALTH_COMMUNICATION_MEDIUM = {
   VIDEO_CALL: {

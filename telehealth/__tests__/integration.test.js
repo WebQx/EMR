@@ -13,17 +13,36 @@ const SecureChatService = require('../services/chatService');
 const RealtimeWhisperService = require('../services/realtimeWhisperService');
 const tlsConfig = require('../config/tls');
 const hipaaConfig = require('../config/hipaa');
+const WebSocket = require('ws');
 
 describe('Telehealth Module Integration Tests', () => {
     let videoService;
     let chatService;
     let whisperService;
     const testSessionId = 'test-session-12345';
+    let wss;
+
+    beforeAll(() => {
+        // Start a mock WebSocket server
+        wss = new WebSocket.Server({ port: 3000 });
+        wss.on('connection', ws => {
+            ws.on('message', message => {
+                // Echo back messages for testing
+                ws.send(message);
+            });
+        });
+    });
+
+    afterAll(() => {
+        // Close the WebSocket server
+        wss.close();
+    });
 
     beforeEach(() => {
         // Set up test environment variables
         process.env.NODE_ENV = 'test';
-        process.env.HIPAA_ENCRYPTION_KEY = 'test-key-12345678901234567890123456789012';
+        process.env.HIPAA_AUDIT_ENABLED = 'true';
+        process.env.HIPAA_ENCRYPTION_KEY = 'a'.repeat(64); // 32-byte key, hex-encoded
         process.env.WHISPER_API_KEY = 'test-whisper-api-key';
     });
 

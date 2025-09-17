@@ -11,12 +11,8 @@ let app;
 let server;
 
 beforeAll(async () => {
-  // Import the server app (we'll need to modify server.js to export the app)
   process.env.NODE_ENV = 'test';
-  const serverPath = require.resolve('../../server.js');
-  delete require.cache[serverPath];
-  
-  // For now, we'll create a simple test setup
+  // Simple isolated Express app for these integration-style tests (no external server dependency)
   app = express();
   app.use(express.json());
   

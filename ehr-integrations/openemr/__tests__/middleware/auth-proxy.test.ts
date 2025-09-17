@@ -3,11 +3,19 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { AuthProxyMiddleware, AuthProxyConfig, AuthProxyRequest } from '../../middleware/auth-proxy';
+import { AuthProxyMiddleware, AuthProxyConfig, AuthProxyRequest, SessionStore } from '../../middleware/auth-proxy';
 import { OAuth2Connector } from '../../connectors/oauth2-connector';
 
 // Mock OAuth2Connector
 jest.mock('../../connectors/oauth2-connector');
+
+// Mock SessionStore
+const mockSessionStore: jest.Mocked<SessionStore> = {
+  get: jest.fn(),
+  set: jest.fn(),
+  delete: jest.fn(),
+  cleanup: jest.fn()
+};
 
 describe('AuthProxyMiddleware', () => {
   let authProxy: AuthProxyMiddleware;
@@ -52,7 +60,7 @@ describe('AuthProxyMiddleware', () => {
     };
 
     mockOAuth2Connector = new OAuth2Connector({} as any) as jest.Mocked<OAuth2Connector>;
-    authProxy = new AuthProxyMiddleware(mockConfig, mockOAuth2Connector);
+    authProxy = new AuthProxyMiddleware(mockConfig, mockOAuth2Connector, mockSessionStore);
 
     mockReq = {
       headers: {},
@@ -399,7 +407,7 @@ describe('AuthProxyMiddleware', () => {
 
   describe('Session Management', () => {
     it('should handle session management when enabled', async () => {
-      mockReq.session = {
+      const mockSession = {
         id: 'session-123',
         userId: 'user-123',
         token: 'token',
@@ -410,6 +418,12 @@ describe('AuthProxyMiddleware', () => {
         isActive: true,
         createdAt: new Date()
       };
+
+      mockReq.session = mockSession;
+      
+      // Mock the session store to return the session
+      mockSessionStore.get.mockResolvedValue(mockSession);
+      mockSessionStore.set.mockResolvedValue(undefined);
 
       const middleware = authProxy.manageSession();
       await middleware(mockReq as AuthProxyRequest, mockRes as Response, mockNext);

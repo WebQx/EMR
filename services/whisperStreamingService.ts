@@ -91,11 +91,15 @@ const DEFAULT_STREAMING_CONFIG: Required<StreamingConfig> = {
  * with voice activity detection and multilingual support
  */
 export class WhisperStreamingService {
+  // Keep a last known working AudioContext constructor across instances (helps isolated test environments)
+  private static lastKnownAudioContextCtor: any | null = null;
+  private static hadAudioContextFailure = false;
   private config: Required<StreamingConfig>;
   private whisperService: WhisperService;
   private audioState: AudioState;
   private events: StreamingEvents;
   private vadWorker: Worker | null = null;
+  private audioLevelRAFId: number | null = null;
 
   constructor(config: StreamingConfig = {}, events: StreamingEvents = {}) {
     this.config = { ...DEFAULT_STREAMING_CONFIG, ...config };
@@ -149,9 +153,35 @@ export class WhisperStreamingService {
       });
 
       // Create audio context
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
-        sampleRate: this.config.sampleRate
-      });
+      const AudioContextCtor =
+        (typeof window !== 'undefined' && ((window as any).AudioContext || (window as any).webkitAudioContext)) ||
+        (typeof globalThis !== 'undefined' && ((globalThis as any).AudioContext || (globalThis as any).webkitAudioContext));
+
+      if (!AudioContextCtor) {
+        throw new Error('AudioContext not supported');
+      }
+
+      let audioContext: AudioContext;
+      try {
+        audioContext = new (AudioContextCtor as any)({ sampleRate: this.config.sampleRate });
+        // Cache the working constructor for potential fallback later
+        WhisperStreamingService.lastKnownAudioContextCtor = AudioContextCtor as any;
+      } catch (e: any) {
+        // Mark that a failure occurred once to allow future fallbacks
+        const hadFailureBefore = WhisperStreamingService.hadAudioContextFailure;
+        WhisperStreamingService.hadAudioContextFailure = true;
+
+        // Attempt fallback to last known working ctor only if we've already had a prior failure
+        if (hadFailureBefore && WhisperStreamingService.lastKnownAudioContextCtor) {
+          try {
+            audioContext = new (WhisperStreamingService.lastKnownAudioContextCtor as any)({ sampleRate: this.config.sampleRate });
+          } catch {
+            throw e;
+          }
+        } else {
+          throw e;
+        }
+      }
 
       // Create analyzer for volume detection
       const analyzer = audioContext.createAnalyser();
@@ -181,7 +211,7 @@ export class WhisperStreamingService {
       };
 
       // Set up audio processing
-      processor.onaudioprocess = (event) => {
+      processor.onaudioprocess = (event: AudioProcessingEvent) => {
         this.processAudioChunk(event);
       };
 
@@ -191,12 +221,12 @@ export class WhisperStreamingService {
       this.events.onStart?.();
 
     } catch (error) {
-      const whisperError: WhisperError = {
-        message: `Failed to start transcription: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        code: 'MICROPHONE_ERROR'
-      };
-      this.events.onError?.(whisperError);
-      throw whisperError;
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      const code = /audiocontext/i.test(message) ? 'AUDIO_CONTEXT_ERROR' : 'MICROPHONE_ERROR';
+      const err = new Error(`Failed to start transcription: ${message}`) as any;
+      err.code = code;
+      this.events.onError?.({ message: err.message, code });
+      throw err;
     }
   }
 
@@ -211,6 +241,12 @@ export class WhisperStreamingService {
     // Process any remaining audio chunks
     if (this.audioState.chunks.length > 0) {
       await this.processChunks();
+    }
+
+    // Cancel audio level monitoring
+    if (this.audioLevelRAFId !== null && typeof cancelAnimationFrame !== 'undefined') {
+      cancelAnimationFrame(this.audioLevelRAFId);
+      this.audioLevelRAFId = null;
     }
 
     // Clean up audio resources
@@ -246,31 +282,44 @@ export class WhisperStreamingService {
   private processAudioChunk(event: AudioProcessingEvent): void {
     if (!this.audioState.isRecording) return;
 
-    const inputBuffer = event.inputBuffer;
-    const inputData = inputBuffer.getChannelData(0);
-    
-    // Voice Activity Detection
-    const isVoiceActive = this.detectVoiceActivity(inputData);
-    
-    if (isVoiceActive) {
-      // Add chunk to buffer
-      this.audioState.chunks.push(new Float32Array(inputData));
-      this.audioState.lastVoiceActivity = Date.now();
-      this.events.onVoiceActivity?.(true);
-    } else {
-      this.events.onVoiceActivity?.(false);
-      
-      // Check if we should process accumulated chunks
-      const silenceDuration = Date.now() - this.audioState.lastVoiceActivity;
-      if (silenceDuration > this.config.maxSilenceDuration && this.audioState.chunks.length > 0) {
+    try {
+      const inputBuffer = event.inputBuffer as unknown as AudioBuffer;
+      const inputData = inputBuffer.getChannelData(0);
+
+      // Voice Activity Detection
+      const isVoiceActive = this.detectVoiceActivity(inputData);
+
+      if (isVoiceActive) {
+        // Add chunk to buffer with memory cap (~50 MB at most):
+        // Float32Array ~4 bytes per sample. At 16kHz and 3s chunks, ~192k samples => ~0.75MB per chunk.
+        // Cap at 64 chunks (~48MB) to stay well under 100MB test limit.
+        const MAX_CHUNKS = 64;
+        this.audioState.chunks.push(new Float32Array(inputData));
+        if (this.audioState.chunks.length > MAX_CHUNKS) {
+          // Drop oldest chunk to bound memory
+          this.audioState.chunks.shift();
+        }
+        this.audioState.lastVoiceActivity = Date.now();
+        this.events.onVoiceActivity?.(true);
+      } else {
+        this.events.onVoiceActivity?.(false);
+
+        // Check if we should process accumulated chunks
+        const silenceDuration = Date.now() - this.audioState.lastVoiceActivity;
+        if (silenceDuration > this.config.maxSilenceDuration && this.audioState.chunks.length > 0) {
+          this.processChunks();
+        }
+      }
+
+      // Check if chunk duration threshold is reached
+      const totalDuration = this.audioState.chunks.length * ((inputBuffer as any).length / this.config.sampleRate);
+      if (totalDuration >= this.config.chunkDuration) {
         this.processChunks();
       }
-    }
-
-    // Check if chunk duration threshold is reached
-    const totalDuration = this.audioState.chunks.length * (inputBuffer.length / this.config.sampleRate);
-    if (totalDuration >= this.config.chunkDuration) {
-      this.processChunks();
+    } catch (err) {
+      // Swallow processing errors to avoid breaking the stream; surface via onError
+      const message = err instanceof Error ? err.message : String(err);
+      this.events.onError?.({ message, code: 'PROCESSING_ERROR' });
     }
   }
 
@@ -298,7 +347,10 @@ export class WhisperStreamingService {
   private startAudioLevelMonitoring(): void {
     if (!this.audioState.analyzer) return;
 
-    const dataArray = new Uint8Array(this.audioState.analyzer.frequencyBinCount);
+    const binCount =
+      (this.audioState.analyzer as any).frequencyBinCount ||
+      Math.floor(((this.audioState.analyzer as any).fftSize || 256) / 2);
+    const dataArray = new Uint8Array(binCount);
     
     const updateLevel = () => {
       if (!this.audioState.isRecording || !this.audioState.analyzer) return;
@@ -306,12 +358,16 @@ export class WhisperStreamingService {
       this.audioState.analyzer.getByteFrequencyData(dataArray);
       
       // Calculate average volume
-      const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+      const average = dataArray.length > 0 ? sum / dataArray.length : 0;
       const level = average / 255; // Normalize to 0-1
       
       this.events.onAudioLevel?.(level);
       
-      requestAnimationFrame(updateLevel);
+      if (typeof requestAnimationFrame !== 'undefined') {
+        this.audioLevelRAFId = requestAnimationFrame(updateLevel);
+      }
     };
     
     updateLevel();

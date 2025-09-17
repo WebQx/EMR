@@ -179,8 +179,33 @@ function updateConfig(updates) {
     if (process.env.NODE_ENV !== 'development' && process.env.NODE_ENV !== 'test') {
         throw new Error('Configuration updates only allowed in development/test environments');
     }
-    
-    Object.assign(oauth2Config, updates);
+
+    if (!updates || typeof updates !== 'object') return;
+
+    // Deep merge helper that preserves existing nested objects/arrays
+    const deepMerge = (target, source) => {
+        if (!source) return target;
+        Object.keys(source).forEach(key => {
+            const sourceVal = source[key];
+            const targetVal = target[key];
+
+            if (Array.isArray(sourceVal)) {
+                // Replace arrays entirely (explicit choice)
+                target[key] = sourceVal.slice();
+            } else if (sourceVal && typeof sourceVal === 'object' && !Array.isArray(sourceVal)) {
+                // Merge objects recursively
+                if (!targetVal || typeof targetVal !== 'object') {
+                    target[key] = {};
+                }
+                deepMerge(target[key], sourceVal);
+            } else if (sourceVal !== undefined) {
+                target[key] = sourceVal;
+            }
+        });
+        return target;
+    };
+
+    deepMerge(oauth2Config, updates);
 }
 
 module.exports = {

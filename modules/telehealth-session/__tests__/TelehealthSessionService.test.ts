@@ -86,14 +86,22 @@ describe('TelehealthSessionService', () => {
   });
 
   describe('Session Management', () => {
+    it('should create service instance correctly', () => {
+      expect(service).toBeDefined();
+      expect(service.getSessionState).toBeDefined();
+      expect(service.startSession).toBeDefined();
+    });
+
     it('should start a session successfully', async () => {
-      // Temporarily disable console.log mocking to see errors
-      console.log.mockRestore?.();
+      // Ensure all mocks are working
+      expect(global.navigator?.mediaDevices?.getUserMedia).toBeDefined();
+      expect(mockGetUserMedia).toBeDefined();
       
       const result = await service.startSession();
       
       if (!result.success) {
-        console.log('Error details:', result.error);
+        console.error('Session start failed:', result.error);
+        console.error('Error details:', JSON.stringify(result.error, null, 2));
       }
 
       expect(result.success).toBe(true);
@@ -262,15 +270,15 @@ describe('TelehealthSessionService', () => {
     });
 
     it('should enforce permissions for screen sharing', async () => {
-      const mockPatient: Omit<SessionParticipant, 'isConnected' | 'joinedAt' | 'permissions'> = {
-        id: 'patient-456',
-        name: 'John Doe',
-        role: 'patient'
+      const mockInterpreter: Omit<SessionParticipant, 'isConnected' | 'joinedAt' | 'permissions'> = {
+        id: 'interpreter-456',
+        name: 'Jane Translator',
+        role: 'interpreter'
       };
-      await service.addParticipant(mockPatient);
+      await service.addParticipant(mockInterpreter);
 
-      // Patient cannot start screen sharing by default
-      const result = await service.startScreenShare('patient-456');
+      // Interpreter cannot start screen sharing by default
+      const result = await service.startScreenShare('interpreter-456');
       expect(result.success).toBe(false);
       expect(result.error?.code).toBe('INSUFFICIENT_PERMISSIONS');
     });

@@ -13,14 +13,14 @@ import {
   requireKeycloakRole,
   requireKeycloakSpecialty,
   requireVerifiedProvider 
-} from '../../../auth/keycloak/middleware';
+} from '../../auth/keycloak/middleware';
 import { 
   KeycloakUser, 
   KeycloakTokenParsed, 
   KeycloakProviderConfig 
-} from '../../../auth/keycloak/types';
-import { getKeycloakProviderConfig } from '../../../auth/keycloak/client';
-import { User, UserRole, MedicalSpecialty } from '../../../auth/types';
+} from '../../auth/keycloak/types';
+import { getKeycloakProviderConfig } from '../../auth/keycloak/client';
+import { User, UserRole, MedicalSpecialty } from '../../auth/types';
 import { OAuth2Connector, TokenExchangeRequest } from '../connectors/oauth2-connector';
 
 // Extend Express Request to include both Keycloak and OpenEMR context

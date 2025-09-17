@@ -5,7 +5,7 @@
  */
 
 import { KeycloakProviderConfig } from '../types';
-import { mapKeycloakRoles, tokenToUser } from '../middleware';
+import { mapKeycloakRoles, tokenToUser, validateKeycloakToken } from '../middleware';
 
 // Mock dependencies
 jest.mock('jwks-rsa');

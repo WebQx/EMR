@@ -540,18 +540,19 @@ class SecureChatService extends EventEmitter {
         }
 
         const iv = crypto.randomBytes(16);
-        const cipher = crypto.createCipher(this.config.encryptionAlgorithm, key);
+        const algorithm = this.config.encryptionAlgorithm || 'aes-256-gcm';
+        const cipher = crypto.createCipheriv(algorithm, key, iv);
         
         let encrypted = cipher.update(content, 'utf8', 'hex');
         encrypted += cipher.final('hex');
         
-        const authTag = cipher.getAuthTag ? cipher.getAuthTag().toString('hex') : null;
+        const authTag = cipher.getAuthTag().toString('hex');
         
         return {
             encrypted,
             iv: iv.toString('hex'),
             authTag,
-            algorithm: this.config.encryptionAlgorithm
+            algorithm: algorithm
         };
     }
 
@@ -564,7 +565,9 @@ class SecureChatService extends EventEmitter {
             throw new Error('Decryption key not available');
         }
 
-        const decipher = crypto.createDecipher(encryptedData.algorithm, keyData.key);
+        const algorithm = encryptedData.algorithm || 'aes-256-gcm';
+        const iv = Buffer.from(encryptedData.iv, 'hex');
+        const decipher = crypto.createDecipheriv(algorithm, keyData.key, iv);
         
         if (encryptedData.authTag) {
             decipher.setAuthTag(Buffer.from(encryptedData.authTag, 'hex'));

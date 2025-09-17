@@ -140,9 +140,9 @@ describe('LabResultsViewer', () => {
       expect(screen.queryByText('Loading lab results...')).not.toBeInTheDocument();
     });
 
-    // Check if lab results are displayed
-    expect(screen.getByText('Lab Results')).toBeInTheDocument();
-    expect(screen.getByText('2 results')).toBeInTheDocument();
+  // Check if lab results are displayed
+  expect(screen.getByText('Lab Results')).toBeInTheDocument();
+  expect(screen.getByTestId('results-count')).toHaveTextContent('2 results');
     expect(screen.getByText('Hemoglobin')).toBeInTheDocument();
     expect(screen.getByText('Hematocrit')).toBeInTheDocument();
     expect(screen.getByText('13.5 g/dL')).toBeInTheDocument();
@@ -184,15 +184,17 @@ describe('LabResultsViewer', () => {
     render(<LabResultsViewer patientId="12345" />);
 
     await waitFor(() => {
-      expect(screen.getByText('2 results')).toBeInTheDocument();
+      expect(screen.getByTestId('results-count')).toHaveTextContent('2 results');
     });
 
-    // Change date filter to Last 30 Days
-    const dateFilter = screen.getByDisplayValue('All Time');
-    fireEvent.change(dateFilter, { target: { value: '30days' } });
+  // Change date filter to Last 90 Days (mock results fall within this window)
+  const dateFilter = screen.getByDisplayValue('All Time');
+  fireEvent.change(dateFilter, { target: { value: '90days' } });
 
-    // Results should still be there since they're recent
-    expect(screen.getByText('2 results')).toBeInTheDocument();
+    // Results should still be there within the 90-day window
+    await waitFor(() => {
+      expect(screen.getByTestId('results-count')).toHaveTextContent('2 results');
+    });
   });
 
   it('should filter results by status', async () => {
@@ -204,14 +206,16 @@ describe('LabResultsViewer', () => {
     render(<LabResultsViewer patientId="12345" />);
 
     await waitFor(() => {
-      expect(screen.getByText('2 results')).toBeInTheDocument();
+      expect(screen.getByTestId('results-count')).toHaveTextContent('2 results');
     });
 
     // Change status filter to preliminary (should show no results)
     const statusFilter = screen.getByDisplayValue('All Statuses');
     fireEvent.change(statusFilter, { target: { value: 'preliminary' } });
 
-    expect(screen.getByText('0 results')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('results-count')).toHaveTextContent('0 results');
+    });
   });
 
   it('should toggle abnormal only filter', async () => {
@@ -223,7 +227,7 @@ describe('LabResultsViewer', () => {
     render(<LabResultsViewer patientId="12345" />);
 
     await waitFor(() => {
-      expect(screen.getByText('2 results')).toBeInTheDocument();
+      expect(screen.getByTestId('results-count')).toHaveTextContent('2 results');
     });
 
     // Enable abnormal only filter (should show no results since all are normal)
@@ -253,7 +257,7 @@ describe('LabResultsViewer', () => {
     const sortDirection = screen.getByText('↓');
     fireEvent.click(sortDirection);
 
-    expect(screen.getByText('↑')).toBeInTheDocument();
+  expect(screen.getByText('↑')).toBeInTheDocument();
   });
 
   it('should open result detail modal', async () => {

@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 /**
  * Encryption Utilities for EHR Integration
  * 
@@ -215,14 +217,24 @@ export class EncryptionService {
    */
   async hash(data: string, algorithm: 'SHA-256' | 'SHA-384' | 'SHA-512' = 'SHA-256'): Promise<string> {
     try {
-      const encoder = new TextEncoder();
-      const dataBuffer = encoder.encode(data);
-      const hashBuffer = await crypto.subtle.digest(algorithm, dataBuffer);
-      return this.arrayBufferToBase64(hashBuffer);
+      // Use Web Crypto API if available (browser environment)
+      if (typeof self !== 'undefined' && self.crypto && self.crypto.subtle) {
+        const encoder = new TextEncoder();
+        const dataBuffer = encoder.encode(data);
+        const hashBuffer = await self.crypto.subtle.digest(algorithm, dataBuffer);
+        return this.arrayBufferToBase64(hashBuffer);
+      } else {
+        // Fallback to Node.js crypto module (Node.js environment)
+        const nodeAlgorithm = algorithm.toLowerCase().replace('-', '');
+        const hash = createHash(nodeAlgorithm);
+        hash.update(data);
+        return hash.digest('base64');
+      }
     } catch (error) {
       throw new Error(`Hashing failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
+
 
   /**
    * Generate HMAC for data integrity verification
@@ -351,13 +363,13 @@ export class EncryptionService {
 
     switch (this.config.keyDerivation) {
       case 'pbkdf2':
-        derivedKey = await this.deriveKeyPBKDF2(passwordBuffer, salt);
+        derivedKey = await this.deriveKeyPBKDF2(passwordBuffer.buffer, salt);
         break;
       case 'scrypt':
-        derivedKey = await this.deriveKeyScrypt(passwordBuffer, salt);
+        derivedKey = await this.deriveKeyScrypt(passwordBuffer.buffer, salt);
         break;
       case 'argon2':
-        derivedKey = await this.deriveKeyArgon2(passwordBuffer, salt);
+        derivedKey = await this.deriveKeyArgon2(passwordBuffer.buffer, salt);
         break;
       default:
         throw new Error(`Unsupported key derivation function: ${this.config.keyDerivation}`);
@@ -387,11 +399,11 @@ export class EncryptionService {
 
     switch (keyDerivation) {
       case 'pbkdf2':
-        return this.deriveKeyPBKDF2(passwordBuffer, salt, iterations);
+        return this.deriveKeyPBKDF2(passwordBuffer.buffer, salt, iterations);
       case 'scrypt':
-        return this.deriveKeyScrypt(passwordBuffer, salt, params);
+        return this.deriveKeyScrypt(passwordBuffer.buffer, salt, params);
       case 'argon2':
-        return this.deriveKeyArgon2(passwordBuffer, salt, params);
+        return this.deriveKeyArgon2(passwordBuffer.buffer, salt, params);
       default:
         throw new Error(`Unsupported key derivation function: ${keyDerivation}`);
     }

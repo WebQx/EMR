@@ -34,6 +34,15 @@ export const FormField: React.FC<FormFieldProps> = ({
   const hasError = !!error;
   const hasWarning = !!warning;
 
+  const renderChildren = () => {
+    return React.Children.map(children, (child) => {
+      if (React.isValidElement(child) && (child.type === 'input' || child.type === 'select' || child.type === 'textarea')) {
+        return React.cloneElement(child as React.ReactElement<any>, { id: fieldId });
+      }
+      return child;
+    });
+  };
+
   return (
     <div className={`form-field ${hasError ? 'has-error' : ''} ${hasWarning ? 'has-warning' : ''} ${className}`}>
       <label htmlFor={fieldId} className="form-label">
@@ -52,7 +61,7 @@ export const FormField: React.FC<FormFieldProps> = ({
       </label>
       
       <div className="form-input-wrapper">
-        {children}
+        {renderChildren()}
       </div>
       
       {error && (

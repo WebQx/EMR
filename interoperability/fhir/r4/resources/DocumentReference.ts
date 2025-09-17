@@ -242,6 +242,19 @@ export const CLINICAL_NOTE_TYPES = {
   } as FHIRCodeableConcept
 } as const;
 
+// Add convenient accessors for .code and .display
+Object.values(CLINICAL_NOTE_TYPES as any).forEach((val: any) => {
+  if (val && val.coding && val.coding[0]) {
+    const first = val.coding[0];
+    if (!('code' in val)) {
+      Object.defineProperty(val, 'code', { get: () => first.code });
+    }
+    if (!('display' in val)) {
+      Object.defineProperty(val, 'display', { get: () => first.display });
+    }
+  }
+});
+
 // Categories for clinical notes
 export const CLINICAL_NOTE_CATEGORIES = {
   CLINICAL_NOTE: {

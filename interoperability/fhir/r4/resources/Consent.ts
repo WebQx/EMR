@@ -235,3 +235,16 @@ export const TELEHEALTH_CONSENT_CATEGORIES = {
     }]
   } as FHIRCodeableConcept
 } as const;
+
+// Add convenient top-level accessors (code/display) for tests/usage
+Object.values(TELEHEALTH_CONSENT_CATEGORIES as any).forEach((val: any) => {
+  if (val && val.coding && val.coding[0]) {
+    const first = val.coding[0];
+    if (!('code' in val)) {
+      Object.defineProperty(val, 'code', { get: () => first.code });
+    }
+    if (!('display' in val)) {
+      Object.defineProperty(val, 'display', { get: () => first.display });
+    }
+  }
+});

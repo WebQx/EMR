@@ -29,7 +29,10 @@ from rest_framework.views import APIView
 from rest_framework.throttling import UserRateThrottle, AnonRateThrottle
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+import os
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.backends import TokenBackend
 
 from django_otp import match_token
 from django_otp.models import Device
@@ -60,9 +63,105 @@ logger = logging.getLogger('authentication')
 security_logger = logging.getLogger('security_monitoring')
 
 
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def token_introspect(request):
+    """Simple JWT token introspection endpoint (Phase 1).
+    Accepts JSON: { "token": "<JWT>" }
+    Returns active=false if invalid/expired.
+    NOTE: For HS256 shared secret only (matches SIMPLE_JWT config). Upgrade to RS256 + JWKS in Phase 2.
+    """
+    token = request.data.get('token') or request.POST.get('token')
+    if not token:
+        return Response({'active': False, 'error': 'missing_token'}, status=400)
+    try:
+        backend = TokenBackend(algorithm='HS256', signing_key=settings.SECRET_KEY)
+        payload = backend.decode(token, verify=True)
+        # Map to RFC 7662 style fields
+        response = {
+            'active': True,
+            'iss': payload.get('iss'),
+            'aud': payload.get('aud'),
+            'exp': payload.get('exp'),
+            'iat': payload.get('iat'),
+            'sub': payload.get('user_id') or payload.get('sub'),
+            'scope': ' '.join(payload.get('scopes', [])) if isinstance(payload.get('scopes'), (list, tuple)) else payload.get('scope', ''),
+            'role': payload.get('role'),
+            'email': payload.get('email'),
+        }
+        return Response(response)
+    except Exception as e:
+        logger.debug(f'Token introspection failed: {e}')
+        return Response({'active': False}, status=200)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def jwks_view(request):
+    """Return JSON Web Key Set for RS256 public key distribution."""
+    pub_path = os.getenv('JWT_PUBLIC_KEY_PATH', str(settings.BASE_DIR / 'keys' / 'public.pem'))
+    if not os.path.exists(pub_path):
+        return Response({'keys': []})
+    try:
+        with open(pub_path, 'r') as f:
+            pem = f.read()
+        # Extract modulus & exponent for RSA public key (simplified parsing)
+        from cryptography.hazmat.primitives import serialization
+        from cryptography.hazmat.backends import default_backend
+        key = serialization.load_pem_public_key(pem.encode(), backend=default_backend())
+        numbers = key.public_numbers()
+        import base64
+        def b64u(data: bytes) -> str:
+            return base64.urlsafe_b64encode(data).decode().rstrip('=')
+        n = b64u(numbers.n.to_bytes((numbers.n.bit_length() + 7)//8, 'big'))
+        e = b64u(numbers.e.to_bytes((numbers.e.bit_length() + 7)//8, 'big'))
+        jwk = {
+            'kty': 'RSA',
+            'alg': 'RS256',
+            'use': 'sig',
+            'n': n,
+            'e': e,
+            'kid': 'webqx-rs256-1'
+        }
+        return Response({'keys': [jwk]})
+    except Exception as ex:
+        logger.error(f'JWKS generation error: {ex}')
+        return Response({'keys': []})
+
+
 class CustomTokenObtainPairView(TokenObtainPairView):
     """Custom JWT token view with enhanced security"""
     throttle_classes = [LoginRateThrottle]
+
+    class Serializer(TokenObtainPairSerializer):
+        @classmethod
+        def get_token(cls, user):
+            token = super().get_token(user)
+            # Map application roles (user_type) to simplified RBAC roles used by microservices
+            role_map = {
+                'PATIENT': 'patient',
+                'PROVIDER': 'provider',
+                'ADMIN': 'admin',
+                'STAFF': 'staff',
+                'RESEARCHER': 'researcher',
+                'PHARMACY': 'pharmacy'
+            }
+            token['role'] = role_map.get(getattr(user, 'user_type', ''), 'user')
+            # Include specialties list if present in metadata
+            specialties = []
+            meta = getattr(user, 'metadata', {}) or {}
+            if isinstance(meta, dict):
+                raw_specs = meta.get('specialties') or meta.get('provider_specialties') or []
+                if isinstance(raw_specs, (list, tuple)):
+                    specialties = [s for s in raw_specs if isinstance(s, str)]
+            if specialties:
+                token['specialties'] = specialties
+            # Basic identity claims
+            token['email'] = user.email
+            token['name'] = user.get_full_name()
+            return token
+
+    serializer_class = Serializer
     
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)

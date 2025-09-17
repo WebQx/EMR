@@ -290,6 +290,7 @@ export const PrescriptionForm: React.FC<PrescriptionFormProps> = ({
             error={state.errors.patientId}
           >
             <input
+              id="field-patient-id"
               type="text"
               value={state.formData.patientId}
               onChange={(e) => handleFieldChange('patientId', e.target.value)}

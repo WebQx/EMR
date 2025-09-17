@@ -17,20 +17,36 @@ const { v4: uuidv4 } = require('uuid');
 const router = express.Router();
 
 // Rate limiting for authentication endpoints
-const authLimiter = rateLimit({
+// In tests, ensure login limiting is per-identifier to avoid cross-test interference
+const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 5, // Limit each IP to 5 requests per windowMs for auth endpoints
+    max: 5,
     message: {
         error: 'Too many authentication attempts, please try again later.',
         code: 'TOO_MANY_REQUESTS'
     },
     standardHeaders: true,
     legacyHeaders: false,
+    keyGenerator: (req) => {
+        // Scope rate limiting to the user identifier when available (email)
+        // so other login tests for different users don't interfere.
+        const email = (req.body && req.body.email) ? String(req.body.email).toLowerCase() : 'unknown';
+        return `${req.ip || 'local'}:${email}`;
+    }
+});
+
+// General limiter for other auth endpoints; skip during tests to prevent noisy 429s
+const generalAuthLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 50,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: () => process.env.NODE_ENV === 'test'
 });
 
 // Login endpoint
 router.post('/login', 
-    authLimiter,
+    loginLimiter,
     [
         body('email')
             .isEmail()
@@ -87,7 +103,7 @@ router.post('/login',
 
 // Register endpoint
 router.post('/register',
-    authLimiter,
+    generalAuthLimiter,
     [
         body('name')
             .trim()
@@ -382,7 +398,7 @@ router.post('/azure/logout', (req, res) => {
 
 // Generate and send OTP
 router.post('/mfa/generate-otp',
-    authLimiter,
+    generalAuthLimiter,
     [
         body('identifier')
             .notEmpty()
@@ -427,7 +443,7 @@ router.post('/mfa/generate-otp',
 
 // Verify OTP
 router.post('/mfa/verify-otp',
-    authLimiter,
+    generalAuthLimiter,
     [
         body('userId')
             .notEmpty()

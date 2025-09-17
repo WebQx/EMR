@@ -33,6 +33,11 @@ class HIPAAConfig {
      * Load HIPAA configuration from environment
      */
     loadConfiguration() {
+        // Provide a safe default encryption key in test environment so tests don't fail due to missing env var
+        if (process.env.NODE_ENV === 'test' && !process.env.HIPAA_ENCRYPTION_KEY) {
+            process.env.HIPAA_ENCRYPTION_KEY = 'TEST_MODE_HIPAA_ENCRYPTION_KEY_32_CHARS_MIN__';
+        }
+
         this.config = {
             // Compliance enablement
             enabled: process.env.HIPAA_AUDIT_ENABLED === 'true',
@@ -283,7 +288,7 @@ class HIPAAConfig {
 
         try {
             const iv = crypto.randomBytes(16);
-            const cipher = crypto.createCipher(this.config.encryptionAlgorithm, this.config.encryptionKey);
+            const cipher = crypto.createCipheriv(this.config.encryptionAlgorithm, Buffer.from(this.config.encryptionKey, 'hex'), iv);
             
             let encrypted = cipher.update(JSON.stringify(data), 'utf8', 'hex');
             encrypted += cipher.final('hex');

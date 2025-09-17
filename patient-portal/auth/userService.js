@@ -7,14 +7,14 @@ const { v4: uuidv4 } = require('uuid');
 const users = new Map();
 
 // Default test users
-const initializeTestUsers = async () => {
+const initializeTestUsers = () => {
     const testUsers = [
         {
             id: uuidv4(),
             name: 'John Doe',
             email: 'john.doe@example.com',
             password: 'password123',
-            phoneNumber: '+1-555-0123',
+            phoneNumber: '+15550123',
             mfaEnabled: true,
             accountStatus: 'active'
         },
@@ -23,7 +23,7 @@ const initializeTestUsers = async () => {
             name: 'Jane Smith',
             email: 'jane.smith@example.com',
             password: 'password123',
-            phoneNumber: '+1-555-0456',
+            phoneNumber: '+15550456',
             mfaEnabled: false,
             accountStatus: 'active'
         },
@@ -32,25 +32,29 @@ const initializeTestUsers = async () => {
             name: 'Locked User',
             email: 'locked@example.com',
             password: 'password123',
-            phoneNumber: '+1-555-0789',
+            phoneNumber: '+15550789',
             mfaEnabled: true,
             accountStatus: 'locked'
         }
     ];
 
     for (const user of testUsers) {
-        const hashedPassword = await bcrypt.hash(user.password, 10);
+        const hashedPassword = bcrypt.hashSync(user.password, 10);
         users.set(user.email, {
             ...user,
             password: hashedPassword
         });
     }
-    
-    console.log('🔐 Test users initialized for patient portal');
 };
 
 // Initialize test users on module load
 initializeTestUsers();
+
+// Test-only helper to reset users between tests
+const __resetUsers = () => {
+    users.clear();
+    initializeTestUsers();
+};
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
@@ -340,5 +344,6 @@ module.exports = {
     registerUser,
     getUserById,
     updateUserMFA,
-    getUserByEmail
+    getUserByEmail,
+    __resetUsers // test helper
 };

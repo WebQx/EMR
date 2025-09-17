@@ -26,7 +26,8 @@
     "services/**/*",
     "ehr-integrations/**/*",
     "modules/**/*",
-    "sso/**/*"
+    "sso/**/*",
+    "auth/**/*"
   ],
   "typeRoots": ["./node_modules/@types", "./patient-portal/types"]
 }

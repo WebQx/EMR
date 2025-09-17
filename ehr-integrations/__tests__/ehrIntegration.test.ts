@@ -364,6 +364,7 @@ describe('EHR Integration System', () => {
     });
 
     test('should validate patient MRN format', async () => {
+      await ehrService.connect(testConfig.id);
       const invalidMrnResult = await ehrService.getPatientRecord(
         testConfig.id,
         '', // Invalid empty MRN

@@ -242,7 +242,8 @@ export function getTimeUntilSession(sessionDateTime: Date): {
 } {
   const now = new Date();
   const diffMs = sessionDateTime.getTime() - now.getTime();
-  const minutes = Math.floor(diffMs / 60000);
+  // Round up future differences to the next whole minute to avoid undercounting
+  const minutes = diffMs >= 0 ? Math.ceil(diffMs / 60000) : Math.floor(diffMs / 60000);
   
   if (minutes < 0) {
     const pastMinutes = Math.abs(minutes);

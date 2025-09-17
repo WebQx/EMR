@@ -340,7 +340,7 @@ export const LabResultsViewer: React.FC<LabResultsViewerProps> = ({
           <h3 className="text-lg leading-6 font-medium text-gray-900">
             Lab Results
           </h3>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500" data-testid="results-count">
             {filteredAndSortedResults.length} results
           </span>
         </div>

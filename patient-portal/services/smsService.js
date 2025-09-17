@@ -50,7 +50,11 @@ const PRIORITY_LEVELS = {
 };
 
 // Delivery tracking (in production, use database)
-const messageTracking = new Map();
+// Use a global map to ensure tracking persists across module reloads in tests
+const globalKey = '__webqx_sms_message_tracking__';
+const g = (typeof global !== 'undefined' ? global : globalThis);
+if (!g[globalKey]) g[globalKey] = new Map();
+const messageTracking = g[globalKey];
 
 /**
  * Format phone number to E.164 format
@@ -58,18 +62,34 @@ const messageTracking = new Map();
  * @returns {string} Formatted phone number
  */
 const formatPhoneNumber = (phoneNumber) => {
+    // Normalize whitespace
+    const raw = String(phoneNumber).trim();
+
+    // If already in E.164 (starts with + and digits), return as-is
+    if (/^\+\d{6,15}$/.test(raw)) {
+        return raw;
+    }
+
     // Remove all non-digit characters
-    const digits = phoneNumber.replace(/\D/g, '');
-    
-    // Add country code if missing (assume US +1 for demo)
+    const digits = raw.replace(/\D/g, '');
+
+    // US numbers: 10 digits -> +1XXXXXXXXXX
     if (digits.length === 10) {
         return `+1${digits}`;
-    } else if (digits.length === 11 && digits.startsWith('1')) {
+    }
+
+    // US numbers with leading 1
+    if (digits.length === 11 && digits.startsWith('1')) {
         return `+${digits}`;
     }
-    
-    // Return as-is if already formatted or international
-    return phoneNumber.startsWith('+') ? phoneNumber : `+${digits}`;
+
+    // Fallback: if starts with country code without +
+    if (/^\d{6,15}$/.test(digits)) {
+        return `+${digits}`;
+    }
+
+    // Last resort, return original
+    return raw;
 };
 
 /**
@@ -485,5 +505,6 @@ module.exports = {
     getMessageStats,
     formatPhoneNumber,
     PRIORITY_LEVELS,
-    SMS_TEMPLATES
+    SMS_TEMPLATES,
+    __resetMessageTracking: () => messageTracking.clear() // test helper
 };

@@ -148,6 +148,8 @@ interface PrescriptionsProviderProps {
 
 export const PrescriptionsProvider: React.FC<PrescriptionsProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(prescriptionsReducer, initialState);
+  const TEST_MODE = typeof process !== 'undefined' && process.env.NODE_ENV === 'test';
+  const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
   // Action creators
   const selectTemplate = useCallback((template: RxTemplate | null) => {
@@ -175,8 +177,10 @@ export const PrescriptionsProvider: React.FC<PrescriptionsProviderProps> = ({ ch
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simulate API call (skip delay in tests for determinism)
+      if (!TEST_MODE) {
+        await delay(1000);
+      }
       
       const newPrescription: Prescription = {
         ...prescription,
@@ -198,8 +202,10 @@ export const PrescriptionsProvider: React.FC<PrescriptionsProviderProps> = ({ ch
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Simulate API call (skip delay in tests for determinism)
+      if (!TEST_MODE) {
+        await delay(500);
+      }
       dispatch({ type: 'SET_TEMPLATES', payload: mockTemplates });
     } catch (error) {
       dispatch({ 
@@ -214,8 +220,10 @@ export const PrescriptionsProvider: React.FC<PrescriptionsProviderProps> = ({ ch
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // Simulate API call (skip delay in tests for determinism)
+      if (!TEST_MODE) {
+        await delay(800);
+      }
       
       // Mock existing prescriptions
       const mockPrescriptions: Prescription[] = [

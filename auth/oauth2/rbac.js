@@ -51,6 +51,15 @@ class RBACManager {
             const userRoles = this.normalizeRoles(userInfo.roles);
             const userPermissions = this.normalizePermissions(userInfo.permissions);
 
+            // Prefer resource-specific checks (like own patient data) when context is provided
+            if (context && (context.resourceId || context.patientId || context.groupId || context.organizationId)) {
+                const resourceResult = this.checkResourcePermissions(userInfo, permission, context);
+                if (resourceResult.authorized) {
+                    this.cachePermissionResult(cacheKey, resourceResult);
+                    return resourceResult;
+                }
+            }
+
             // Check direct permission
             if (this.hasDirectPermission(userPermissions, permission)) {
                 const result = {
@@ -80,15 +89,6 @@ class RBACManager {
             if (wildcardResult.authorized) {
                 this.cachePermissionResult(cacheKey, wildcardResult);
                 return wildcardResult;
-            }
-
-            // Check resource-specific permissions
-            if (context.resourceId || context.patientId) {
-                const resourceResult = this.checkResourcePermissions(userInfo, permission, context);
-                if (resourceResult.authorized) {
-                    this.cachePermissionResult(cacheKey, resourceResult);
-                    return resourceResult;
-                }
             }
 
             // Permission denied
@@ -522,7 +522,7 @@ class RBACManager {
         }
 
         // Check session validity
-        if (context.sessionId && !this.isValidSession(context.sessionId)) {
+        if (context.sessionId !== undefined && !this.isValidSession(context.sessionId)) {
             warnings.push('Invalid session detected');
         }
 

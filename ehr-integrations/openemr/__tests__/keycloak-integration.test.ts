@@ -54,12 +54,37 @@ describe('OpenEMR Keycloak Integration', () => {
     app = express();
     app.use(express.json());
 
-    // Create mock OAuth2 connector
+    // Create mock OAuth2 connector with full config shape
     mockOAuth2Connector = new MockOAuth2Connector({
-      openemrBaseUrl: 'http://test-openemr.com',
-      centralIdpIssuer: 'http://localhost:8080/auth/realms/test-realm',
-      openemrClientId: 'test-client',
-      openemrClientSecret: 'test-secret'
+      centralIdp: {
+        issuer: 'http://localhost:8080/auth/realms/test-realm',
+        clientId: 'test-client',
+        clientSecret: 'test-secret',
+        redirectUri: 'http://localhost:3000/callback',
+        scopes: ['openid','profile','email']
+      },
+      openemr: {
+        baseUrl: 'http://test-openemr.com',
+        clientId: 'openemr-client',
+        clientSecret: 'openemr-secret',
+        apiVersion: 'v1'
+      },
+      tokens: {
+        accessTokenTtl: 3600,
+        refreshTokenTtl: 86400,
+        enableRefresh: true
+      },
+      security: {
+        validateIssuer: true,
+        validateAudience: true,
+        clockSkewTolerance: 60,
+        enablePKCE: false
+      },
+      audit: {
+        enabled: false,
+        logTokenExchange: false,
+        logUserMapping: false
+      }
     });
 
     // Create integration instance

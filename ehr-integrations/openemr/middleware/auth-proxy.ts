@@ -202,7 +202,10 @@ export class AuthProxyMiddleware {
         const authResult = await this.extractAndValidateToken(req);
         if (!authResult.success) {
           this.auditAuthFailure(req, authResult.error!);
-          res.status(401).json({ error: authResult.error!.message });
+          res.status(401).json({ 
+            error: authResult.error!.message,
+            details: authResult.error!.message
+          });
           return;
         }
         

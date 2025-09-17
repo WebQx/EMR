@@ -1,0 +1,5 @@
+services:
+  webqx-frontend:
+    build: .
+    ports:
+      - "54112:3000"

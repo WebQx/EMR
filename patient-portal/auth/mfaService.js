@@ -111,7 +111,7 @@ const generateAndSendOTP = async (identifier) => {
             success: true,
             message: 'OTP sent successfully',
             expiresAt: expiresAt.toISOString(),
-            phoneNumber: user.phoneNumber.replace(/(\+\d{1,3})\d+(\d{4})/, '$1****$2') // Mask phone number
+            phoneNumber: user.phoneNumber.replace(/^(\+?1)(\d{0,3})(\d+)(\d{4})$/, (_, c1, c2, mid, last4) => `${c1}****${last4}`)
         };
 
     } catch (error) {
@@ -228,13 +228,21 @@ const getOTPStatus = (userId) => {
     };
 };
 
-// Clean up expired OTPs every 5 minutes
-setInterval(cleanupExpiredOTPs, 5 * 60 * 1000);
+// Clean up expired OTPs every 5 minutes (skip in tests to prevent open handles)
+if (process.env.NODE_ENV !== 'test') {
+    setInterval(cleanupExpiredOTPs, 5 * 60 * 1000);
+}
+
+// Test-only helper to reset OTP store between tests
+const __resetOtpStore = () => {
+    otpStore.clear();
+};
 
 module.exports = {
     generateAndSendOTP,
     verifyOTP,
     cleanupExpiredOTPs,
     getOTPStatus,
-    sendSMS // Export for potential external use
+    sendSMS, // Export for potential external use
+    __resetOtpStore // test helper
 };

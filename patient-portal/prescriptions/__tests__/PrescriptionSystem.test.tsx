@@ -200,10 +200,10 @@ describe('Prescription System Core Components', () => {
       render(<PrescriptionForm onSubmit={mockOnSubmit} />);
       
       expect(screen.getByLabelText(/Patient ID/)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Dosage/)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Frequency/)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Duration/)).toBeInTheDocument();
-      expect(screen.getByLabelText(/Quantity/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Dosage/, { selector: 'input' })).toBeInTheDocument();
+      expect(screen.getByLabelText(/Frequency/, { selector: 'select' })).toBeInTheDocument();
+      expect(screen.getByLabelText(/Duration/, { selector: 'input' })).toBeInTheDocument();
+      expect(screen.getByLabelText(/Quantity/, { selector: 'input' })).toBeInTheDocument();
     });
 
     it('should validate required fields on submit', async () => {
@@ -266,7 +266,7 @@ describe('Prescription System Core Components', () => {
       
       // Should render all components
       expect(screen.getByLabelText('Select language')).toBeInTheDocument();
-      expect(screen.getByRole('combobox')).toBeInTheDocument(); // MedicationSearch
+      expect(screen.getByRole('combobox', { name: /Search and select medication/ })).toBeInTheDocument(); // MedicationSearch
       expect(screen.getByLabelText(/Patient ID/)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Create Prescription/ })).toBeInTheDocument();
     });
@@ -281,10 +281,13 @@ describe('Prescription System Core Components', () => {
       
       // Tab through form fields
       await user.tab();
+      expect(screen.getByLabelText('Select language')).toHaveFocus();
+
+      await user.tab();
       expect(screen.getByLabelText(/Patient ID/)).toHaveFocus();
       
       await user.tab();
-      expect(screen.getByRole('combobox')).toHaveFocus();
+      expect(screen.getByRole('combobox', { name: /Search and select medication/ })).toHaveFocus();
     });
 
     it('should have proper ARIA roles and labels', () => {

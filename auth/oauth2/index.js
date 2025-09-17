@@ -53,7 +53,12 @@ function createOAuth2Instance(options = {}) {
         
         // Utility methods
         getStatus: middleware.getStatus.bind(middleware),
-        clearCaches: middleware.clearCaches.bind(middleware)
+        clearCaches: () => {
+            // Clear caches across components
+            middleware.clearCaches();
+            tokenValidator.clearCache();
+            rbacManager.clearCache();
+        }
     };
 }
 

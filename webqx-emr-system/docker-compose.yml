@@ -149,6 +149,32 @@ services:
       retries: 5
       start_period: 60s
 
+  # Django Authentication Service (Identity Provider)
+  django-auth:
+    build:
+      context: ../django-auth-backend
+    container_name: webqx-django-auth
+    restart: unless-stopped
+    environment:
+      DJANGO_SECRET_KEY: webqx_shared_dev_secret_change_me
+      DEBUG: 'True'
+      DB_ENGINE: sqlite
+      # SimpleJWT alignment / explicit values
+      JWT_ISSUER: webqx.healthcare
+      JWT_AUDIENCE: webqx.emr
+      JWT_ALG: HS256
+      # (Optional) Could externalize to Postgres later
+    command: bash -c "python manage.py migrate --noinput && gunicorn webqx_auth.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+    ports:
+      - "8090:8000"
+    networks:
+      - webqx-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health" ]
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
   # MailHog (Email Testing)
   mailhog:
     image: mailhog/mailhog:latest

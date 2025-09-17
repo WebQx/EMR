@@ -16,7 +16,8 @@ describe('AppointmentCard Component', () => {
     render(<AppointmentCard {...defaultProps} />);
     
     expect(screen.getByText('Annual Checkup')).toBeInTheDocument();
-    expect(screen.getByText('📅 March 15, 2024 at 10:00 AM')).toBeInTheDocument();
+    // Match date/time via accessible label rather than exact emoji+text
+    expect(screen.getByLabelText(/Date and time: March 15, 2024 at 10:00 AM/)).toBeInTheDocument();
     expect(screen.getByText(/Dr. Smith/)).toBeInTheDocument();
     expect(screen.getByText('Annual physical examination')).toBeInTheDocument();
   });
@@ -25,7 +26,7 @@ describe('AppointmentCard Component', () => {
     render(<AppointmentCard />);
     
     expect(screen.getByText('Upcoming Appointment')).toBeInTheDocument();
-    expect(screen.getByText('📅 No appointments scheduled')).toBeInTheDocument();
+    expect(screen.getByLabelText(/Date and time: No appointments scheduled/)).toBeInTheDocument();
     expect(screen.getByText(/WebQX Health/)).toBeInTheDocument();
     expect(screen.getByText(/Schedule your next appointment/)).toBeInTheDocument();
   });

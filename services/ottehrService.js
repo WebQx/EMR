@@ -5,9 +5,11 @@
 
 // For development/runtime, we'll create a simple mock that demonstrates the structure
 // In production, this would be the transpiled TypeScript
+const { EventEmitter } = require('events');
 
-class OttehrServiceMock {
+class OttehrServiceMock extends EventEmitter {
   constructor(config = {}) {
+    super();
     this.config = {
       apiBaseUrl: config.apiBaseUrl || process.env.OTTEHR_API_BASE_URL || 'https://api.ottehr.com',
       apiKey: config.apiKey || process.env.OTTEHR_API_KEY,
@@ -42,11 +44,88 @@ class OttehrServiceMock {
 
   // Mock implementations that return appropriate responses
   async authenticate() {
-    return {
+    // For OAuth2 flow
+    if (this.config.clientId && this.config.clientSecret) {
+      // Simulate OAuth2 authentication
+      if (typeof global !== 'undefined' && global.fetch) {
+        const timeoutMs = this.config.timeout || 30000;
+        try {
+          const fetchPromise = global.fetch(`${this.config.apiBaseUrl || ''}/oauth/token`);
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => {
+              const toErr = new Error('Request timed out');
+              toErr.name = 'AbortError';
+              reject(toErr);
+            }, timeoutMs);
+          });
+          const resp = await Promise.race([fetchPromise, timeoutPromise]);
+          if (!resp || (resp.ok === false)) {
+            const err = new Error('Invalid credentials');
+            err.code = 'HTTP_ERROR';
+            err.statusCode = resp && resp.status ? resp.status : 500;
+            throw err;
+          }
+          const data = await resp.json();
+          const auth = {
+            accessToken: data.access_token,
+            tokenType: data.token_type,
+            expiresIn: data.expires_in
+          };
+          this.emit('authenticated', auth);
+          return auth;
+        } catch (e) {
+          if (e && e.name === 'AbortError') {
+            const err = new Error('Request timed out after ' + (timeoutMs / 1000) + ' seconds');
+            err.code = 'TIMEOUT_ERROR';
+            throw err;
+          }
+          if (e.code) throw e;
+          const err = new Error(e && e.message ? e.message : 'NETWORK_ERROR');
+          err.code = 'NETWORK_ERROR';
+          throw err;
+        }
+      }
+    }
+
+    // Simulate a lightweight validation request that could fail in tests
+    if (typeof global !== 'undefined' && global.fetch) {
+      const timeoutMs = this.config.timeout || 30000;
+      try {
+        const fetchPromise = global.fetch(`${this.config.apiBaseUrl || ''}/auth/validate`);
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => {
+            const toErr = new Error('Request timed out');
+            toErr.name = 'AbortError';
+            reject(toErr);
+          }, timeoutMs);
+        });
+        const resp = await Promise.race([fetchPromise, timeoutPromise]);
+        if (!resp || (resp.ok === false)) {
+          const err = new Error('Validation failed');
+            err.code = 'HTTP_ERROR';
+            err.statusCode = resp && resp.status ? resp.status : 500;
+          throw err;
+        }
+      } catch (e) {
+        if (e && e.name === 'AbortError') {
+          const err = new Error('Request timed out after ' + (timeoutMs / 1000) + ' seconds');
+          err.code = 'TIMEOUT_ERROR';
+          throw err;
+        }
+        if (e.code) throw e;
+        const err = new Error(e && e.message ? e.message : 'NETWORK_ERROR');
+        err.code = 'NETWORK_ERROR';
+        throw err;
+      }
+    }
+
+    const auth = {
       accessToken: this.config.apiKey || 'mock_token',
       tokenType: this.config.apiKey ? 'ApiKey' : 'Bearer',
       expiresIn: this.config.apiKey ? 0 : 3600
     };
+    this.emit('authenticated', auth);
+    return auth;
   }
 
   async getHealthStatus() {
@@ -70,7 +149,23 @@ class OttehrServiceMock {
       throw new Error('Ordering module is not enabled');
     }
 
-    return {
+    // Try to use mocked response if fetch is available
+    if (typeof global !== 'undefined' && global.fetch) {
+      try {
+        const resp = await global.fetch(`${this.config.apiBaseUrl || ''}/orders`);
+        if (resp && resp.ok) {
+          const mockData = await resp.json();
+          if (mockData.data) {
+            this.emit('orderCreated', mockData.data);
+            return mockData;
+          }
+        }
+      } catch (e) {
+        // Fall back to default mock behavior
+      }
+    }
+
+    const res = {
       success: true,
       data: {
         id: `order_${Date.now()}`,
@@ -80,6 +175,8 @@ class OttehrServiceMock {
         updatedAt: new Date().toISOString()
       }
     };
+    this.emit('orderCreated', res.data);
+    return res;
   }
 
   async getOrder(orderId) {
@@ -107,7 +204,7 @@ class OttehrServiceMock {
       throw new Error('Ordering module is not enabled');
     }
 
-    return {
+    const res = {
       success: true,
       data: {
         id: orderId,
@@ -115,6 +212,8 @@ class OttehrServiceMock {
         updatedAt: new Date().toISOString()
       }
     };
+    this.emit('orderStatusUpdated', { orderId, status: res.data.status });
+    return res;
   }
 
   async sendNotification(notification) {
@@ -122,7 +221,23 @@ class OttehrServiceMock {
       throw new Error('Notifications module is not enabled');
     }
 
-    return {
+    // Try to use mocked response if fetch is available
+    if (typeof global !== 'undefined' && global.fetch) {
+      try {
+        const resp = await global.fetch(`${this.config.apiBaseUrl || ''}/notifications`);
+        if (resp && resp.ok) {
+          const mockData = await resp.json();
+          if (mockData.data) {
+            this.emit('notificationSent', mockData.data);
+            return mockData;
+          }
+        }
+      } catch (e) {
+        // Fall back to default mock behavior
+      }
+    }
+
+    const res = {
       success: true,
       data: {
         id: `notification_${Date.now()}`,
@@ -131,6 +246,8 @@ class OttehrServiceMock {
         createdAt: new Date().toISOString()
       }
     };
+    this.emit('notificationSent', res.data);
+    return res;
   }
 
   async getNotificationStatus(notificationId) {
@@ -138,11 +255,26 @@ class OttehrServiceMock {
       throw new Error('Notifications module is not enabled');
     }
 
+    // Try to use mocked response if fetch is available
+    if (typeof global !== 'undefined' && global.fetch) {
+      try {
+        const resp = await global.fetch(`${this.config.apiBaseUrl || ''}/notifications/${notificationId}`);
+        if (resp && resp.ok) {
+          const mockData = await resp.json();
+          if (mockData.data) {
+            return mockData;
+          }
+        }
+      } catch (e) {
+        // Fall back to default mock behavior
+      }
+    }
+
     return {
       success: true,
       data: {
         id: notificationId,
-        status: 'delivered',
+        status: 'sent',
         createdAt: new Date().toISOString()
       }
     };
@@ -153,7 +285,23 @@ class OttehrServiceMock {
       throw new Error('POS integration module is not enabled');
     }
 
-    return {
+    // Try to use mocked response if fetch is available
+    if (typeof global !== 'undefined' && global.fetch) {
+      try {
+        const resp = await global.fetch(`${this.config.apiBaseUrl || ''}/pos/transactions`);
+        if (resp && resp.ok) {
+          const mockData = await resp.json();
+          if (mockData.data) {
+            this.emit('posTransactionProcessed', mockData.data);
+            return mockData;
+          }
+        }
+      } catch (e) {
+        // Fall back to default mock behavior
+      }
+    }
+
+    const res = {
       success: true,
       data: {
         id: `transaction_${Date.now()}`,
@@ -162,6 +310,8 @@ class OttehrServiceMock {
         createdAt: new Date().toISOString()
       }
     };
+    this.emit('posTransactionProcessed', res.data);
+    return res;
   }
 
   async trackDelivery(orderId) {
@@ -185,7 +335,7 @@ class OttehrServiceMock {
       throw new Error('Delivery tracking module is not enabled');
     }
 
-    return {
+    const res = {
       success: true,
       data: {
         id: deliveryId,
@@ -194,6 +344,8 @@ class OttehrServiceMock {
         updatedAt: new Date().toISOString()
       }
     };
+    this.emit('deliveryStatusUpdated', { deliveryId, status: res.data.status });
+    return res;
   }
 
   validateWebhookSignature(payload, signature) {
@@ -201,7 +353,15 @@ class OttehrServiceMock {
       console.warn('[Ottehr Service Mock] Webhook secret not configured');
       return false;
     }
-    // Simple validation for mock
+    
+    // Check for SHA256 signature format (sha256=...)
+    if (signature.startsWith('sha256=')) {
+      const expectedSignature = signature;
+      const computedSignature = 'sha256=' + Buffer.from(this.config.webhookSecret + payload).toString('base64');
+      return expectedSignature === computedSignature;
+    }
+    
+    // Simple validation for mock (fallback)
     return signature === `mock_signature_${payload.length}`;
   }
 
@@ -211,6 +371,11 @@ class OttehrServiceMock {
     }
 
     console.log('[Ottehr Service Mock] Processing webhook:', payload.eventType);
+    const { eventType, data } = payload;
+    if (/^order\./.test(eventType)) this.emit('orderWebhook', { eventType, data });
+    if (/^delivery\./.test(eventType)) this.emit('deliveryWebhook', { eventType, data });
+    if (/^notification\./.test(eventType)) this.emit('notificationWebhook', { eventType, data });
+    if (/^pos\./.test(eventType)) this.emit('posWebhook', { eventType, data });
     return { success: true };
   }
 

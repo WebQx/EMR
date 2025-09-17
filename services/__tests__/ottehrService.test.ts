@@ -46,15 +46,18 @@ describe('OttehrService', () => {
 
   describe('Configuration', () => {
     it('should initialize with default configuration', () => {
-      const service = new OttehrService();
+      const service = new OttehrService({ apiKey: 'test_key' });
       const config = service.getConfig();
       
       expect(config.timeout).toBe(30000);
       expect(config.environment).toBe('sandbox');
+      
+      service.destroy();
     });
 
     it('should merge custom configuration with defaults', () => {
       const customConfig: OttehrConfig = {
+        apiKey: 'test_key',
         timeout: 60000,
         environment: 'production'
       };
@@ -114,6 +117,11 @@ describe('OttehrService', () => {
     });
 
     it('should handle authentication errors', async () => {
+      const service = new OttehrService({
+        clientId: 'test_client',
+        clientSecret: 'test_secret'
+      });
+
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 401,
@@ -121,10 +129,11 @@ describe('OttehrService', () => {
         json: async () => ({ error: { message: 'Invalid credentials' } })
       } as Response);
 
-      await expect(ottehrService.authenticate()).rejects.toMatchObject({
+      await expect(service.authenticate()).rejects.toMatchObject({
         code: 'HTTP_ERROR',
         message: expect.stringContaining('Invalid credentials')
       });
+      service.destroy();
     });
   });
 
@@ -147,7 +156,8 @@ describe('OttehrService', () => {
 
     beforeEach(() => {
       // Mock HTTP responses for order operations
-      mockFetch.mockImplementation((url: string) => {
+      mockFetch.mockImplementation((input: string | Request | URL) => {
+        const url = input.toString();
         if (url.includes('/orders')) {
           return Promise.resolve({
             ok: true,
@@ -163,7 +173,13 @@ describe('OttehrService', () => {
             })
           } as Response);
         }
-        return Promise.resolve({ ok: true, json: async () => ({}) } as Response);
+        if (url.includes('/auth/validate')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true })
+          } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: async () => ({}) } as Response);
       });
     });
 
@@ -213,7 +229,8 @@ describe('OttehrService', () => {
 
     beforeEach(() => {
       // Mock HTTP responses for notification operations
-      mockFetch.mockImplementation((url: string) => {
+      mockFetch.mockImplementation((input: string | Request | URL) => {
+        const url = input.toString();
         if (url.includes('/notifications')) {
           return Promise.resolve({
             ok: true,
@@ -228,7 +245,13 @@ describe('OttehrService', () => {
             })
           } as Response);
         }
-        return Promise.resolve({ ok: true, json: async () => ({}) } as Response);
+        if (url.includes('/auth/validate')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true })
+          } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: async () => ({}) } as Response);
       });
     });
 
@@ -269,29 +292,35 @@ describe('OttehrService', () => {
     };
 
     beforeEach(() => {
-      // Mock successful authentication
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ access_token: 'test_api_key', token_type: 'ApiKey' })
-      } as Response);
+      // Mock successful authentication and POS transaction
+      mockFetch.mockImplementation((input: string | Request | URL) => {
+        const url = input.toString();
+        if (url.includes('/auth/validate')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true })
+          } as Response);
+        }
+        if (url.includes('/pos/transactions')) {
+          const mockResponse: OttehrApiResponse<OttehrPOSTransaction> = {
+            success: true,
+            data: {
+              ...mockTransaction,
+              id: 'transaction_123',
+              status: 'completed',
+              createdAt: '2025-01-30T12:00:00Z'
+            }
+          };
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockResponse
+          } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: async () => ({}) } as Response);
+      });
     });
 
     it('should process POS transaction successfully', async () => {
-      const mockResponse: OttehrApiResponse<OttehrPOSTransaction> = {
-        success: true,
-        data: {
-          ...mockTransaction,
-          id: 'transaction_123',
-          status: 'completed',
-          createdAt: '2025-01-30T12:00:00Z'
-        }
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
-
       const result = await ottehrService.processPOSTransaction(mockTransaction);
       
       expect(result.success).toBe(true);
@@ -314,28 +343,48 @@ describe('OttehrService', () => {
   describe('Delivery Tracking', () => {
     beforeEach(() => {
       // Mock successful authentication
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ access_token: 'test_api_key', token_type: 'ApiKey' })
-      } as Response);
+      mockFetch.mockImplementation((input: string | Request | URL) => {
+        const url = input.toString();
+        if (url.includes('/auth/validate')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true })
+          } as Response);
+        }
+        if (url.includes('/deliveries/track/order_123')) {
+          const mockResponse: OttehrApiResponse = {
+            success: true,
+            data: {
+              id: 'delivery_123',
+              orderId: 'order_123',
+              status: 'in_transit',
+              estimatedDeliveryTime: '2025-01-30T14:00:00Z'
+            }
+          };
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockResponse
+          } as Response);
+        }
+        if (url.includes('/deliveries/delivery_123/status')) {
+          const mockResponse: OttehrApiResponse = {
+            success: true,
+            data: {
+              id: 'delivery_123',
+              orderId: 'order_123',
+              status: 'delivered'
+            }
+          };
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockResponse
+          } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: async () => ({}) } as Response);
+      });
     });
 
     it('should track delivery successfully', async () => {
-      const mockResponse: OttehrApiResponse = {
-        success: true,
-        data: {
-          id: 'delivery_123',
-          orderId: 'order_123',
-          status: 'in_transit',
-          estimatedDeliveryTime: '2025-01-30T14:00:00Z'
-        }
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
-
       const result = await ottehrService.trackDelivery('order_123');
       
       expect(result.success).toBe(true);
@@ -343,20 +392,6 @@ describe('OttehrService', () => {
     });
 
     it('should update delivery status', async () => {
-      const mockResponse: OttehrApiResponse = {
-        success: true,
-        data: {
-          id: 'delivery_123',
-          orderId: 'order_123',
-          status: 'delivered'
-        }
-      };
-
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
-
       const result = await ottehrService.updateDeliveryStatus('delivery_123', 'delivered');
       
       expect(result.success).toBe(true);
@@ -429,13 +464,7 @@ describe('OttehrService', () => {
 
   describe('Health Check', () => {
     it('should perform health check successfully', async () => {
-      // Mock successful authentication
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ access_token: 'test_api_key', token_type: 'ApiKey' })
-      } as Response);
-
-      const mockResponse: OttehrApiResponse = {
+      const mockHealthResponse: OttehrApiResponse = {
         success: true,
         data: {
           status: 'healthy',
@@ -449,10 +478,22 @@ describe('OttehrService', () => {
         }
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
+      mockFetch.mockImplementation((input: string | Request | URL) => {
+        const url = input.toString();
+        if (url.includes('/auth/validate')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true })
+          } as Response);
+        }
+        if (url.includes('/health')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockHealthResponse
+          } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: async () => ({}) } as Response);
+      });
 
       const result = await ottehrService.getHealthStatus();
       
@@ -464,13 +505,12 @@ describe('OttehrService', () => {
   describe('Error Handling', () => {
     it('should handle network timeouts', async () => {
       const service = new OttehrService({
-        apiKey: 'test_key',
+        clientId: 'test_client',
+        clientSecret: 'test_secret',
         timeout: 100 // Very short timeout
       });
 
-      mockFetch.mockImplementation(() => 
-        new Promise(resolve => setTimeout(resolve, 200))
-      );
+      mockFetch.mockImplementation(() => new Promise(() => {})); // Never resolves
 
       await expect(service.authenticate()).rejects.toMatchObject({
         code: 'TIMEOUT_ERROR'
@@ -480,14 +520,26 @@ describe('OttehrService', () => {
     });
 
     it('should handle network errors', async () => {
+      const service = new OttehrService({
+        clientId: 'test_client',
+        clientSecret: 'test_secret'
+      });
+      
       mockFetch.mockRejectedValue(new Error('Network connection failed'));
 
-      await expect(ottehrService.authenticate()).rejects.toMatchObject({
+      await expect(service.authenticate()).rejects.toMatchObject({
         code: 'NETWORK_ERROR'
       });
+      
+      service.destroy();
     });
 
     it('should handle API errors gracefully', async () => {
+      const service = new OttehrService({
+        clientId: 'test_client',
+        clientSecret: 'test_secret'
+      });
+      
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
@@ -495,27 +547,21 @@ describe('OttehrService', () => {
         json: async () => ({ message: 'Server temporarily unavailable' })
       } as Response);
 
-      await expect(ottehrService.authenticate()).rejects.toMatchObject({
+      await expect(service.authenticate()).rejects.toMatchObject({
         code: 'HTTP_ERROR',
         statusCode: 500
       });
+      
+      service.destroy();
     });
   });
 
   describe('Event Emission', () => {
-    beforeEach(() => {
-      // Mock successful authentication
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ access_token: 'test_api_key', token_type: 'ApiKey' })
-      } as Response);
-    });
-
     it('should emit events for successful operations', async () => {
       const orderSpy = jest.fn();
       ottehrService.on('orderCreated', orderSpy);
 
-      const mockResponse: OttehrApiResponse<OttehrOrder> = {
+      const mockOrderResponse: OttehrApiResponse<OttehrOrder> = {
         success: true,
         data: {
           id: 'order_123',
@@ -526,10 +572,22 @@ describe('OttehrService', () => {
         }
       };
 
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      } as Response);
+      mockFetch.mockImplementation((input: string | Request | URL) => {
+        const url = input.toString();
+        if (url.includes('/auth/validate')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({ success: true })
+          } as Response);
+        }
+        if (url.includes('/orders')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockOrderResponse
+          } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: async () => ({}) } as Response);
+      });
 
       await ottehrService.createOrder({
         customerId: 'customer_123',
@@ -538,7 +596,7 @@ describe('OttehrService', () => {
         currency: 'USD'
       });
 
-      expect(orderSpy).toHaveBeenCalledWith(mockResponse.data);
+      expect(orderSpy).toHaveBeenCalledWith(mockOrderResponse.data);
     });
   });
 });

@@ -1,15 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-no-webqx-theme>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebQX Admin Console - EMR Integration Testing</title>
+    <title>WebQX Admin Console</title>
+    <link rel="stylesheet" href="../assets/webqx-emr-theme.css" />
+    <script src="../assets/webqx-theme-init.js" defer></script>
     <style>
+        body.webqx-theme { background: linear-gradient(140deg,var(--wqx-bg) 0%,var(--wqx-bg-alt) 100%); color: var(--wqx-text); }
+        .wqx-topbar { justify-content: space-between; }
+        .nav-group { display:flex; align-items:center; gap:12px; }
+        .nav-group a { text-decoration:none; font-size:13px; color: var(--wqx-text-soft); padding:6px 10px; border-radius: var(--wqx-radius-sm); }
+        .nav-group a:hover { background: var(--wqx-primary-soft); color: var(--wqx-primary); }
+        .theme-toggle { background: var(--wqx-primary-soft); color: var(--wqx-primary); border:1px solid var(--wqx-primary); padding:4px 10px; font-size:12px; border-radius: var(--wqx-radius-pill); cursor:pointer; }
+        .theme-toggle:hover { background: var(--wqx-primary-fade); }
+        /* retain existing styles below */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            color: white;
+            font-family: var(--wqx-font-sans);
             min-height: 100vh;
         }
         .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
@@ -83,8 +91,18 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
     </style>
 </head>
-<body>
-    <div class="container">
+<body class="webqx-theme">
+    <div class="wqx-topbar">
+        <div class="nav-brand">WebQX Admin</div>
+        <div class="nav-group">
+            <a href="../index.html">Home</a>
+            <a href="#deploy">Deploy</a>
+            <a href="#tests">Tests</a>
+            <a href="#fhir">FHIR</a>
+            <button class="theme-toggle" id="themeToggleAdmin" aria-label="Toggle dark mode">Dark</button>
+        </div>
+    </div>
+    <div class="container" id="deploy">
         <div class="header">
             <div>
                 <h1>WebQX Admin Console</h1>
@@ -1724,3 +1742,20 @@ Logs cleared. Ready for new tests...`;
     </script>
 </body>
 </html>
+<script>
+ (function(){
+     const btn = document.getElementById('themeToggleAdmin');
+     if(!btn) return;
+     const stored = localStorage.getItem('wqx-theme');
+     function apply(mode){
+         document.body.classList.toggle('dark', mode==='dark');
+         btn.textContent = mode==='dark' ? 'Light' : 'Dark';
+         btn.setAttribute('aria-pressed', mode==='dark');
+     }
+     if (stored) apply(stored); else if (window.matchMedia('(prefers-color-scheme: dark)').matches) apply('dark');
+     btn.addEventListener('click', ()=>{
+         const next = document.body.classList.contains('dark') ? 'light' : 'dark';
+         localStorage.setItem('wqx-theme', next); apply(next);
+     });
+ })();
+</script>
