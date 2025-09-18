@@ -1,11 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { DashboardCards } from './components/DashboardCards';
 import { AuthPanel } from './components/AuthPanel';
 import { SystemStatusPanel } from './components/SystemStatusPanel';
 import { PlacementStatusPanel } from './components/PlacementStatusPanel';
 import { ReadmePreview } from './components/ReadmePreview';
+import { PortalContent } from './components/PortalContent';
 
 export const PortalApp: React.FC = () => {
+  const [selected, setSelected] = useState<string | null>(null);
+
+  // Initialize from hash for deep linking
+  useEffect(() => {
+    const applyHash = () => {
+      const h = window.location.hash.replace(/^#/, '').trim();
+      setSelected(h || null);
+    };
+    applyHash();
+    window.addEventListener('hashchange', applyHash);
+    return () => window.removeEventListener('hashchange', applyHash);
+  }, []);
+
   return (
     <div className="portal-shell">
       <header className="portal-header">
@@ -19,7 +33,10 @@ export const PortalApp: React.FC = () => {
       </header>
       <div className="grid" style={{ gap: '1.25rem' }}>
         <section id="experiences">
-          <DashboardCards />
+          <DashboardCards onSelect={setSelected} selectedId={selected} />
+        </section>
+        <section id="content-detail">
+          <PortalContent selectedId={selected} base={deriveBase()} onClose={() => { setSelected(null); window.location.hash = ''; }} />
         </section>
         <section id="observability">
           <SystemStatusPanel />
@@ -38,3 +55,10 @@ export const PortalApp: React.FC = () => {
     </div>
   );
 };
+
+function deriveBase(): string {
+  const loc = window.location.pathname; // /webqx/portal/
+  const idx = loc.indexOf('/portal/');
+  if (idx !== -1) return loc.substring(0, idx + 1);
+  return '/';
+}

@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import { MODULE_CATALOG } from './PortalContent';
 
 export interface DashboardLink {
   id: string;
   title: string;
   description: string;
-  href: string;
+  href?: string; // optional now; we can rely on hash routing
   badge?: string;
   external?: boolean;
+  category?: string;
 }
 
 const guessBase = (): string => {
@@ -19,32 +21,51 @@ const guessBase = (): string => {
   return '/';
 };
 
-export const DashboardCards: React.FC = () => {
+interface DashboardCardsProps { onSelect: (id: string) => void; selectedId: string | null; }
+
+export const DashboardCards: React.FC<DashboardCardsProps> = ({ onSelect, selectedId }) => {
   const base = guessBase();
-  const links: DashboardLink[] = [
-    { id: 'patient', title: 'Patient Portal', description: 'Patient-facing experience & onboarding flows', href: base + 'patient-portal/' },
-    { id: 'provider', title: 'Provider Workspace', description: 'Clinical tools & encounter management', href: base + 'provider/' },
-    { id: 'telehealth', title: 'Telehealth Demo', description: 'Live session / virtual visit examples', href: base + 'telehealth-demo.html', badge: 'Demo' },
-    { id: 'labs', title: 'Lab Results Viewer', description: 'FHIR R4 lab result rendering demo', href: base + 'demo-lab-results-viewer.html', badge: 'FHIR' },
-    { id: 'appt', title: 'Appointment Booking', description: 'FHIR scheduling demonstration', href: base + 'demo-fhir-r4-appointment-booking.html', badge: 'FHIR' },
-    { id: 'login', title: 'Login Page', description: 'Standalone authentication UI example', href: base + 'login.html' },
-    { id: 'admin', title: 'Admin Console', description: 'Operational oversight & configuration', href: base + 'admin-console/' },
-    { id: 'docs', title: 'System README', description: 'Platform architecture & guidance', href: base + 'README.md', badge: 'Docs' }
-  ];
+  const links: DashboardLink[] = useMemo(() => MODULE_CATALOG.map(m => ({
+    id: m.id,
+    title: m.title,
+    description: m.description,
+    href: m.externalHref ? base + m.externalHref : undefined,
+    badge: m.category === 'FHIR' ? 'FHIR' : (m.category === 'Docs' ? 'Docs' : undefined),
+    category: m.category
+  })), [base]);
+
   return (
     <div className="panel" style={{ gridColumn: '1 / -1' }}>
       <h2 style={{ marginTop: 0 }}>Experience & Demo Surfaces</h2>
       <div className="cards">
-        {links.map(l => (
-          <a key={l.id} className="card-link" href={l.href} target={l.external ? '_blank' : undefined} rel={l.external ? 'noopener noreferrer' : undefined}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '.5rem' }}>
-              <h3>{l.title}</h3>
-              {l.badge && <span className="badge">{l.badge}</span>}
+        {links.map(l => {
+          const active = l.id === selectedId;
+          return (
+            <div
+              key={l.id}
+              className="card-link"
+              style={{ cursor: 'pointer', outline: active ? '2px solid var(--accent)' : 'none', position: 'relative' }}
+              onClick={(e) => {
+                // If user holds meta/ctrl open original target in new tab
+                if ((e.metaKey || e.ctrlKey) && l.href) {
+                  window.open(l.href, '_blank');
+                  return;
+                }
+                onSelect(l.id);
+                window.location.hash = l.id; // hash routing for deep link
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '.5rem' }}>
+                <h3>{l.title}</h3>
+                {l.badge && <span className="badge">{l.badge}</span>}
+              </div>
+              <p>{l.description}</p>
+              {l.href && <span style={{ position: 'absolute', bottom: 6, right: 8, fontSize: '.55rem', opacity: .7 }}>Ext ↗</span>}
             </div>
-            <p>{l.description}</p>
-          </a>
-        ))}
+          );
+        })}
       </div>
+      <footer className="meta" style={{ fontSize: '.55rem' }}>Click to view details inline • Ctrl/Cmd+Click opens legacy destination</footer>
     </div>
   );
 };

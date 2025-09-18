@@ -72,3 +72,10 @@ footer.site-footer { margin-top:2.25rem; font-size:.7rem; color:var(--muted); te
 /* Light animations */
 @keyframes pulseFade { 0%{opacity:.4;} 50%{opacity:1;} 100%{opacity:.4;} }
 .loading-skeleton { background:linear-gradient(90deg,#e2e8f0,#f1f5f9,#e2e8f0); background-size:200% 100%; animation:pulseFade 1.6s ease-in-out infinite; height:12px; border-radius:4px; }
+
+/* PortalContent interactive mini components */
+.mini-block { background:#f8fafc; border:1px solid var(--border); padding:.6rem .75rem; border-radius:.5rem; margin-bottom:.6rem; }
+.mini-block pre { background:#0f172a; color:#e2e8f0; padding:.5rem .6rem; border-radius:.4rem; font-size:.6rem; }
+.code-block { font-family:SFMono-Regular,ui-monospace,Menlo,monospace; font-size:.6rem; }
+.btn { background:var(--accent-grad); border:none; color:#fff; font-size:.6rem; padding:.4rem .7rem; border-radius:.45rem; cursor:pointer; letter-spacing:.4px; box-shadow:0 2px 4px rgba(0,0,0,.12); }
+.btn:hover { filter:brightness(1.1); }
