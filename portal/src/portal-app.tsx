@@ -2,6 +2,8 @@ import React from 'react';
 import { DashboardCards } from './components/DashboardCards';
 import { AuthPanel } from './components/AuthPanel';
 import { SystemStatusPanel } from './components/SystemStatusPanel';
+import { PlacementStatusPanel } from './components/PlacementStatusPanel';
+import { ReadmePreview } from './components/ReadmePreview';
 
 export const PortalApp: React.FC = () => {
   return (
@@ -21,6 +23,12 @@ export const PortalApp: React.FC = () => {
         </section>
         <section id="observability">
           <SystemStatusPanel />
+        </section>
+        <section id="placement-status">
+          <PlacementStatusPanel />
+        </section>
+        <section id="overview">
+          <ReadmePreview />
         </section>
         <section id="session" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1.25rem' }}>
           <AuthPanel />

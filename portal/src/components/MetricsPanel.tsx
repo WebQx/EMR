@@ -20,7 +20,17 @@ export const MetricsPanel: React.FC = () => {
         const data = await res.json();
         if (active) setMetrics(data);
       } catch (e: any) {
-        if (active) setError(e.message);
+        if (active) {
+          setError(e.message);
+          if (!metrics) {
+            setMetrics({
+              requestCount: 0,
+              avgLatencyMs: 0,
+              mode: 'static-fallback',
+              note: 'Live metrics unavailable on static hosting'
+            });
+          }
+        }
       }
     };
     load();
@@ -31,7 +41,7 @@ export const MetricsPanel: React.FC = () => {
   return (
     <div style={panelStyle}>
       <h2 style={titleStyle}>Runtime Metrics</h2>
-      {error && <div style={errorStyle}>{error}</div>}
+  {error && <div style={errorStyle}>{error} (fallback)</div>}
       {!metrics && !error && <div>Loading...</div>}
       {metrics && (
         <div style={{ display: 'grid', gap: '.35rem' }}>

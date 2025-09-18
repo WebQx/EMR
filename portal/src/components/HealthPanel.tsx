@@ -22,7 +22,17 @@ export const HealthPanel: React.FC = () => {
           setError('');
         }
       } catch (e:any) {
-        if (active) setError(e.message);
+        if (active) {
+          setError(e.message);
+          // Provide a static fallback so the panel is still informative on GitHub Pages.
+            if (!health) {
+              setHealth({
+                status: 'offline (mock)',
+                message: 'Static fallback – live /health not reachable',
+                timestamp: new Date().toISOString()
+              });
+            }
+        }
       }
     };
     fetchHealth();
@@ -33,7 +43,7 @@ export const HealthPanel: React.FC = () => {
   return (
     <div style={panelStyle}>
       <h2 style={titleStyle}>Platform Health</h2>
-      {error && <div style={errorStyle}>{error}</div>}
+  {error && <div style={errorStyle}>{error} (showing fallback)</div>}
       {!health && !error && <div>Loading...</div>}
       {health && (
         <div style={{ display: 'grid', gap: '.5rem' }}>

@@ -24,9 +24,21 @@ export const FeaturesPanel: React.FC = () => {
             USE_REMOTE_OPENEMR: !!data?.env?.USE_REMOTE_OPENEMR
           };
           if (active) setFlags(featureLike);
+        } else {
+          throw new Error('metrics not ok');
         }
       } catch (e:any) {
-        if (active) setError(e.message);
+        if (active) {
+          setError(e.message);
+          if (!flags) {
+            setFlags({
+              USE_FHIR_MOCK: true,
+              AI_ASSIST_ENABLED: true,
+              USE_REMOTE_OPENEMR: false,
+              MOCK: true
+            });
+          }
+        }
       }
     };
     load();
@@ -37,7 +49,7 @@ export const FeaturesPanel: React.FC = () => {
   return (
     <div style={panelStyle}>
       <h2 style={titleStyle}>Feature Flags</h2>
-      {error && <div style={errorStyle}>{error}</div>}
+  {error && <div style={errorStyle}>{error} (fallback)</div>}
       {!flags && !error && <div>Loading...</div>}
       {flags && (
         <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
