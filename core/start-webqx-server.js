@@ -51,17 +51,19 @@ class WebQXServerManager {
     async checkDependencies() {
         console.log('🔍 Checking dependencies...');
         
+        const projectRoot = path.join(__dirname, '..');
         const requiredFiles = [
-            'package.json',
-            'django-auth-server.js',
-            'openemr-server.js',
-            'telehealth-server.js',
-            'unified-server.js'
+            'package.json', // root
+            'core/django-auth-server.js',
+            'core/openemr-server.js',
+            'core/telehealth-server.js',
+            'core/unified-server.js'
         ];
 
         for (const file of requiredFiles) {
-            if (!fs.existsSync(path.join(__dirname, file))) {
-                throw new Error(`Required file missing: ${file}`);
+            const full = path.join(projectRoot, file);
+            if (!fs.existsSync(full)) {
+                throw new Error(`Required file missing: ${file} (looked in ${full})`);
             }
         }
 

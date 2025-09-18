@@ -441,7 +441,7 @@
                         </svg>
                     </div>
                     <div class="header-title">
-                        <h1>WebQX™ OpenEMR Portal</h1>
+                        <h1>WebQX™ EMR Portal</h1>
                         <p id="userWelcome">Integrated EHR Management System</p>
                     </div>
                 </div>
@@ -469,8 +469,8 @@
         <div class="container">
             <!-- Welcome Banner -->
             <div class="welcome-banner">
-                <h2 class="welcome-title">WebQX™ OpenEMR Integration Portal</h2>
-                <p class="welcome-subtitle">Seamlessly integrated with OpenEMR EHR system via FHIR R4</p>
+                <h2 class="welcome-title">WebQX™ EMR Integration Portal</h2>
+                <p class="welcome-subtitle">Seamlessly integrated with WebQX EMR (OpenEMR-based) via FHIR R4</p>
             </div>
             
             <!-- Dashboard Modules -->
@@ -479,7 +479,7 @@
                     <div class="module-header">
                         <div class="module-icon">🏥</div>
                         <div class="module-info">
-                            <h3>OpenEMR Patient Management</h3>
+                            <h3>WebQX EMR Patient Management</h3>
                             <p>Live server: http://localhost:8080</p>
                         </div>
                     </div>
@@ -511,7 +511,7 @@
                     <div class="module-header">
                         <div class="module-icon">�</div>
                         <div class="module-info">
-                            <h3>OpenEMR Scheduling</h3>
+                            <h3>WebQX EMR Scheduling</h3>
                             <p>Integrated appointment management via FHIR</p>
                         </div>
                     </div>
@@ -527,7 +527,7 @@
                     <div class="module-header">
                         <div class="module-icon">�</div>
                         <div class="module-info">
-                            <h3>OpenEMR Clinical Data</h3>
+                            <h3>WebQX EMR Clinical Data</h3>
                             <p>Lab results, encounters, and clinical notes</p>
                         </div>
                     </div>
@@ -544,7 +544,7 @@
                         <div class="module-icon">⚙️</div>
                         <div class="module-info">
                             <h3>System Administration</h3>
-                            <p>OpenEMR configuration and system settings</p>
+                            <p>WebQX EMR configuration and system settings</p>
                         </div>
                     </div>
                     <div class="module-status">
@@ -558,12 +558,15 @@
             
             <!-- Quick Actions -->
             <div class="quick-actions">
-                <h2>OpenEMR Quick Actions</h2>
+                <h2>WebQX EMR Quick Actions</h2>
                 <div class="actions-grid">
                     <button class="action-btn" onclick="quickAction('openemr-patient-search')">🔍 Search Patients</button>
                     <button class="action-btn schedule" onclick="quickAction('openemr-appointments')">📅 FHIR Scheduling</button>
                     <button class="action-btn urgent" onclick="quickAction('urgent-telehealth')">🚨 Urgent Telehealth</button>
                     <button class="action-btn home" onclick="quickAction('back-to-main')">🏠 Main Portal</button>
+                    <!-- Future Feature: Uncomment when transcription mock integrated UI side
+                    <button class="action-btn" onclick="quickAction('ai-assist')">🤖 AI Assist (Preview)</button>
+                    -->
                 </div>
             </div>
         </div>
@@ -600,28 +603,28 @@
         });
 
         function checkOpenEMRIntegration() {
-            console.log('🔍 Checking OpenEMR integration status...');
+                    console.log('🔍 Checking WebQX EMR integration status...');
             
             // Check if config is loaded
             if (window.openEMRConfig) {
-                console.log('✅ OpenEMR config loaded:', window.openEMRConfig);
+                console.log('✅ WebQX EMR config loaded:', window.openEMRConfig);
             } else {
-                console.error('❌ OpenEMR config not loaded');
+                console.error('❌ WebQX EMR config not loaded');
             }
             
             // Check if launcher is available
             if (window.openEMRLauncher) {
-                console.log('✅ OpenEMR launcher available:', window.openEMRLauncher);
+                console.log('✅ WebQX EMR launcher available:', window.openEMRLauncher);
                 
                 // Check initialization status
                 if (window.openEMRLauncher.isInitialized) {
-                    console.log('✅ OpenEMR launcher initialized');
+                    console.log('✅ WebQX EMR launcher initialized');
                 } else {
-                    console.log('🔄 OpenEMR launcher initializing...');
+                    console.log('🔄 WebQX EMR launcher initializing...');
                 }
             } else {
-                console.error('❌ OpenEMR launcher not available');
-                showNotification('⚠️ OpenEMR launcher not loaded. Please refresh the page.', 'warning');
+                console.error('❌ WebQX EMR launcher not available');
+                showNotification('⚠️ WebQX EMR launcher not loaded. Please refresh the page.', 'warning');
             }
         }
 
@@ -664,10 +667,10 @@
             showModuleLoading(moduleName);
             
             const moduleNames = {
-                'openemr-patients': 'OpenEMR Patient Management',
+                'openemr-patients': 'WebQX EMR Patient Management',
                 'telehealth': 'Telehealth Console',
-                'openemr-appointments': 'OpenEMR FHIR Scheduling',
-                'openemr-clinical': 'OpenEMR Clinical Data',
+                'openemr-appointments': 'WebQX EMR FHIR Scheduling',
+                'openemr-clinical': 'WebQX EMR Clinical Data',
                 'admin': 'Administration Console'
             };
             
@@ -685,20 +688,20 @@
                             }).then(result => {
                                 hideModuleLoading();
                                 if (result.success) {
-                                    showNotification(`✅ OpenEMR Patient Management launched: ${result.action}`);
+                                    showNotification(`✅ WebQX EMR Patient Management launched: ${result.action}`);
                                 } else {
                                     showNotification(`❌ Launch failed: ${result.error}`);
                                 }
                             }).catch(error => {
                                 hideModuleLoading();
-                                console.error('OpenEMR launch error:', error);
-                                showNotification(`❌ OpenEMR launch failed: ${error.message}`);
+                                console.error('WebQX EMR launch error:', error);
+                                showNotification(`❌ WebQX EMR launch failed: ${error.message}`);
                                 // Fallback to modal interface
                                 createOpenEMRPatientInterface();
                             });
                         } else {
                             // Fallback to modal interface if launcher not available
-                            console.warn('OpenEMR launcher not available, using fallback interface');
+                            console.warn('WebQX EMR launcher not available, using fallback interface');
                             createOpenEMRPatientInterface();
                             hideModuleLoading();
                         }
@@ -721,13 +724,13 @@
                             }).then(result => {
                                 hideModuleLoading();
                                 if (result.success) {
-                                    showNotification(`✅ OpenEMR Appointments launched: ${result.action}`);
+                                    showNotification(`✅ WebQX EMR Appointments launched: ${result.action}`);
                                 } else {
                                     showNotification(`❌ Launch failed: ${result.error}`);
                                 }
                             }).catch(error => {
                                 hideModuleLoading();
-                                console.error('OpenEMR appointments launch error:', error);
+                                console.error('WebQX EMR appointments launch error:', error);
                                 // Fallback to interface
                                 createOpenEMRSchedulingInterface();
                             });
@@ -748,13 +751,13 @@
                             }).then(result => {
                                 hideModuleLoading();
                                 if (result.success) {
-                                    showNotification(`✅ OpenEMR Clinical Data launched: ${result.action}`);
+                                    showNotification(`✅ WebQX EMR Clinical Data launched: ${result.action}`);
                                 } else {
                                     showNotification(`❌ Launch failed: ${result.error}`);
                                 }
                             }).catch(error => {
                                 hideModuleLoading();
-                                console.error('OpenEMR clinical launch error:', error);
+                                console.error('WebQX EMR clinical launch error:', error);
                                 // Fallback to interface
                                 createOpenEMRClinicalInterface();
                             });
@@ -779,14 +782,14 @@
         }
 
         function createOpenEMRPatientInterface() {
-            // Create modal for OpenEMR patient management
+                    // Create modal for WebQX EMR patient management
             const modal = document.createElement('div');
             modal.className = 'openemr-modal';
             modal.innerHTML = `
                 <div class="modal-overlay" onclick="closeOpenEMRModal()"></div>
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h2>🏥 OpenEMR Patient Management</h2>
+                        <h2>🏥 WebQX EMR Patient Management</h2>
                         <button class="close-btn" onclick="closeOpenEMRModal()">×</button>
                     </div>
                     <div class="modal-body">
@@ -794,21 +797,21 @@
                             <div class="connection-status">
                                 <div class="status-indicator">
                                     <div class="status-dot connected"></div>
-                                    <span>Connected to OpenEMR Instance</span>
+                                    <span>Connected to WebQX EMR Instance</span>
                                 </div>
-                                <div class="openemr-version">v7.0.2 FHIR R4</div>
+                                <div class="openemr-version">WebQX (OpenEMR base) v7.0.2 FHIR R4</div>
                             </div>
                             
                             <div class="patient-search">
                                 <h3>Patient Search</h3>
                                 <div class="search-form">
                                     <input type="text" placeholder="Search by name, ID, or DOB..." class="search-input">
-                                    <button class="search-btn">🔍 Search OpenEMR</button>
+                                    <button class="search-btn">🔍 Search WebQX EMR</button>
                                 </div>
                             </div>
                             
                             <div class="patient-actions">
-                                <h3>OpenEMR Actions</h3>
+                                <h3>WebQX EMR Actions</h3>
                                 <div class="actions-grid">
                                     <button class="openemr-action" onclick="openEMRAction('patient-list')">📋 Patient List</button>
                                     <button class="openemr-action" onclick="openEMRAction('new-patient')">➕ New Patient</button>
@@ -844,7 +847,7 @@
                     </div>
                     <div class="modal-footer">
                         <button class="btn-secondary" onclick="closeOpenEMRModal()">Close</button>
-                        <button class="btn-primary" onclick="launchOpenEMR()">Launch OpenEMR</button>
+                        <button class="btn-primary" onclick="launchOpenEMR()">Launch WebQX EMR</button>
                     </div>
                 </div>
             `;
@@ -1064,18 +1067,18 @@
         }
 
         function createOpenEMRSchedulingInterface() {
-            showNotification('🔄 Connecting to OpenEMR FHIR scheduling endpoint...');
-            setTimeout(() => {
-                showNotification('📅 FHIR R4 scheduling interface would open here with real-time OpenEMR integration');
-            }, 1500);
-        }
+                    showNotification('🔄 Connecting to WebQX EMR FHIR scheduling endpoint...');
+                    setTimeout(() => {
+                        showNotification('📅 FHIR R4 scheduling interface would open here with real-time WebQX EMR integration');
+                    }, 1500);
+                }
 
         function createOpenEMRClinicalInterface() {
-            showNotification('🔄 Accessing OpenEMR clinical data via FHIR...');
-            setTimeout(() => {
-                showNotification('📋 Clinical data interface would display: encounters, lab results, medications, and notes from OpenEMR');
-            }, 1500);
-        }
+                    showNotification('🔄 Accessing WebQX EMR clinical data via FHIR...');
+                    setTimeout(() => {
+                        showNotification('📋 Clinical data interface would display: encounters, lab results, medications, and notes from WebQX EMR');
+                    }, 1500);
+                }
 
         function closeOpenEMRModal() {
             const modal = document.querySelector('.openemr-modal');

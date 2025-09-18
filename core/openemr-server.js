@@ -260,6 +260,10 @@ class OpenEMRServer {
                 }]
             });
         });
+        // Compatibility alias when upstream proxy strips /fhir prefix
+        this.app.get('/metadata', (req, res) => {
+            res.redirect(301, '/fhir/metadata');
+        });
 
         // Patient resources
         this.app.get('/fhir/Patient', this.authenticateRequest.bind(this), this.searchPatients.bind(this));

@@ -25,6 +25,14 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 require('dotenv').config();
 
 const { PortManager } = require('./port-manager');
+// Optional middleware & feature routers (wrapped in try/catch so missing files won't break startup)
+let securityMiddleware, metricsMiddleware, auditMiddleware, authOptional, aiAssistRouter, mockFhirRouter;
+try { securityMiddleware = require('../middleware/security'); } catch (_) {}
+try { metricsMiddleware = require('../middleware/metrics'); } catch (_) {}
+try { auditMiddleware = require('../middleware/audit'); } catch (_) {}
+try { authOptional = require('../middleware/auth'); } catch (_) {}
+try { aiAssistRouter = require('../services/ai/ai-assist-router'); } catch (_) {}
+try { mockFhirRouter = require('../services/fhir/mock-fhir-router'); } catch (_) {}
 
 class UnifiedHealthcareServer {
     constructor() {
@@ -35,8 +43,17 @@ class UnifiedHealthcareServer {
             djangoPort: process.env.DJANGO_PORT || 3001,
             openEMRPort: process.env.OPENEMR_PORT || 3002,
             telehealthPort: process.env.TELEHEALTH_PORT || 3003,
-            environment: process.env.NODE_ENV || 'development'
+            environment: process.env.NODE_ENV || 'development',
+            useRemoteOpenEMR: /^true$/i.test(process.env.USE_REMOTE_OPENEMR || ''),
+            remoteOpenEMRUrl: process.env.OPENEMR_REMOTE_URL || '',
+            useFhirMock: /^true$/i.test(process.env.USE_FHIR_MOCK || ''),
+            aiAssistEnabled: !/^false$/i.test(process.env.AI_ASSIST_ENABLED || 'true'),
+            openemrCircuitThreshold: parseInt(process.env.OPENEMR_CIRCUIT_THRESHOLD || '5', 10),
+            openemrCircuitCooldownMs: parseInt(process.env.OPENEMR_CIRCUIT_COOLDOWN_MS || '15000', 10)
         };
+        // Circuit breaker state
+        this._openemrFailures = [];
+        this._openemrCircuitOpenUntil = 0;
         
         // Service health status
         this.serviceHealth = {
@@ -60,14 +77,28 @@ class UnifiedHealthcareServer {
             await this.createMainGateway();
             
             // Start all backend services in parallel
-            await Promise.all([
-                this.startDjangoAuth(),
-                this.startOpenEMRServer(),
-                this.startTelehealthServer()
-            ]);
+            if (this.config.useRemoteOpenEMR) {
+                console.log('🌐 Remote OpenEMR mode ENABLED. Backend OpenEMR will not be spawned.');
+                await Promise.all([
+                    this.startDjangoAuth(),
+                    // Skip local OpenEMR integration spawn
+                    this.startTelehealthServer()
+                ]);
+                // Mark OpenEMR as healthy (remote assumption) after lightweight probe (optional)
+                this.serviceHealth.openemr = true;
+            } else {
+                await Promise.all([
+                    this.startDjangoAuth(),
+                    this.startOpenEMRServer(),
+                    this.startTelehealthServer()
+                ]);
+            }
             
             // Start the main gateway server
             await this.startMainServer();
+            if (this.config.useRemoteOpenEMR) {
+                this.scheduleRemoteOpenEMRProbe();
+            }
             
             console.log('\n✅ All WebQX Healthcare Services are running!');
             this.printServiceStatus();
@@ -221,9 +252,15 @@ class UnifiedHealthcareServer {
         });
         this.app.use(globalLimiter);
 
-        // Body parsing middleware
-        this.app.use(express.json({ limit: '10mb' }));
-        this.app.use(express.urlencoded({ extended: true }));
+    // Body parsing middleware
+    this.app.use(express.json({ limit: '10mb' }));
+    this.app.use(express.urlencoded({ extended: true }));
+
+    // Custom layered middleware (order matters lightly: security -> auth decode -> metrics -> audit)
+    if (securityMiddleware) this.app.use(securityMiddleware);
+    if (authOptional) this.app.use(authOptional);
+    if (metricsMiddleware) this.app.use(metricsMiddleware);
+    if (auditMiddleware) this.app.use(auditMiddleware);
 
         // Serve static files
         this.app.use(express.static('.'));
@@ -248,8 +285,33 @@ class UnifiedHealthcareServer {
             });
         });
 
+        // Lightweight readiness endpoint (all critical deps ready)
+        this.app.get('/ready', (req, res) => {
+            // Consider django + main mandatory, others optional but reported
+            const ready = this.serviceHealth.main && this.serviceHealth.django;
+            res.status(ready ? 200 : 503).json({
+                ready,
+                services: this.serviceHealth,
+                timestamp: new Date().toISOString()
+            });
+        });
+
+        // Internal observability endpoints (unauthenticated for now)
+        if (metricsMiddleware && metricsMiddleware.metricsEndpoint) {
+            this.app.get('/internal/metrics', metricsMiddleware.metricsEndpoint);
+        }
+        if (auditMiddleware && auditMiddleware.auditEndpoint) {
+            this.app.get('/internal/audit', auditMiddleware.auditEndpoint);
+        }
+
         // Setup service proxies
         this.setupServiceProxies();
+
+        // AI Assist router (mount after proxies to keep ordering predictable)
+        if (this.config.aiAssistEnabled && aiAssistRouter) {
+            this.app.use('/api/ai', aiAssistRouter);
+            console.log('🧠 AI Assist mock mounted at /api/ai');
+        }
         
         // Serve main frontend
         this.app.get('/', (req, res) => {
@@ -263,6 +325,13 @@ class UnifiedHealthcareServer {
      * Setup proxy middleware for all backend services
      */
     setupServiceProxies() {
+        // Circuit breaker guard for OpenEMR / FHIR
+        const circuitGuard = (req, res, next) => {
+            if (this.isOpenEMRCircuitOpen && this.isOpenEMRCircuitOpen()) {
+                return res.status(503).json({ error: 'OPENEMR_CIRCUIT_OPEN', retryAfterMs: Math.max(0, this._openemrCircuitOpenUntil - Date.now()) });
+            }
+            next();
+        };
         // Django Authentication Service Proxy
         this.app.use('/api/auth', createProxyMiddleware({
             target: `http://localhost:${this.config.djangoPort}`,
@@ -274,26 +343,42 @@ class UnifiedHealthcareServer {
             }
         }));
 
-        // OpenEMR Service Proxy
-        this.app.use('/api/openemr', createProxyMiddleware({
-            target: `http://localhost:${this.config.openEMRPort}`,
+        // OpenEMR Service Proxy (local or remote)
+        const openEMRTarget = this.config.useRemoteOpenEMR && this.config.remoteOpenEMRUrl
+            ? this.config.remoteOpenEMRUrl.replace(/\/$/, '')
+            : `http://localhost:${this.config.openEMRPort}`;
+        this.app.use('/api/openemr', circuitGuard, createProxyMiddleware({
+            target: openEMRTarget,
             changeOrigin: true,
             pathRewrite: { '^/api/openemr': '/api/v1/openemr' },
             onError: (err, req, res) => {
                 console.error('❌ OpenEMR proxy error:', err.message);
-                res.status(503).json({ error: 'OpenEMR service unavailable' });
+                if (this.recordOpenEMRFailure) this.recordOpenEMRFailure();
+                res.status(503).json({ error: 'OpenEMR service unavailable', remote: this.config.useRemoteOpenEMR, circuitOpen: this.isOpenEMRCircuitOpen && this.isOpenEMRCircuitOpen() });
             }
         }));
 
-        // FHIR API Proxy
-        this.app.use('/fhir', createProxyMiddleware({
-            target: `http://localhost:${this.config.openEMRPort}`,
-            changeOrigin: true,
-            onError: (err, req, res) => {
-                console.error('❌ FHIR proxy error:', err.message);
-                res.status(503).json({ error: 'FHIR service unavailable' });
-            }
-        }));
+        // FHIR mock or proxy
+        if (this.config.useFhirMock && mockFhirRouter) {
+            this.app.use('/fhir', mockFhirRouter);
+            console.log('🧪 FHIR mock enabled at /fhir');
+        } else {
+            this.app.use('/fhir', circuitGuard, createProxyMiddleware({
+                target: openEMRTarget,
+                changeOrigin: true,
+                pathRewrite: (path) => {
+                    if (!path.startsWith('/fhir/')) {
+                        return '/fhir' + path;
+                    }
+                    return path;
+                },
+                onError: (err, req, res) => {
+                    console.error('❌ FHIR proxy error:', err.message);
+                    if (this.recordOpenEMRFailure) this.recordOpenEMRFailure();
+                    res.status(503).json({ error: 'FHIR service unavailable', remote: this.config.useRemoteOpenEMR, circuitOpen: this.isOpenEMRCircuitOpen && this.isOpenEMRCircuitOpen() });
+                }
+            }));
+        }
 
         // Telehealth Service Proxy
         this.app.use('/api/telehealth', createProxyMiddleware({
@@ -317,6 +402,15 @@ class UnifiedHealthcareServer {
         }));
 
         console.log('✅ Service proxies configured');
+
+        // Transcription (mock) local router (non-proxied yet) mounted after proxies
+        try {
+            const transcriptionRouter = require('../services/transcription/whisper-service.js').default || require('../services/transcription/whisper-service.js');
+            this.app.use('/api/transcription', transcriptionRouter);
+            console.log('📝 Transcription mock service mounted at /api/transcription');
+        } catch (e) {
+            console.warn('⚠️ Transcription service not available:', e.message);
+        }
     }
 
     /**
@@ -394,7 +488,7 @@ class UnifiedHealthcareServer {
         return new Promise((resolve, reject) => {
             console.log('🔐 Starting Django Authentication Server...');
             
-            const djangoServerPath = path.join(__dirname, 'django-auth-backend', 'auth-server.js');
+            const djangoServerPath = path.join(__dirname, '..', 'django-auth-backend', 'auth-server.js');
             
             if (!fs.existsSync(djangoServerPath)) {
                 console.warn('⚠️ Django auth server not found, creating minimal implementation...');
@@ -461,8 +555,9 @@ class UnifiedHealthcareServer {
             });
 
             openEMRProcess.stdout.on('data', (data) => {
-                console.log(`[OpenEMR] ${data.toString().trim()}`);
-                if (data.toString().includes('Started') || data.toString().includes('listening')) {
+                const line = data.toString().trim();
+                console.log(`[OpenEMR] ${line}`);
+                if (!this.serviceHealth.openemr && /(started on port|Server initialized|listening)/i.test(line)) {
                     this.serviceHealth.openemr = true;
                     resolve();
                 }
@@ -479,14 +574,30 @@ class UnifiedHealthcareServer {
 
             this.services.set('openemr', openEMRProcess);
             
-            // Timeout fallback
-            setTimeout(() => {
-                if (!this.serviceHealth.openemr) {
-                    console.log('⚠️ OpenEMR server timeout, marking as available');
-                    this.serviceHealth.openemr = true;
-                    resolve();
-                }
-            }, 5000);
+            // Active probe to reduce false timeouts
+            const probeStart = Date.now();
+            const maxProbeMs = 8000;
+            const attemptProbe = () => {
+                if (this.serviceHealth.openemr) return; // already ready
+                // Lightweight HTTP probe via internal fetch
+                fetch(`http://localhost:${this.config.openEMRPort}/health`, { method: 'GET' })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(() => {
+                        this.serviceHealth.openemr = true;
+                        console.log('✅ OpenEMR health probe succeeded');
+                        resolve();
+                    })
+                    .catch(() => {
+                        if (Date.now() - probeStart < maxProbeMs) {
+                            setTimeout(attemptProbe, 500);
+                        } else {
+                            console.log('⚠️ OpenEMR probe timeout, marking as available');
+                            this.serviceHealth.openemr = true;
+                            resolve();
+                        }
+                    });
+            };
+            setTimeout(attemptProbe, 600); // initial slight delay
         });
     }
 
@@ -511,8 +622,9 @@ class UnifiedHealthcareServer {
             });
 
             telehealthProcess.stdout.on('data', (data) => {
-                console.log(`[Telehealth] ${data.toString().trim()}`);
-                if (data.toString().includes('Started') || data.toString().includes('listening')) {
+                const line = data.toString().trim();
+                console.log(`[Telehealth] ${line}`);
+                if (!this.serviceHealth.telehealth && /(Server initialized|Services Server started|listening)/i.test(line)) {
                     this.serviceHealth.telehealth = true;
                     resolve();
                 }
@@ -529,14 +641,29 @@ class UnifiedHealthcareServer {
 
             this.services.set('telehealth', telehealthProcess);
             
-            // Timeout fallback
-            setTimeout(() => {
-                if (!this.serviceHealth.telehealth) {
-                    console.log('⚠️ Telehealth server timeout, marking as available');
-                    this.serviceHealth.telehealth = true;
-                    resolve();
-                }
-            }, 5000);
+            // Active probe to reduce false timeouts
+            const probeStart = Date.now();
+            const maxProbeMs = 8000;
+            const attemptProbe = () => {
+                if (this.serviceHealth.telehealth) return;
+                fetch(`http://localhost:${this.config.telehealthPort}/health`, { method: 'GET' })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(() => {
+                        this.serviceHealth.telehealth = true;
+                        console.log('✅ Telehealth health probe succeeded');
+                        resolve();
+                    })
+                    .catch(() => {
+                        if (Date.now() - probeStart < maxProbeMs) {
+                            setTimeout(attemptProbe, 500);
+                        } else {
+                            console.log('⚠️ Telehealth probe timeout, marking as available');
+                            this.serviceHealth.telehealth = true;
+                            resolve();
+                        }
+                    });
+            };
+            setTimeout(attemptProbe, 600);
         });
     }
 
@@ -592,17 +719,55 @@ class UnifiedHealthcareServer {
         console.log('═══════════════════════════════════════════════════════════');
         console.log(`🌐 Main Gateway     : http://localhost:${this.config.mainPort} ${this.serviceHealth.main ? '✅' : '❌'}`);
         console.log(`🔐 Django Auth      : http://localhost:${this.config.djangoPort} ${this.serviceHealth.django ? '✅' : '❌'}`);
-        console.log(`🏥 OpenEMR          : http://localhost:${this.config.openEMRPort} ${this.serviceHealth.openemr ? '✅' : '❌'}`);
+        if (this.config.useRemoteOpenEMR) {
+            console.log(`🏥 OpenEMR (Remote) : ${this.config.remoteOpenEMRUrl || 'UNSET'} ${this.serviceHealth.openemr ? '✅' : '❌'}`);
+        } else {
+            console.log(`🏥 OpenEMR          : http://localhost:${this.config.openEMRPort} ${this.serviceHealth.openemr ? '✅' : '❌'}`);
+        }
         console.log(`📹 Telehealth       : http://localhost:${this.config.telehealthPort} ${this.serviceHealth.telehealth ? '✅' : '❌'}`);
         console.log('═══════════════════════════════════════════════════════════');
         console.log('\n🔗 Available Endpoints:');
         console.log(`   • Health Check    : http://localhost:${this.config.mainPort}/health`);
         console.log(`   • Authentication  : http://localhost:${this.config.mainPort}/api/auth/*`);
-        console.log(`   • OpenEMR/FHIR    : http://localhost:${this.config.mainPort}/api/openemr/*`);
-        console.log(`   • FHIR Direct     : http://localhost:${this.config.mainPort}/fhir/*`);
+    console.log(`   • OpenEMR/FHIR    : http://localhost:${this.config.mainPort}/api/openemr/* (remote=${this.config.useRemoteOpenEMR})`);
+    console.log(`   • FHIR Direct     : http://localhost:${this.config.mainPort}/fhir/* (remote=${this.config.useRemoteOpenEMR})`);
         console.log(`   • Telehealth      : http://localhost:${this.config.mainPort}/api/telehealth/*`);
+        console.log(`   • Transcription   : http://localhost:${this.config.mainPort}/api/transcription/mock`);
+        if (this.config.aiAssistEnabled) console.log(`   • AI Assist       : http://localhost:${this.config.mainPort}/api/ai/summary`);
+        if (this.config.useFhirMock) console.log('   • FHIR Mock       : ENABLED (Patient, Appointment)');
         console.log(`   • WebSocket       : ws://localhost:${this.config.mainPort}/ws`);
         console.log('\n🎯 All services are proxied through the main gateway for unified access');
+    }
+
+    // ---- Circuit Breaker Helpers ----
+    recordOpenEMRFailure() {
+        const now = Date.now();
+        this._openemrFailures.push(now);
+        const cutoff = now - 60000; // keep last minute
+        this._openemrFailures = this._openemrFailures.filter(t => t >= cutoff);
+        if (this._openemrFailures.length >= this.config.openemrCircuitThreshold && !this.isOpenEMRCircuitOpen()) {
+            this._openemrCircuitOpenUntil = now + this.config.openemrCircuitCooldownMs;
+            console.warn(`⚠️ OpenEMR circuit opened for ${this.config.openemrCircuitCooldownMs}ms (failures=${this._openemrFailures.length})`);
+        }
+    }
+
+    isOpenEMRCircuitOpen() {
+        return Date.now() < this._openemrCircuitOpenUntil;
+    }
+
+    scheduleRemoteOpenEMRProbe() {
+        if (!this.config.remoteOpenEMRUrl) return;
+        const attempt = async () => {
+            if (!this.isOpenEMRCircuitOpen()) return; // only probe during open state
+            try {
+                const r = await fetch(this.config.remoteOpenEMRUrl.replace(/\/$/, '') + '/health');
+                if (r.ok) {
+                    this._openemrCircuitOpenUntil = 0;
+                    console.log('✅ Remote OpenEMR probe succeeded - circuit closed');
+                }
+            } catch (_) { /* swallow */ }
+        };
+        setInterval(attempt, 4000);
     }
 
     /**
