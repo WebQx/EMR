@@ -55,7 +55,7 @@ export const AuthPanel: React.FC = () => {
           )}
         </div>
       )}
-      <footer className="meta">Role: {role || 'none'} • Local-only mock</footer>
+      <footer className="meta">Role: {role ? role : 'not selected yet'} • Local-only mock session</footer>
     </div>
   );
 };
