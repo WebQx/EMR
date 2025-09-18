@@ -91,8 +91,8 @@ jobs:
           tags: ${{ steps.meta_auth.outputs.tags }}
           labels: ${{ steps.meta_auth.outputs.labels }}
 
-  build-pages:
-    name: Build Static Pages
+  pages-build:
+    name: Build Static Pages (Unified)
     runs-on: ubuntu-latest
     needs: test
     steps:
@@ -105,17 +105,49 @@ jobs:
           cache: 'npm'
       - name: Install Dependencies
         run: npm ci
-      - name: Build CSS & Pages
+      - name: Build Static Assets & Apps
         run: |
+          set -e
+          echo "== Tailwind/CSS =="
           npm run build:css:prod
+          echo "== Legacy static pages script (if present) =="
           if [ -f scripts/build-pages.js ]; then npm run build:pages; fi
-      - name: Prepare Pages Artifact
+          echo "== Patient Portal Build (Parcel) =="
+          if [ -d patient-portal ]; then \
+            pushd patient-portal; npm ci || npm install; npm run build; popd; \
+          else echo "patient-portal directory missing"; fi
+          echo "== Vite Portal Build (if portal dir exists) =="
+          if [ -d portal ]; then \
+            npm run portal:build || echo "portal:build script missing"; \
+          fi
+      - name: Assemble Dist Artifact
         run: |
-          mkdir -p dist
-          cp -r index.html assets sw.js webqx-remote-config.js integrations dist/ 2>/dev/null || true
-          if [ -d github-pages-frontend ]; then cp -r github-pages-frontend/* dist/; fi
-          if [ -f index-github-pages.html ]; then cp index-github-pages.html dist/; fi
-      - name: Upload Artifact
+          set -e
+          rm -rf dist && mkdir -p dist
+          # Root & shared
+          cp -f index.html dist/ 2>/dev/null || true
+          cp -f index-github-pages.html dist/ 2>/dev/null || true
+          cp -f sw.js webqx-remote-config.js dist/ 2>/dev/null || true
+          [ -d assets ] && cp -r assets dist/
+          [ -d integrations ] && cp -r integrations dist/
+          # Existing static sections
+          for d in provider patient-portal admin-console auth modules demo telehealth; do
+            [ -d "$d" ] && cp -r "$d" dist/ || true;
+          done
+          # Patient portal (parcel output)
+          if [ -d patient-portal/dist ]; then \
+            mkdir -p dist/patient-portal; cp -r patient-portal/dist/* dist/patient-portal/; \
+          fi
+          # Vite portal output (assume portal/dist)
+          if [ -d portal/dist ]; then \
+            mkdir -p dist/portal; cp -r portal/dist/* dist/portal/; \
+          fi
+          # Stamp commit for cache busting
+          echo "<!-- build-sha: ${GITHUB_SHA} -->" >> dist/index.html 2>/dev/null || true
+      - name: List Dist Contents
+        run: |
+          echo "=== dist tree ==="; find dist -maxdepth 4 -type f | head -n 200
+      - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
@@ -123,7 +155,7 @@ jobs:
   deploy-pages:
     name: Deploy GitHub Pages
     runs-on: ubuntu-latest
-    needs: build-pages
+    needs: pages-build
     permissions:
       pages: write
       id-token: write
@@ -143,71 +175,4 @@ jobs:
       - name: Summary
         run: |
           echo 'CI & Deployment complete.'
-          echo 'EMR Image Tags:'
-          echo '${{ needs.build-docker.outputs.emr }}'name: Deploy WebQx Global Healthcare Platform
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: "pages"
-  cancel-in-progress: false
-
-jobs:
-  # Build job
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Build CSS (Production)
-        run: npm run build:css:prod
-        continue-on-error: true
-
-      - name: Build Pages
-        run: npm run build:pages
-        continue-on-error: true
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
-
-  # Deploy job
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-      - name: Deployment Success
-        run: |
-          echo "WebQx Global Healthcare Platform deployed successfully!"
-          echo "Live URL: ${{ steps.deployment.outputs.page_url }}"
-          echo "24/7 Healthcare: ${{ steps.deployment.outputs.page_url }}telehealth-24-7-global.html"
+          echo 'Images and Pages deployed.'
