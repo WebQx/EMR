@@ -49,7 +49,6 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ onSelect, select
                   return;
                 }
                 onSelect(l.id);
-                window.location.hash = l.id; // hash routing for deep link
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '.5rem' }}>

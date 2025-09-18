@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { DashboardCards } from './components/DashboardCards';
 import { AuthPanel } from './components/AuthPanel';
 // Diagnostics now lazy-toggle (SystemStatus + Placement) inside DiagnosticsSection
@@ -13,27 +13,22 @@ const AppInner: React.FC = () => {
   const [selected, setSelected] = useState<string | null>(null);
   const { role } = useAuth();
 
-  // Initialize from hash for deep linking
-  useEffect(() => {
-    const applyHash = () => {
-      const h = window.location.hash.replace(/^#/, '').trim();
-      setSelected(h || null);
-    };
-    applyHash();
-    window.addEventListener('hashchange', applyHash);
-    return () => window.removeEventListener('hashchange', applyHash);
-  }, []);
+  // Keep URL stable (no hash); internal state controls selection.
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
     <div className="portal-shell">
       <header className="portal-header">
         <h1>WebQX Portal</h1>
         <nav>
-          <a href="#welcome">Welcome</a>
-          <a href="#experiences">Experiences</a>
-          <a href="#overview">Overview</a>
-          <a href="#diagnostics">Diagnostics</a>
-          <a href="#session">Session</a>
+          <button onClick={() => scrollTo('welcome')}>Welcome</button>
+          <button onClick={() => scrollTo('experiences')}>Experiences</button>
+          <button onClick={() => scrollTo('overview')}>Overview</button>
+          <button onClick={() => scrollTo('diagnostics')}>Diagnostics</button>
+          <button onClick={() => scrollTo('session')}>Session</button>
         </nav>
       </header>
       <div className="grid" style={{ gap: '1.25rem' }}>
@@ -43,7 +38,7 @@ const AppInner: React.FC = () => {
           <DashboardCards onSelect={setSelected} selectedId={selected} />
         </section>
         <section id="content-detail">
-          <PortalContent selectedId={selected} base={computeBasePath()} onClose={() => { setSelected(null); window.location.hash = ''; }} />
+          <PortalContent selectedId={selected} base={computeBasePath()} onClose={() => { setSelected(null); }} />
         </section>
         <section id="overview">
           <ReadmePreview />

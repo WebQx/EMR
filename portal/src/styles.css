@@ -21,8 +21,8 @@ html,body { margin:0; padding:0; background: var(--bg); color: var(--text); }
 header.portal-header { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between; margin-bottom:1.75rem; }
 header.portal-header h1 { font-size:1.9rem; line-height:1.15; margin:0; background:var(--accent-grad); -webkit-background-clip:text; color:transparent; font-weight:650; letter-spacing:.5px; }
 header.portal-header nav { display:flex; gap:.85rem; flex-wrap:wrap; }
-header.portal-header nav a { text-decoration:none; padding:.5rem .85rem; border-radius: 30px; font-size:.85rem; font-weight:500; color:var(--accent); background:rgba(37,99,235,.08); transition:.18s background,color; }
-header.portal-header nav a:hover { background:var(--accent); color:#fff; }
+header.portal-header nav a, header.portal-header nav button { text-decoration:none; padding:.5rem .85rem; border-radius: 30px; font-size:.85rem; font-weight:500; color:var(--accent); background:rgba(37,99,235,.08); transition:.18s background,color; border:none; cursor:pointer; }
+header.portal-header nav a:hover, header.portal-header nav button:hover { background:var(--accent); color:#fff; }
 
 .grid { display:grid; gap:1.25rem; }
 @media (min-width: 880px){
