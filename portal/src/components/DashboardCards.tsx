@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { MODULE_CATALOG } from './PortalContent';
 import { useAuth } from './AuthContext';
+import { computeBasePath } from './basePath';
 
 export interface DashboardLink {
   id: string;
@@ -12,21 +13,13 @@ export interface DashboardLink {
   category?: string;
 }
 
-const guessBase = (): string => {
-  // Derive '/webqx/' when at /webqx/portal/ on Pages, fallback '/'
-  const path = window.location.pathname;
-  const idx = path.indexOf('/portal/');
-  if (idx !== -1) {
-    return path.substring(0, idx + 1); // includes trailing '/'
-  }
-  return '/';
-};
+// Legacy function removed; replaced by computeBasePath()
 
 interface DashboardCardsProps { onSelect: (id: string) => void; selectedId: string | null; }
 
 export const DashboardCards: React.FC<DashboardCardsProps> = ({ onSelect, selectedId }) => {
   const { role } = useAuth();
-  const base = guessBase();
+  const base = computeBasePath();
   const links: DashboardLink[] = useMemo(() => MODULE_CATALOG
     .filter(m => !role || !m.roles || m.roles.includes(role))
     .map(m => ({

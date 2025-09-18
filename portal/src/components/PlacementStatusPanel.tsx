@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { computeBasePath } from './basePath';
 
 interface PlacementInfo { id: string; path: string; ok: boolean; }
 
@@ -21,7 +22,7 @@ export const PlacementStatusPanel: React.FC = () => {
 
   useEffect(() => {
     let active = true;
-    const base = deriveBase();
+  const base = computeBasePath();
     const run = async () => {
       const results: PlacementInfo[] = [];
       for (const t of TARGETS) {
@@ -60,9 +61,4 @@ export const PlacementStatusPanel: React.FC = () => {
   );
 };
 
-function deriveBase(): string {
-  const loc = window.location.pathname; // /webqx/portal/
-  const idx = loc.indexOf('/portal/');
-  if (idx !== -1) return loc.substring(0, idx + 1);
-  return '/';
-}
+// deriveBase removed in favor of computeBasePath

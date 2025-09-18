@@ -6,6 +6,7 @@ import { PlacementStatusPanel } from './components/PlacementStatusPanel';
 import { ReadmePreview } from './components/ReadmePreview';
 import { PortalContent } from './components/PortalContent';
 import { AuthProvider, useAuth } from './components/AuthContext';
+import { computeBasePath } from './components/basePath';
 
 const AppInner: React.FC = () => {
   const [selected, setSelected] = useState<string | null>(null);
@@ -40,7 +41,7 @@ const AppInner: React.FC = () => {
               <DashboardCards onSelect={setSelected} selectedId={selected} />
             </section>
             <section id="content-detail">
-              <PortalContent selectedId={selected} base={deriveBase()} onClose={() => { setSelected(null); window.location.hash = ''; }} />
+              <PortalContent selectedId={selected} base={computeBasePath()} onClose={() => { setSelected(null); window.location.hash = ''; }} />
             </section>
           </>
         ) : (
@@ -76,9 +77,4 @@ export const PortalApp: React.FC = () => (
   </AuthProvider>
 );
 
-function deriveBase(): string {
-  const loc = window.location.pathname; // /webqx/portal/
-  const idx = loc.indexOf('/portal/');
-  if (idx !== -1) return loc.substring(0, idx + 1);
-  return '/';
-}
+// Local deriveBase removed; using computeBasePath utility

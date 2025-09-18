@@ -9,7 +9,7 @@
 ![WebQX CI & Deployment](https://github.com/${GITHUB_REPOSITORY:-webqx/webqx}/actions/workflows/deploy.yml/badge.svg)
 
 ## 🌍 Live Demo
-**GitHub Pages:** https://webqx.github.io/webqx/  
+**GitHub Pages:** https://webqx.github.io/EMR/  
 **OpenEMR Instance:** https://fuzzy-goldfish-7vx645x7wgvv3rjxg-8085.app.github.dev
 
 ---

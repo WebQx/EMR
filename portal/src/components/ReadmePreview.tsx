@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { computeBasePath } from './basePath';
 
 export const ReadmePreview: React.FC = () => {
   const [html, setHtml] = useState<string>('');
@@ -8,7 +9,7 @@ export const ReadmePreview: React.FC = () => {
     let active = true;
     const load = async () => {
       try {
-        const base = deriveBase();
+  const base = computeBasePath();
         const res = await fetch(base + 'README.md');
         if (!res.ok) throw new Error('README fetch failed');
         const md = await res.text();
@@ -29,17 +30,10 @@ export const ReadmePreview: React.FC = () => {
       {error && <div className="error-msg">{error} (README preview fallback)</div>}
       {!error && !html && <div className="loading-skeleton" style={{ height: 48 }} />}
       {html && <div style={{ fontSize: '.75rem', lineHeight: 1.4 }} dangerouslySetInnerHTML={{ __html: html }} />}
-      <footer className="meta"><a href={deriveBase() + 'README.md'} target="_blank" rel="noopener noreferrer">Open full README</a></footer>
+      <footer className="meta"><a href={computeBasePath() + 'README.md'} target="_blank" rel="noopener noreferrer">Open full README</a></footer>
     </div>
   );
 };
-
-function deriveBase(): string {
-  const loc = window.location.pathname;
-  const idx = loc.indexOf('/portal/');
-  if (idx !== -1) return loc.substring(0, idx + 1);
-  return '/';
-}
 
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
