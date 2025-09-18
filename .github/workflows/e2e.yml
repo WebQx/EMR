@@ -36,10 +36,19 @@ jobs:
           cache: 'npm'
       - name: Install deps
         run: npm install
+      - name: Build Portal (Vite)
+        run: |
+          if [ -d portal ]; then npm run portal:build; fi
+          if [ -d patient-portal ]; then (cd patient-portal && npm install && npm run build); fi
+          mkdir -p e2e-dist
+          cp -r index.html assets integrations  e2e-dist/ 2>/dev/null || true
+          [ -d portal/public/portal ] && cp -r portal/public/portal e2e-dist/portal || true
+          [ -d public/portal ] && cp -r public/portal e2e-dist/portal || true
+          [ -d patient-portal/dist ] && mkdir -p e2e-dist/patient-portal && cp -r patient-portal/dist/* e2e-dist/patient-portal/ || true
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
       - name: Start Static Server
-        run: npx http-server -p 4173 . &
+        run: npx http-server -p 4173 e2e-dist &
       - name: Wait for server
         run: npx wait-on http://127.0.0.1:4173/index.html
       - name: Run E2E Tests
