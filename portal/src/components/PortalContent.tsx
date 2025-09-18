@@ -113,6 +113,12 @@ const InteractiveBlock: React.FC<{ meta: ModuleMeta; base: string }> = ({ meta, 
       return <SessionIdGenerator />;
     case 'login':
       return <CredentialMasker />;
+    case 'patient':
+      return <PatientChartMini />;
+    case 'provider':
+      return <EncounterNoteDemo />;
+    case 'admin':
+      return <AdminFlagsDemo />;
     default:
       return <GenericInfo />;
   }
@@ -151,6 +157,53 @@ const FhirObservationDemo: React.FC = () => {
       <p style={{ fontSize: '.7rem', marginTop: 0 }}>Synthetic Observation resource (HbA1c). Click regenerate to vary value.</p>
       <pre className="code-block" style={{ maxHeight: 180, overflow: 'auto' }}>{JSON.stringify(resource, null, 2)}</pre>
       <button className="btn" onClick={() => setValue(4.6 + Math.random())}>Regenerate</button>
+    </div>
+  );
+};
+// Patient chart mini overview ------------------------------------------------------------
+const PatientChartMini: React.FC = () => {
+  const [tab, setTab] = useState<'summary'|'meds'|'allergies'>('summary');
+  return (
+    <div className="mini-block">
+      <div style={{ display:'flex', gap:'.4rem', marginBottom:'.4rem' }}>
+        {(['summary','meds','allergies'] as const).map(t => (
+          <button key={t} className={`btn small ${tab===t?'':'secondary'}`} onClick={() => setTab(t)}>{t}</button>
+        ))}
+      </div>
+      {tab==='summary' && <pre className="code-block">{JSON.stringify({ name:'John Doe', dob:'1980-01-15', mrn:'P001234567' }, null, 2)}</pre>}
+      {tab==='meds' && <pre className="code-block">{JSON.stringify([{ drug:'Atorvastatin 20mg', sig:'1 tab PO daily' }], null, 2)}</pre>}
+      {tab==='allergies' && <pre className="code-block">{JSON.stringify([{ substance:'Penicillin', reaction:'Rash' }], null, 2)}</pre>}
+    </div>
+  );
+};
+
+// Provider encounter note demo -----------------------------------------------------------
+const EncounterNoteDemo: React.FC = () => {
+  const [note, setNote] = useState('CC: Cough x3 days\nHPI: 45 y/o presents with dry cough.\nPlan: OTC cough suppressant, fluids.');
+  return (
+    <div className="mini-block">
+      <p style={{ fontSize: '.7rem', marginTop: 0 }}>Type a brief encounter note:</p>
+      <textarea value={note} onChange={e=>setNote(e.target.value)} style={{ width:'100%', minHeight:120, fontFamily:'monospace', fontSize:'.7rem' }} />
+      <div style={{ display:'flex', gap:'.4rem', marginTop:'.4rem' }}>
+        <button className="btn small" onClick={()=>setNote(note + '\nSigned: Dr. Smith')}>Sign</button>
+        <button className="btn small secondary" onClick={()=>setNote('')}>Clear</button>
+      </div>
+    </div>
+  );
+};
+
+// Admin flags mock ----------------------------------------------------------------------
+const AdminFlagsDemo: React.FC = () => {
+  const [flags, setFlags] = useState({ ePrescribe:true, patientPortal:true, telehealth:true });
+  const toggle = (k: keyof typeof flags) => setFlags(prev => ({ ...prev, [k]: !prev[k] }));
+  return (
+    <div className="mini-block">
+      <p style={{ fontSize: '.7rem', marginTop: 0 }}>Toggle feature availability (mock):</p>
+      <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap' }}>
+        {Object.entries(flags).map(([k,v]) => (
+          <button key={k} className={`btn small ${v?'':'secondary'}`} onClick={()=>toggle(k as any)}>{k}: {v?'on':'off'}</button>
+        ))}
+      </div>
     </div>
   );
 };

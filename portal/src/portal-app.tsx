@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from './components/AuthContext';
 import { computeBasePath } from './components/basePath';
 import { HeroWelcome } from './components/HeroWelcome';
 import { DiagnosticsSection } from './components/DiagnosticsSection';
+import { QuickStart } from './components/QuickStart';
 
 const AppInner: React.FC = () => {
   const [selected, setSelected] = useState<string | null>(null);
@@ -24,8 +25,8 @@ const AppInner: React.FC = () => {
       <header className="portal-header">
         <h1>WebQX Portal</h1>
         <nav>
-          <button onClick={() => scrollTo('welcome')}>Welcome</button>
-          <button onClick={() => scrollTo('experiences')}>Experiences</button>
+          <button onClick={() => scrollTo('welcome')}>Dashboard</button>
+          <button onClick={() => scrollTo('experiences')}>Modules</button>
           <button onClick={() => scrollTo('overview')}>Overview</button>
           <button onClick={() => scrollTo('diagnostics')}>Diagnostics</button>
           <button onClick={() => scrollTo('session')}>Session</button>
@@ -33,6 +34,7 @@ const AppInner: React.FC = () => {
       </header>
       <div className="grid" style={{ gap: '1.25rem' }}>
         <HeroWelcome />
+        <QuickStart onSelect={setSelected} scrollTo={scrollTo} />
         {/* Experiences & content are visible even before role; internal gating handles access notes */}
         <section id="experiences">
           <DashboardCards onSelect={setSelected} selectedId={selected} />
