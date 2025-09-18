@@ -204,7 +204,20 @@ function checkRoleLevel(requiredLevel) {
         next();
     };
 }
+// Persistence (load existing users if any)
+const { loadUsers, scheduleSaveUsers } = require('./lib/persistence');
 const users = new Map();
+(() => {
+    const loaded = loadUsers();
+    if (loaded.length) {
+        loaded.forEach(u => {
+            const userObj = new WebQXUser(u); // rehydrate class methods
+            users.set(userObj.email, userObj);
+            users.set(userObj.id, userObj);
+        });
+        console.log(`[persistence] Loaded ${loaded.length} users from disk`);
+    }
+})();
 const userSessions = new Map();
 const securityEvents = new Map();
 const loginHistory = new Map();
@@ -356,8 +369,13 @@ function authenticateToken(req, res, next) {
         if (err) {
             return res.status(403).json({ error: 'Invalid or expired token' });
         }
-        
-        const userData = users.get(user.user_id);
+
+        // Support both legacy (email keyed) and new id-keyed storage
+        const emailKey = user.email ? user.email.toLowerCase() : null;
+        let userData = null;
+        if (emailKey && users.has(emailKey)) userData = users.get(emailKey);
+        if (!userData && users.has(user.user_id)) userData = users.get(user.user_id);
+
         if (!userData || !userData.is_active) {
             return res.status(403).json({ error: 'User account is inactive' });
         }
@@ -381,105 +399,47 @@ app.get('/health/', (req, res) => {
     });
 });
 
-// User Registration (Django-style)
+// Development diagnostics (disabled in production)
+if ((process.env.NODE_ENV || 'development') !== 'production') {
+    app.get('/internal/users', (req, res) => {
+        const list = [];
+        for (const [k, v] of users.entries()) {
+            // Skip duplicate id mapping by filtering where key matches email or id uniquely
+            list.push({ key: k, id: v.id, email: v.email, active: v.is_active, created_at: v.created_at });
+        }
+        res.json({ count: list.length, users: list.slice(0, 200) });
+    });
+}
+
+// Functional User Registration
+const { validateRegistration } = require('./lib/validation');
+const { generateAccessToken, generateRefreshToken } = require('./lib/tokens');
+const { sendValidationError, sendError, sendSuccess } = require('./lib/responses');
+
 app.post('/api/v1/auth/register/', async (req, res) => {
     try {
-        const {
-            email, password, password_confirm,
-            first_name, last_name, middle_name,
-            date_of_birth, phone_number, user_type,
-            country, language, terms_accepted,
-            privacy_policy_accepted, hipaa_authorization,
-            gdpr_consent
-        } = req.body;
-
-        // Validation (Django-style)
-        const errors = {};
-
-        if (!email || !validator.isEmail(email)) {
-            errors.email = ['Enter a valid email address'];
+        const { errors, sanitized } = validateRegistration(req.body, users);
+        if (Object.keys(errors).length) {
+            return sendValidationError(res, errors);
         }
 
-        if (users.has(email.toLowerCase())) {
-            errors.email = ['A user with this email already exists'];
-        }
+        const password_hash = await bcrypt.hash(sanitized.password, BCRYPT_ROUNDS);
+        const user = new WebQXUser({
+            ...sanitized,
+            password_hash
+        });
 
-        if (!password || password.length < 12) {
-            errors.password = ['Password must be at least 12 characters long'];
-        }
-
-        if (password !== password_confirm) {
-            errors.password_confirm = ['Password confirmation does not match'];
-        }
-
-        if (!first_name) {
-            errors.first_name = ['This field is required'];
-        }
-
-        if (!last_name) {
-            errors.last_name = ['This field is required'];
-        }
-
-        if (!terms_accepted) {
-            errors.terms_accepted = ['You must accept the terms and conditions'];
-        }
-
-        if (!privacy_policy_accepted) {
-            errors.privacy_policy_accepted = ['You must accept the privacy policy'];
-        }
-
-        if (user_type === 'PATIENT' && !hipaa_authorization) {
-            errors.hipaa_authorization = ['HIPAA authorization is required for patients'];
-        }
-
-        if (Object.keys(errors).length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Registration failed. Please check your input.',
-                errors: errors
-            });
-        }
-
-        // Create user (Django-style)
-        const password_hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-        
-        const userData = {
-            email: email.toLowerCase(),
-            password_hash,
-            first_name,
-            last_name,
-            middle_name,
-            date_of_birth,
-            phone_number,
-            user_type: user_type || 'PATIENT',
-            country,
-            language: language || 'en',
-            terms_accepted,
-            privacy_policy_accepted,
-            hipaa_authorization,
-            gdpr_consent
-        };
-
-        const user = new WebQXUser(userData);
         users.set(user.email, user);
+    scheduleSaveUsers(users);
+        users.set(user.id, user); // id lookup
+    scheduleSaveUsers(users);
 
-        // Log registration
         logSecurityEvent(user.id, 'ACCOUNT_CREATED', 'LOW', 'New user account created', req);
 
-        // Generate tokens
-        const accessToken = jwt.sign(
-            { user_id: user.id, email: user.email, user_type: user.user_type },
-            JWT_SECRET,
-            { expiresIn: '1h' }
-        );
+        const accessToken = generateAccessToken(user, false);
+        const refreshToken = generateRefreshToken(user);
 
-        const refreshToken = jwt.sign(
-            { user_id: user.id, type: 'refresh' },
-            JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
             message: 'Registration successful. Please check your email for verification.',
             user: {
@@ -490,114 +450,72 @@ app.post('/api/v1/auth/register/', async (req, res) => {
                 verification_status: user.verification_status,
                 email_verified: user.email_verified
             },
-            tokens: {
-                access: accessToken,
-                refresh: refreshToken
-            }
+            tokens: { access: accessToken, refresh: refreshToken }
         });
-
     } catch (error) {
         console.error('Registration error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Registration failed. Please try again.',
-            errors: { non_field_errors: ['An unexpected error occurred'] }
-        });
+        return sendError(res, 500, 'Registration failed. Please try again.', { errors: { non_field_errors: ['An unexpected error occurred'] } });
     }
+});
+
+// Fallback unprefixed registration (gateway proxy quirk safeguard)
+app.post('/register/', async (req, res) => {
+    req.url = '/api/v1/auth/register/';
+    return app._router.handle(req, res, () => {});
 });
 
 // User Login (Django-style JWT)
 app.post('/api/v1/auth/token/', async (req, res) => {
+    const { checkCredentialsInput, findUser, checkAccountStatus, verifyPassword, buildLoginResponse } = require('./lib/auth');
     try {
+        const creds = checkCredentialsInput(req.body);
+        if (!creds.valid) return sendError(res, 400, creds.error);
+
         const { email, password, remember_me } = req.body;
+        const user = findUser(users, email);
 
-        if (!email || !password) {
-            return res.status(400).json({
-                error: 'Email and password are required'
-            });
+        const status = checkAccountStatus(user);
+        if (!status.ok) {
+            logLoginAttempt(user ? user.id : null, status.code === 423 ? 'BLOCKED' : 'FAILED', req, status.error);
+            return sendError(res, status.code, status.error);
         }
 
-        const user = users.get(email.toLowerCase());
-        
-        if (!user) {
-            logLoginAttempt(null, 'FAILED', req, 'User not found');
-            return res.status(401).json({
-                error: 'Invalid email or password'
-            });
-        }
-
-        if (!user.is_active) {
-            logLoginAttempt(user.id, 'FAILED', req, 'Account deactivated');
-            return res.status(401).json({
-                error: 'This account has been deactivated'
-            });
-        }
-
-        if (user.is_locked_out()) {
-            logLoginAttempt(user.id, 'BLOCKED', req, 'Account locked');
-            return res.status(423).json({
-                error: 'Account is temporarily locked due to multiple failed login attempts'
-            });
-        }
-
-        const passwordValid = await bcrypt.compare(password, user.password_hash);
-        
+        const passwordValid = await verifyPassword(user, password);
         if (!passwordValid) {
             user.increment_failed_login();
             users.set(user.email, user);
+            scheduleSaveUsers(users);
             logLoginAttempt(user.id, 'FAILED', req, 'Invalid password');
-            return res.status(401).json({
-                error: 'Invalid email or password'
+            const attemptsRemaining = Math.max(0, 5 - user.failed_login_attempts);
+            return sendError(res, 401, 'Invalid email or password', {
+                attempts_remaining: attemptsRemaining,
+                lockout_until: user.lockout_until
             });
         }
 
-        // Check if MFA is required
-        if (user.mfa_enabled) {
-            // For this demo, we'll skip MFA verification
-            // In production, you'd return a partial token requiring MFA
-        }
+        // Future: Insert MFA challenge flow if required
 
-        // Successful login
         user.reset_failed_login();
         user.last_login_ip = getClientIP(req);
         user.last_activity = new Date();
         users.set(user.email, user);
+    scheduleSaveUsers(users);
 
         logLoginAttempt(user.id, 'SUCCESS', req);
         logSecurityEvent(user.id, 'SUCCESSFUL_LOGIN', 'LOW', 'User logged in successfully', req);
 
-        const accessToken = jwt.sign(
-            { user_id: user.id, email: user.email, user_type: user.user_type },
-            JWT_SECRET,
-            { expiresIn: remember_me ? '7d' : '1h' }
-        );
-
-        const refreshToken = jwt.sign(
-            { user_id: user.id, type: 'refresh' },
-            JWT_SECRET,
-            { expiresIn: '30d' }
-        );
-
-        res.json({
-            access: accessToken,
-            refresh: refreshToken,
-            user: {
-                id: user.id,
-                email: user.email,
-                full_name: user.get_full_name(),
-                user_type: user.user_type,
-                role_info: user.get_role_info(),
-                mfa_enabled: user.mfa_enabled,
-                permissions: user.get_permissions()
-            }
-        });
-
+        const responsePayload = buildLoginResponse(user, !!remember_me);
+        return sendSuccess(res, responsePayload, 'Login successful');
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({
-            error: 'Login failed. Please try again.'
-        });
+        return sendError(res, 500, 'Login failed. Please try again.');
     }
+});
+
+// Fallback unprefixed token endpoint
+app.post('/token/', async (req, res) => {
+    req.url = '/api/v1/auth/token/';
+    return app._router.handle(req, res, () => {});
 });
 
 // Get User Profile (Django-style)
@@ -624,6 +542,16 @@ app.get('/api/v1/auth/profile/', authenticateToken, (req, res) => {
         created_at: user.created_at,
         updated_at: user.updated_at,
         last_activity: user.last_activity
+    });
+});
+
+// Non-trailing-slash variant for proxy compatibility
+app.get('/api/v1/auth/profile', authenticateToken, (req, res) => {
+    const user = req.user;
+    res.json({
+        id: user.id,
+        email: user.email,
+        full_name: user.get_full_name()
     });
 });
 
@@ -882,494 +810,186 @@ app.get('/api/v1/auth/security/dashboard/', authenticateToken, (req, res) => {
 
 // Serve test frontend
 app.get('/', (req, res) => {
-    res.send(`
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebQX Authentication Test</title>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { color: #2563eb; margin: 0; }
-        .header p { color: #64748b; margin: 5px 0 0 0; }
-        .section { margin: 20px 0; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; }
-        .section h3 { margin-top: 0; color: #374151; }
-        .form-group { margin: 15px 0; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #374151; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 5px; font-size: 14px; }
-        .btn { background: #2563eb; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; margin: 5px; }
-        .btn:hover { background: #1d4ed8; }
-        .btn-secondary { background: #6b7280; }
-        .btn-secondary:hover { background: #4b5563; }
-        .result { margin: 15px 0; padding: 15px; border-radius: 5px; font-family: monospace; font-size: 12px; white-space: pre-wrap; }
-        .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .error { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
-        .info { background: #eff6ff; color: #1d4ed8; border: 1px solid #dbeafe; }
-        .endpoints { background: #f8fafc; padding: 15px; border-radius: 5px; margin: 15px 0; }
-        .endpoints h4 { margin-top: 0; color: #374151; }
-        .endpoints ul { margin: 0; padding-left: 20px; }
-        .endpoints li { margin: 5px 0; }
-        .status { display: inline-block; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 500; }
-        .status.online { background: #dcfce7; color: #166534; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🔐 WebQX Authentication Server</h1>
-            <p>Django-style Secure Authentication Testing</p>
-            <div class="status online">✅ Server Online</div>
-        </div>
+    res.send(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>WebQX Auth Console</title><style>
+    :root { --blue:#2563eb; --gray:#64748b; --bg:#f5f7fb; --radius:10px; --mono:ui-monospace, SFMono-Regular, Menlo, monospace; }
+    body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto; background:var(--bg); color:#1e293b; }
+    header { padding:1.25rem 1rem; background:#fff; box-shadow:0 2px 4px rgba(0,0,0,.06); position:sticky; top:0; z-index:10; }
+    h1 { margin:0; font-size:1.25rem; color:var(--blue); display:flex; align-items:center; gap:.5rem; }
+    main { max-width:1050px; margin:0 auto; padding:1rem 1rem 3rem; }
+    .tabs { display:flex; flex-wrap:wrap; gap:.5rem; margin:1rem 0 1.25rem; }
+    .tab-btn { background:#fff; border:1px solid #cbd5e1; padding:.55rem .9rem; border-radius:6px; cursor:pointer; font-size:.85rem; font-weight:500; color:#334155; display:flex; align-items:center; gap:.4rem; }
+    .tab-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); box-shadow:0 1px 3px rgba(0,0,0,.15); }
+    section[role=tabpanel] { background:#fff; border:1px solid #e2e8f0; padding:1.1rem 1.1rem 1.4rem; border-radius:var(--radius); display:none; }
+    section[role=tabpanel].active { display:block; animation:fade .25s ease; }
+    @keyframes fade { from { opacity:0; transform:translateY(4px);} to { opacity:1; transform:translateY(0);} }
+    form.grid { display:grid; gap:.75rem; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); margin-top:.75rem; }
+    label { font-size:.7rem; letter-spacing:.05em; text-transform:uppercase; font-weight:600; color:#475569; display:block; margin-bottom:.25rem; }
+    input, select { width:100%; padding:.55rem .6rem; border:1px solid #cbd5e1; border-radius:6px; font-size:.8rem; background:#f8fafc; }
+    input:focus, select:focus { outline:2px solid var(--blue); outline-offset:1px; background:#fff; }
+    .full { grid-column:1 / -1; }
+    .actions { margin-top:.6rem; display:flex; flex-wrap:wrap; gap:.5rem; }
+    button { border:none; background:var(--blue); color:#fff; font-weight:600; font-size:.75rem; letter-spacing:.04em; padding:.6rem 1.1rem; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:.35rem; }
+    button.secondary { background:#475569; }
+    button.outline { background:#fff; color:var(--blue); border:1px solid var(--blue); }
+    button:disabled { opacity:.55; cursor:not-allowed; }
+    pre { background:#0f172a; color:#e2e8f0; padding:.85rem .9rem; border-radius:8px; font-size:.65rem; line-height:1.25; overflow:auto; max-height:350px; }
+    .result-group { margin-top:1rem; display:grid; gap:1rem; }
+    .status-pill { background:#dcfce7; color:#166534; padding:.25rem .6rem; border-radius:999px; font-size:.65rem; font-weight:600; letter-spacing:.05em; }
+    .endpoint-list { columns:2; font-size:.7rem; margin:0; padding:0; list-style:none; }
+    .endpoint-list li { break-inside:avoid; margin-bottom:.35rem; }
+    .badge { background:#eef2ff; color:#3730a3; font-size:.55rem; padding:.2rem .45rem; border-radius:4px; font-weight:600; }
+    .inline { display:inline-block; }
+    .split { display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(310px,1fr)); margin-top:1rem; }
+    .card { background:#fff; border:1px solid #e2e8f0; padding:.9rem .95rem 1rem; border-radius:8px; position:relative; }
+    .card h3 { margin:.1rem 0 .65rem; font-size:.85rem; letter-spacing:.03em; color:#334155; display:flex; align-items:center; gap:.4rem; }
+    .muted { color:#64748b; font-size:.65rem; line-height:1.25; }
+    .small { font-size:.6rem; }
+    a.inline-link { color:var(--blue); text-decoration:none; }
+    a.inline-link:hover { text-decoration:underline; }
+    .toast { position:fixed; right:1rem; bottom:1rem; background:#1e293b; color:#fff; padding:.7rem .9rem; border-radius:8px; font-size:.7rem; box-shadow:0 4px 18px -2px rgba(0,0,0,.35); display:none; }
+    .toast.show { display:block; animation:pop .25s ease; }
+    @keyframes pop { from { transform:translateY(6px); opacity:0;} to { transform:translateY(0); opacity:1; } }
+    details { background:#f1f5f9; padding:.6rem .8rem; border-radius:6px; }
+    summary { cursor:pointer; font-size:.65rem; font-weight:600; letter-spacing:.05em; }
+    code.inline { font-family:var(--mono); background:#1e293b; color:#e2e8f0; padding:.15rem .35rem; border-radius:4px; font-size:.6rem; }
+    .flex { display:flex; gap:.35rem; align-items:center; flex-wrap:wrap; }
+    .gap { margin-top:.65rem; }
+    </style></head><body>
+    <header><h1>🔐 WebQX Auth Console <span class="status-pill" id="statusPill">ONLINE</span><button id="btnLogout" style="margin-left:auto; background:#dc2626;" class="secondary">Logout</button></h1></header>
+    <main>
+      <p class="muted">Functional test console for the in-memory Django‑style authentication service. Use the tabs below to exercise flows. All data resets when the process restarts.</p>
+      <nav class="tabs" role="tablist" aria-label="Authentication Panels">
+        <button class="tab-btn active" role="tab" aria-selected="true" data-tab="register">👤 Register</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="login">🔑 Login</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="profile">📇 Profile</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="dashboards">📊 Dashboards</button>
+        <button class="tab-btn" role="tab" aria-selected="false" data-tab="security">🔒 Security</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="raw">🧪 Raw HTTP</button>
+    <button class="tab-btn" role="tab" aria-selected="false" data-tab="reference">📘 Reference</button>
+      </nav>
 
-        <div class="endpoints">
-            <h4>🚀 Available API Endpoints:</h4>
-            <ul>
-                <li><strong>POST</strong> /api/v1/auth/register/ - User Registration</li>
-                <li><strong>POST</strong> /api/v1/auth/token/ - User Login (JWT)</li>
-                <li><strong>GET</strong> /api/v1/auth/profile/ - User Profile</li>
-                <li><strong>GET</strong> /api/v1/auth/mfa/setup/ - MFA Setup</li>
-                <li><strong>GET</strong> /api/v1/auth/security/dashboard/ - Security Dashboard</li>
-                <li><strong>GET</strong> /api/v1/dashboard/ - Role-Based Dashboard</li>
-                <li><strong>GET</strong> /api/v1/patient-dashboard/ - Patient Dashboard</li>
-                <li><strong>GET</strong> /api/v1/physician-dashboard/ - Physician Dashboard</li>
-                <li><strong>GET</strong> /api/v1/nurse-dashboard/ - Nurse Dashboard</li>
-                <li><strong>GET</strong> /api/v1/admin-dashboard/ - Administrator Dashboard</li>
-                <li><strong>GET</strong> /api/v1/billing-dashboard/ - Billing Dashboard</li>
-                <li><strong>GET</strong> /health/ - Health Check</li>
-            </ul>
-        </div>
+      <section id="tab-register" role="tabpanel" class="active" aria-labelledby="Register">
+        <h2 class="small" style="margin:0 0 .5rem; letter-spacing:.06em; text-transform:uppercase;">Register User</h2>
+        <form id="registerForm" class="grid" autocomplete="off">
+          <div><label>Email</label><input required type="email" id="regEmail" placeholder="user+demo@example.com"/></div>
+          <div><label>Password</label><input required type="password" id="regPassword" placeholder="Min 12 chars"/></div>
+          <div><label>Confirm</label><input required type="password" id="regPasswordConfirm"/></div>
+          <div><label>First Name</label><input required id="regFirstName" placeholder="Jane"/></div>
+            <div><label>Last Name</label><input required id="regLastName" placeholder="Doe"/></div>
+          <div><label>User Type</label><select id="regUserType"><option value="PATIENT">Patient</option><option value="PHYSICIAN">Physician</option><option value="PHYSICIAN_ASSISTANT">Physician Assistant</option><option value="NURSE">Nurse</option><option value="ADMINISTRATOR">Admin</option><option value="BILLING">Billing</option></select></div>
+          <div><label>Country</label><select id="regCountry"><option>US</option><option>CA</option><option>GB</option><option>DE</option><option>FR</option><option>IN</option><option>BR</option></select></div>
+          <div class="full flex small" style="margin-top:.4rem;">
+             <label class="inline"><input type="checkbox" id="regTerms"/> Terms</label>
+             <label class="inline"><input type="checkbox" id="regPrivacy"/> Privacy</label>
+             <label class="inline"><input type="checkbox" id="regHipaa"/> HIPAA (patients)</label>
+          </div>
+          <div class="actions full"><button type="submit">Create Account</button><button type="button" class="secondary" id="btnFillPatient">Fill Patient</button><button type="button" class="secondary" id="btnFillPhys">Fill Physician</button></div>
+        </form>
+        <div class="result-group"><pre id="registerOut" aria-live="polite" hidden></pre></div>
+      </section>
 
-        <div class="section">
-            <h3>👤 User Registration</h3>
-            <form id="registerForm">
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" id="regEmail" placeholder="user@example.com" required>
-                </div>
-                <div class="form-group">
-                    <label>Password:</label>
-                    <input type="password" id="regPassword" placeholder="Min 12 characters" required>
-                </div>
-                <div class="form-group">
-                    <label>Confirm Password:</label>
-                    <input type="password" id="regPasswordConfirm" required>
-                </div>
-                <div class="form-group">
-                    <label>First Name:</label>
-                    <input type="text" id="regFirstName" placeholder="John" required>
-                </div>
-                <div class="form-group">
-                    <label>Last Name:</label>
-                    <input type="text" id="regLastName" placeholder="Doe" required>
-                </div>
-                <div class="form-group">
-                    <label>User Type:</label>
-                    <select id="regUserType">
-                        <option value="PATIENT">Patient</option>
-                        <option value="PHYSICIAN">Physician</option>
-                        <option value="PHYSICIAN_ASSISTANT">Physician Assistant</option>
-                        <option value="NURSE">Nurse</option>
-                        <option value="ADMINISTRATOR">Administrator</option>
-                        <option value="BILLING">Accounting & Billing</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Country:</label>
-                    <select id="regCountry">
-                        <option value="US">United States</option>
-                        <option value="CA">Canada</option>
-                        <option value="GB">United Kingdom</option>
-                        <option value="DE">Germany</option>
-                        <option value="FR">France</option>
-                        <option value="IN">India</option>
-                        <option value="BR">Brazil</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label><input type="checkbox" id="regTerms" required> I accept the Terms and Conditions</label>
-                </div>
-                <div class="form-group">
-                    <label><input type="checkbox" id="regPrivacy" required> I accept the Privacy Policy</label>
-                </div>
-                <div class="form-group">
-                    <label><input type="checkbox" id="regHipaa"> I authorize HIPAA compliance (required for patients)</label>
-                </div>
-                <button type="submit" class="btn">Register User</button>
-            </form>
-            <div id="registerResult"></div>
-        </div>
+            <section id="tab-login" role="tabpanel" aria-labelledby="Login">
+                <h2 class="small" style="margin:0 0 .5rem; letter-spacing:.06em; text-transform:uppercase;">Login</h2>
+                <form id="loginForm" class="grid" autocomplete="off">
+                    <div><label>Email</label><input type="email" id="loginEmail" required/></div>
+                    <div><label>Password <span class="small" id="togglePass" style="cursor:pointer; color:var(--blue);">show</span></label><input type="password" id="loginPassword" required/></div>
+                    <div class="full flex small">
+                        <label class="inline"><input type="checkbox" id="loginRemember"/> Remember 7d</label>
+                        <div id="attemptMeta" class="muted small"></div>
+                        <button type="submit">Login</button>
+                        <button type="button" class="secondary" id="btnCopyAccess">Copy Token</button>
+                        <button type="button" class="outline" id="btnShowToken">Reveal Token</button>
+                    </div>
+                </form>
+                <pre id="loginOut" aria-live="polite" hidden></pre>
+                <pre id="tokenReveal" hidden></pre>
+            </section>
 
-        <div class="section">
-            <h3>🔑 User Login</h3>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label>Email:</label>
-                    <input type="email" id="loginEmail" placeholder="user@example.com" required>
+      <section id="tab-profile" role="tabpanel" aria-labelledby="Profile">
+        <div class="actions"><button id="btnGetProfile">Get Profile</button><button class="secondary" id="btnGetSecurity">Security Dashboard</button><button class="secondary" id="btnSetupMfa">MFA Setup</button><button class="outline" id="btnHealth">Health</button></div>
+        <div class="split" style="margin-top:1rem;">
+            <div class="card"><h3>Profile</h3><pre id="profileOut" hidden></pre></div>
+            <div class="card"><h3>Security</h3><pre id="secOut" hidden></pre></div>
+            <div class="card"><h3>MFA</h3><div id="mfaWrap" class="muted small">No request yet.</div><div class="gap small"><input id="mfaCode" maxlength="6" placeholder="123456" style="width:90px;"/> <button id="btnVerifyMfa" class="secondary" type="button">Verify</button></div><pre id="mfaOut" hidden></pre></div>
+        </div>
+      </section>
+
+      <section id="tab-dashboards" role="tabpanel" aria-labelledby="Dashboards">
+        <div class="actions"><button data-dash="/api/v1/dashboard/">My Dashboard</button><button class="secondary" data-dash="/api/v1/patient-dashboard/">Patient</button><button class="secondary" data-dash="/api/v1/physician-dashboard/">Physician</button><button class="secondary" data-dash="/api/v1/nurse-dashboard/">Nurse</button><button class="secondary" data-dash="/api/v1/admin-dashboard/">Admin</button><button class="secondary" data-dash="/api/v1/billing-dashboard/">Billing</button></div>
+        <pre id="dashOut" hidden></pre>
+      </section>
+
+      <section id="tab-security" role="tabpanel" aria-labelledby="Security">
+        <div class="card"><h3>Recent Auth Events</h3><p class="muted">Use the other tabs to generate events. Then refresh here.</p><div class="actions"><button id="btnRefreshSecurity">Refresh</button></div><pre id="securityEvents" hidden></pre></div>
+      </section>
+
+            <section id="tab-raw" role="tabpanel" aria-labelledby="Raw HTTP">
+                <div class="card"><h3>Raw HTTP Tester</h3>
+                    <form id="rawForm" class="grid" autocomplete="off">
+                        <div><label>Method</label><select id="rawMethod"><option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select></div>
+                        <div class="full"><label>Path</label><input id="rawPath" value="/api/v1/auth/profile/"/></div>
+                        <div class="full"><label>Headers (JSON)</label><textarea id="rawHeaders" style="width:100%; min-height:60px; font-size:.65rem; font-family:var(--mono);"></textarea></div>
+                        <div class="full"><label>Body (JSON)</label><textarea id="rawBody" style="width:100%; min-height:90px; font-size:.65rem; font-family:var(--mono);">{}</textarea></div>
+                        <div class="actions full"><button type="submit">Send Request</button><button type="button" class="secondary" id="btnRawClear">Clear</button></div>
+                    </form>
+                    <pre id="rawOut" hidden></pre>
                 </div>
-                <div class="form-group">
-                    <label>Password:</label>
-                    <input type="password" id="loginPassword" required>
-                </div>
-                <div class="form-group">
-                    <label><input type="checkbox" id="loginRemember"> Remember me (7 days)</label>
-                </div>
-                <button type="submit" class="btn">Login</button>
-            </form>
-            <div id="loginResult"></div>
-        </div>
+            </section>
 
-        <div class="section">
-            <h3>📊 Role-Based Dashboard Testing</h3>
-            <button class="btn" onclick="getDashboard()">Get My Dashboard</button>
-            <button class="btn btn-secondary" onclick="testPatientDashboard()">Patient Dashboard</button>
-            <button class="btn btn-secondary" onclick="testPhysicianDashboard()">Physician Dashboard</button>
-            <button class="btn btn-secondary" onclick="testNurseDashboard()">Nurse Dashboard</button>
-            <button class="btn btn-secondary" onclick="testAdminDashboard()">Admin Dashboard</button>
-            <button class="btn btn-secondary" onclick="testBillingDashboard()">Billing Dashboard</button>
-            <div id="dashboardResult"></div>
-        </div>
-
-        <div class="section">
-            <h3>📊 Profile & Security</h3>
-            <button class="btn" onclick="getUserProfile()">Get Profile</button>
-            <button class="btn btn-secondary" onclick="getSecurityDashboard()">Security Dashboard</button>
-            <button class="btn btn-secondary" onclick="setupMFA()">Setup MFA</button>
-            <div id="profileResult"></div>
-        </div>
-
-        <div class="section">
-            <h3>🏥 Quick Test Users</h3>
-            <p>For testing, you can use these pre-configured user types:</p>
-            <button class="btn btn-secondary" onclick="fillTestPatient()">Test Patient</button>
-            <button class="btn btn-secondary" onclick="fillTestProvider()">Test Physician</button>
-            <button class="btn btn-secondary" onclick="checkHealth()">Health Check</button>
-        </div>
-    </div>
-
+      <section id="tab-reference" role="tabpanel" aria-labelledby="Reference">
+        <h2 class="small" style="margin:0 0 .75rem; letter-spacing:.06em; text-transform:uppercase;">API Reference</h2>
+        <ul class="endpoint-list" aria-label="Endpoints"><li><span class="badge">POST</span> /api/v1/auth/register/</li><li><span class="badge">POST</span> /api/v1/auth/token/</li><li><span class="badge">GET</span> /api/v1/auth/profile/</li><li><span class="badge">GET</span> /api/v1/auth/mfa/setup/</li><li><span class="badge">GET</span> /api/v1/auth/security/dashboard/</li><li><span class="badge">GET</span> /api/v1/dashboard/</li><li><span class="badge">GET</span> /api/v1/patient-dashboard/</li><li><span class="badge">GET</span> /api/v1/physician-dashboard/</li><li><span class="badge">GET</span> /api/v1/nurse-dashboard/</li><li><span class="badge">GET</span> /api/v1/admin-dashboard/</li><li><span class="badge">GET</span> /api/v1/billing-dashboard/</li><li><span class="badge">GET</span> /health/</li></ul>
+        <details class="gap"><summary>Token Storage</summary><p class="muted">Access token cached in <code class="inline">localStorage</code> under <code class="inline">webqx_token</code>. Clear it to simulate logout.</p></details>
+        <details class="gap"><summary>Notes</summary><p class="muted">This console is intentionally minimal. It focuses on functional clarity over visual design so flows are easy to trace.</p></details>
+      </section>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <script>
-        let authToken = localStorage.getItem('webqx_token');
+    // Utility helpers
+    const qs = s => document.querySelector(s); const qsa = s => [...document.querySelectorAll(s)];
+    const out = (el, data) => { el.hidden = false; el.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2); };
+    const toast = msg => { const t = qs('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 3200); };
+    const tokenKey = 'webqx_token'; let authToken = localStorage.getItem(tokenKey) || '';
+    function authHeaders() { return authToken ? { 'Authorization': 'Bearer ' + authToken } : {}; }
+    const fetchJSON = async (url, opt={}) => { const r = await fetch(url, { ...opt, headers: { 'Content-Type': 'application/json', ...(opt.headers||{}), ...authHeaders() }}); const j = await r.json().catch(()=>({ raw: 'non-json' })); return { ok: r.ok, status: r.status, data: j, headers: r.headers }; };
 
-        // Register User
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const data = {
-                email: document.getElementById('regEmail').value,
-                password: document.getElementById('regPassword').value,
-                password_confirm: document.getElementById('regPasswordConfirm').value,
-                first_name: document.getElementById('regFirstName').value,
-                last_name: document.getElementById('regLastName').value,
-                user_type: document.getElementById('regUserType').value,
-                country: document.getElementById('regCountry').value,
-                terms_accepted: document.getElementById('regTerms').checked,
-                privacy_policy_accepted: document.getElementById('regPrivacy').checked,
-                hipaa_authorization: document.getElementById('regHipaa').checked
-            };
+    // Tabs
+    qsa('.tab-btn').forEach(btn=>btn.addEventListener('click', e=>{ qsa('.tab-btn').forEach(b=>b.classList.remove('active')); e.currentTarget.classList.add('active'); const id = 'tab-' + e.currentTarget.dataset.tab; qsa('section[role=tabpanel]').forEach(p=>p.classList.remove('active')); qs('#'+id).classList.add('active'); }));
 
-            try {
-                const response = await fetch('/api/v1/auth/register/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+    // Registration
+    qs('#registerForm').addEventListener('submit', async e => { e.preventDefault(); const data = { email:regEmail.value, password:regPassword.value, password_confirm:regPasswordConfirm.value, first_name:regFirstName.value, last_name:regLastName.value, user_type:regUserType.value, country:regCountry.value, terms_accepted:regTerms.checked, privacy_policy_accepted:regPrivacy.checked, hipaa_authorization:regHipaa.checked }; const { ok, data:resp } = await fetchJSON('/api/v1/auth/register/', { method:'POST', body: JSON.stringify(data) }); out(registerOut, resp); if (ok && resp.tokens?.access){ authToken = resp.tokens.access; localStorage.setItem(tokenKey, authToken); loginEmail.value = data.email; loginPassword.value = data.password; toast('Registered & token stored'); } else toast('Registration failed'); });
+    qs('#btnFillPatient').onclick = ()=>{ regEmail.value='patient.test@webqx.healthcare'; regPassword.value=regPasswordConfirm.value='SecurePatient123!'; regFirstName.value='Jane'; regLastName.value='Patient'; regUserType.value='PATIENT'; regCountry.value='US'; regTerms.checked=regPrivacy.checked=regHipaa.checked=true; toast('Filled patient example'); };
+    qs('#btnFillPhys').onclick = ()=>{ regEmail.value='doctor.smith@webqx.healthcare'; regPassword.value=regPasswordConfirm.value='SecurePhysician123!'; regFirstName.value='Sarah'; regLastName.value='Smith'; regUserType.value='PHYSICIAN'; regCountry.value='US'; regTerms.checked=regPrivacy.checked=true; regHipaa.checked=false; toast('Filled physician example'); };
 
-                const result = await response.json();
-                
-                if (response.ok) {
-                    authToken = result.tokens.access;
-                    localStorage.setItem('webqx_token', authToken);
-                    document.getElementById('registerResult').innerHTML = 
-                        '<div class="result success">✅ Registration successful!\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                } else {
-                    document.getElementById('registerResult').innerHTML = 
-                        '<div class="result error">❌ Registration failed:\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                }
-            } catch (error) {
-                document.getElementById('registerResult').innerHTML = 
-                    '<div class="result error">❌ Error: ' + error.message + '</div>';
-            }
-        });
+    // Login
+    qs('#loginForm').addEventListener('submit', async e => { e.preventDefault(); const data={ email:loginEmail.value, password:loginPassword.value, remember_me:loginRemember.checked }; const { ok, data:resp, headers } = await fetchJSON('/api/v1/auth/token/', { method:'POST', body: JSON.stringify(data) }); out(loginOut, resp); if (!ok && resp.attempts_remaining !== undefined){ attemptMeta.textContent = 'Attempts left: '+resp.attempts_remaining + (resp.lockout_until ? ' | lockout at next fail' : ''); if (resp.lockout_until) attemptMeta.textContent += ' lockout until '+resp.lockout_until; } if (ok && resp.access){ authToken = resp.access; localStorage.setItem(tokenKey, authToken); attemptMeta.textContent='Authenticated'; toast('Logged in & token stored'); } else if(!ok) { toast('Login failed'); } const rl = headers.get('x-ratelimit-remaining'); if (rl) attemptMeta.textContent += ' | rate left '+rl; });
+    qs('#togglePass').onclick = ()=>{ const f = loginPassword; if (f.type==='password'){ f.type='text'; togglePass.textContent='hide'; } else { f.type='password'; togglePass.textContent='show'; } };
+    qs('#btnShowToken').onclick = ()=>{ if(!authToken) return toast('No token'); out(tokenReveal, authToken); };
+    qs('#btnLogout').onclick = ()=>{ authToken=''; localStorage.removeItem(tokenKey); [loginOut, profileOut, secOut, dashOut, tokenReveal].forEach(el=>{ if(el) el.hidden=true; }); attemptMeta.textContent='Logged out'; toast('Logged out'); };
+    qs('#btnCopyAccess').onclick = ()=>{ if(!authToken) return toast('No token'); navigator.clipboard.writeText(authToken).then(()=>toast('Access token copied')); };
 
-        // Login User
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const data = {
-                email: document.getElementById('loginEmail').value,
-                password: document.getElementById('loginPassword').value,
-                remember_me: document.getElementById('loginRemember').checked
-            };
+    // Profile
+    qs('#btnGetProfile').onclick = async ()=>{ const { ok, data } = await fetchJSON('/api/v1/auth/profile/'); out(profileOut, data); toast(ok?'Profile loaded':'Profile error'); };
+    qs('#btnGetSecurity').onclick = async ()=>{ const { ok, data } = await fetchJSON('/api/v1/auth/security/dashboard/'); out(secOut, data); toast(ok?'Security loaded':'Security error'); };
+    qs('#btnSetupMfa').onclick = async ()=>{ const { ok, data } = await fetchJSON('/api/v1/auth/mfa/setup/'); if (ok && data.qr_code){ mfaWrap.innerHTML = '<img alt="MFA QR" style="max-width:140px;" src="'+data.qr_code+'"/><div class="small" style="margin-top:.4rem;">Secret: '+data.secret+'</div>'; toast('MFA QR ready'); } else { mfaWrap.textContent = JSON.stringify(data,null,2); toast(ok?'MFA status':'MFA error'); } };
+    qs('#btnVerifyMfa').onclick = async ()=>{ const code = mfaCode.value.trim(); if(code.length!==6) return toast('Enter 6 digits'); const { ok, data } = await fetchJSON('/api/v1/auth/mfa/setup/', { method:'POST', body: JSON.stringify({ token: code }) }); out(mfaOut, data); toast(ok? 'MFA verified' : 'MFA verify failed'); };
+    qs('#btnHealth').onclick = async ()=>{ const { data } = await fetchJSON('/health/'); toast('Health checked'); out(secOut, data); };
 
-            try {
-                const response = await fetch('/api/v1/auth/token/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
+    // Dashboards
+    qsa('[data-dash]').forEach(btn=>btn.onclick = async e => { const ep = e.currentTarget.getAttribute('data-dash'); const { ok, data } = await fetchJSON(ep); out(dashOut, data); toast(ok ? 'Dashboard '+ep+' loaded' : 'Dashboard error'); });
 
-                const result = await response.json();
-                
-                if (response.ok) {
-                    authToken = result.access;
-                    localStorage.setItem('webqx_token', authToken);
-                    document.getElementById('loginResult').innerHTML = 
-                        '<div class="result success">✅ Login successful!\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                } else {
-                    document.getElementById('loginResult').innerHTML = 
-                        '<div class="result error">❌ Login failed:\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                }
-            } catch (error) {
-                document.getElementById('loginResult').innerHTML = 
-                    '<div class="result error">❌ Error: ' + error.message + '</div>';
-            }
-        });
+        // Security events (reuse security dashboard subset)
+    qs('#btnRefreshSecurity').onclick = async ()=>{ const { data } = await fetchJSON('/api/v1/auth/security/dashboard/'); out(securityEvents, data.recent_events || data); toast('Events refreshed'); };
 
-        // Get Dashboard
-        async function getDashboard() {
-            if (!authToken) {
-                document.getElementById('dashboardResult').innerHTML = 
-                    '<div class="result error">❌ Please login first</div>';
-                return;
-            }
+        // Raw HTTP panel
+        qs('#rawForm').addEventListener('submit', async e => { e.preventDefault(); let headersObj={}; try { headersObj = rawHeaders.value ? JSON.parse(rawHeaders.value) : {}; } catch { toast('Bad headers JSON'); }
+            let bodyObj = rawBody.value; try { if(rawBody.value.trim()) bodyObj = JSON.stringify(JSON.parse(rawBody.value)); } catch { /* leave as string */ }
+            const method = rawMethod.value.toUpperCase(); const path = rawPath.value || '/'; const opts = { method }; if(!['GET','HEAD'].includes(method)) opts.body = bodyObj; const { ok, data, status, headers } = await fetchJSON(path, { ...opts, headers: headersObj }); out(rawOut, { status, ok, data }); toast('Raw request done'); });
+        qs('#btnRawClear').onclick = ()=>{ rawOut.hidden=true; rawBody.value='{}'; rawHeaders.value=''; };
 
-            try {
-                const response = await fetch('/api/v1/dashboard/', {
-                    headers: { 'Authorization': 'Bearer ' + authToken }
-                });
-
-                const result = await response.json();
-                
-                if (response.ok) {
-                    document.getElementById('dashboardResult').innerHTML = 
-                        '<div class="result success">🏠 Your Dashboard:\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                } else {
-                    document.getElementById('dashboardResult').innerHTML = 
-                        '<div class="result error">❌ Dashboard access failed:\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                }
-            } catch (error) {
-                document.getElementById('dashboardResult').innerHTML = 
-                    '<div class="result error">❌ Error: ' + error.message + '</div>';
-            }
-        }
-
-        // Test specific dashboards
-        async function testPatientDashboard() {
-            await testDashboard('/api/v1/patient-dashboard/', 'Patient');
-        }
-
-        async function testPhysicianDashboard() {
-            await testDashboard('/api/v1/physician-dashboard/', 'Physician');
-        }
-
-        async function testNurseDashboard() {
-            await testDashboard('/api/v1/nurse-dashboard/', 'Nurse');
-        }
-
-        async function testAdminDashboard() {
-            await testDashboard('/api/v1/admin-dashboard/', 'Administrator');
-        }
-
-        async function testBillingDashboard() {
-            await testDashboard('/api/v1/billing-dashboard/', 'Billing');
-        }
-
-        async function testDashboard(endpoint, dashboardType) {
-            if (!authToken) {
-                document.getElementById('dashboardResult').innerHTML = 
-                    '<div class="result error">❌ Please login first</div>';
-                return;
-            }
-
-            try {
-                const response = await fetch(endpoint, {
-                    headers: { 'Authorization': 'Bearer ' + authToken }
-                });
-
-                const result = await response.json();
-                
-                if (response.ok) {
-                    document.getElementById('dashboardResult').innerHTML = 
-                        '<div class="result success">✅ ' + dashboardType + ' Dashboard Access:\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                } else {
-                    document.getElementById('dashboardResult').innerHTML = 
-                        '<div class="result error">❌ ' + dashboardType + ' Dashboard Access Denied:\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                }
-            } catch (error) {
-                document.getElementById('dashboardResult').innerHTML = 
-                    '<div class="result error">❌ Error: ' + error.message + '</div>';
-            }
-        }
-        async function getUserProfile() {
-            if (!authToken) {
-                document.getElementById('profileResult').innerHTML = 
-                    '<div class="result error">❌ Please login first</div>';
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/v1/auth/profile/', {
-                    headers: { 'Authorization': 'Bearer ' + authToken }
-                });
-
-                const result = await response.json();
-                
-                if (response.ok) {
-                    document.getElementById('profileResult').innerHTML = 
-                        '<div class="result success">👤 User Profile:\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                } else {
-                    document.getElementById('profileResult').innerHTML = 
-                        '<div class="result error">❌ Failed to get profile:\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                }
-            } catch (error) {
-                document.getElementById('profileResult').innerHTML = 
-                    '<div class="result error">❌ Error: ' + error.message + '</div>';
-            }
-        }
-
-        // Get Security Dashboard
-        async function getSecurityDashboard() {
-            if (!authToken) {
-                document.getElementById('profileResult').innerHTML = 
-                    '<div class="result error">❌ Please login first</div>';
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/v1/auth/security/dashboard/', {
-                    headers: { 'Authorization': 'Bearer ' + authToken }
-                });
-
-                const result = await response.json();
-                
-                if (response.ok) {
-                    document.getElementById('profileResult').innerHTML = 
-                        '<div class="result info">🔒 Security Dashboard:\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                } else {
-                    document.getElementById('profileResult').innerHTML = 
-                        '<div class="result error">❌ Failed to get security dashboard:\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                }
-            } catch (error) {
-                document.getElementById('profileResult').innerHTML = 
-                    '<div class="result error">❌ Error: ' + error.message + '</div>';
-            }
-        }
-
-        // Setup MFA
-        async function setupMFA() {
-            if (!authToken) {
-                document.getElementById('profileResult').innerHTML = 
-                    '<div class="result error">❌ Please login first</div>';
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/v1/auth/mfa/setup/', {
-                    headers: { 'Authorization': 'Bearer ' + authToken }
-                });
-
-                const result = await response.json();
-                
-                if (response.ok) {
-                    if (result.qr_code) {
-                        document.getElementById('profileResult').innerHTML = 
-                            '<div class="result info">📱 MFA Setup - Scan QR Code:\\n' +
-                            '<img src="' + result.qr_code + '" style="max-width: 200px; display: block; margin: 10px 0;">\\n' +
-                            'Secret: ' + result.secret + '\\n\\n' +
-                            'Enter the 6-digit code from your authenticator app to complete setup.</div>';
-                    } else {
-                        document.getElementById('profileResult').innerHTML = 
-                            '<div class="result success">✅ MFA Status:\\n' + 
-                            JSON.stringify(result, null, 2) + '</div>';
-                    }
-                } else {
-                    document.getElementById('profileResult').innerHTML = 
-                        '<div class="result error">❌ MFA setup failed:\\n' + 
-                        JSON.stringify(result, null, 2) + '</div>';
-                }
-            } catch (error) {
-                document.getElementById('profileResult').innerHTML = 
-                    '<div class="result error">❌ Error: ' + error.message + '</div>';
-            }
-        }
-
-        // Test Users
-        function fillTestPatient() {
-            document.getElementById('regEmail').value = 'patient.test@webqx.healthcare';
-            document.getElementById('regPassword').value = 'SecurePatient123!';
-            document.getElementById('regPasswordConfirm').value = 'SecurePatient123!';
-            document.getElementById('regFirstName').value = 'Jane';
-            document.getElementById('regLastName').value = 'Patient';
-            document.getElementById('regUserType').value = 'PATIENT';
-            document.getElementById('regCountry').value = 'US';
-            document.getElementById('regTerms').checked = true;
-            document.getElementById('regPrivacy').checked = true;
-            document.getElementById('regHipaa').checked = true;
-        }
-
-        function fillTestProvider() {
-            document.getElementById('regEmail').value = 'doctor.smith@webqx.healthcare';
-            document.getElementById('regPassword').value = 'SecurePhysician123!';
-            document.getElementById('regPasswordConfirm').value = 'SecurePhysician123!';
-            document.getElementById('regFirstName').value = 'Dr. Sarah';
-            document.getElementById('regLastName').value = 'Smith';
-            document.getElementById('regUserType').value = 'PHYSICIAN';
-            document.getElementById('regCountry').value = 'US';
-            document.getElementById('regTerms').checked = true;
-            document.getElementById('regPrivacy').checked = true;
-            document.getElementById('regHipaa').checked = false;
-        }
-
-        // Health Check
-        async function checkHealth() {
-            try {
-                const response = await fetch('/health/');
-                const result = await response.json();
-                
-                document.getElementById('profileResult').innerHTML = 
-                    '<div class="result success">🏥 Health Check:\\n' + 
-                    JSON.stringify(result, null, 2) + '</div>';
-            } catch (error) {
-                document.getElementById('profileResult').innerHTML = 
-                    '<div class="result error">❌ Health check failed: ' + error.message + '</div>';
-            }
-        }
-
-        // Auto-fill login if we have a registered email
-        document.getElementById('registerForm').addEventListener('submit', () => {
-            setTimeout(() => {
-                const email = document.getElementById('regEmail').value;
-                const password = document.getElementById('regPassword').value;
-                if (email && password) {
-                    document.getElementById('loginEmail').value = email;
-                    document.getElementById('loginPassword').value = password;
-                }
-            }, 1000);
-        });
-
-        // Load saved token on page load
-        if (authToken) {
-            document.getElementById('profileResult').innerHTML = 
-                '<div class="result info">🔑 Loaded saved authentication token</div>';
-        }
+    if(authToken) toast('Loaded existing token');
     </script>
-</body>
-</html>
-    `);
+    </body></html>`);
 });
 
 // Start server

@@ -4,6 +4,8 @@
 
 > Latest Enhancements (2025-09): Added security middleware stack, AI Assist mock endpoint, optional in-memory FHIR R4 mock (Patient & Appointment), circuit breaker for remote OpenEMR/FHIR proxy, internal metrics & audit endpoints.
 
+> Operational Hardening (2025-09-18): Port reservation & retry (prevents EADDRINUSE), dual user lookup (email + UUID) fixing inactive profile issue, deferred OpenEMR/FHIR proxy mounting (eliminates early 404/metadata race), structured unified server logging helper, dev diagnostics endpoint `/internal/users` (non-production), graceful retry for child service startup.
+
 ![WebQX CI & Deployment](https://github.com/${GITHUB_REPOSITORY:-webqx/webqx}/actions/workflows/deploy.yml/badge.svg)
 
 ## 🌍 Live Demo
@@ -586,4 +588,102 @@ To disable image publishing temporarily, comment out the `build-docker` job or s
 
 Contact: [info@webqx.healthcare](https://github.com/webqx-health)  
 _“Care equity begins with code equity.”_
+
+---
+
+## 🔐 In-Memory Node Auth Test Server (Developer Console)
+
+Alongside the Django auth integration, the repo now includes a lightweight, fully self-contained Node.js authentication server at `django-auth-backend/auth-server.js` (name retained for compatibility) providing a fast sandbox for local RBAC + MFA testing without bringing up the full Django stack.
+
+### Why It Exists
+| Goal | Benefit |
+|------|---------|
+| Rapid UX iteration | Instant restart, no migrations |
+| Frontend contract testing | Stable JSON shapes & JWT claims |
+| RBAC / permissions demos | In-memory role map with dashboards |
+| MFA enable & verify flow | QR provisioning + TOTP check |
+| Failure & rate-limit handling | Surfaced attempt counters + lockouts |
+| Raw request crafting | Built‑in panel to exercise any endpoint |
+
+### Feature Snapshot
+* HS256 JWT issuance (access + refresh) with configurable expiry window
+* Role-based dashboards: Patient / Nurse / Physician / Physician Assistant / Billing / Administrator
+* MFA setup (TOTP secret + QR) and verification with backup codes
+* Account lockout after 5 failed password attempts (15 min default)
+* Rate limit headers surfaced (per 15‑minute window)
+* Security event & login history dashboard (recent events / attempts)
+* Debounced JSON persistence (`data/users.json`) so users survive restarts
+* Raw HTTP panel (choose method, path, headers JSON, body JSON) auto-injects bearer token when present
+* Logout + token reveal & clipboard helpers
+* Attempts remaining + lockout countdown metadata on failed login responses
+
+### Quick Start (Standalone)
+```bash
+node django-auth-backend/auth-server.js
+# Open http://localhost:3001/
+```
+
+Health check:
+```
+curl -s http://localhost:3001/health/ | jq
+```
+
+### Registration & Login API (Simplified)
+| Endpoint | Verb | Purpose |
+|----------|------|---------|
+| `/api/v1/auth/register/` | POST | Create user (password >= 12 chars; HIPAA consent required for PATIENT) |
+| `/api/v1/auth/token/` | POST | Login (returns access + refresh) |
+| `/api/v1/auth/profile/` | GET | Authenticated user profile |
+| `/api/v1/auth/mfa/setup/` | GET | Begin MFA (returns QR + secret) |
+| `/api/v1/auth/mfa/setup/` | POST | Verify 6‑digit token + receive backup codes |
+| `/api/v1/auth/security/dashboard/` | GET | Security & login events |
+| `/api/v1/dashboard/` | GET | Aggregate dashboard (role aware) |
+
+Failed login response example:
+```json
+{
+	"success": false,
+	"message": "Invalid email or password",
+	"attempts_remaining": 3,
+	"lockout_until": null
+}
+```
+
+### Persistence
+* Stored at: `django-auth-backend/data/users.json`
+* Debounced (400ms) after mutations: registration, failed attempt increment, successful login, MFA enable
+* Safe to delete for a clean slate
+
+### MFA Flow
+1. Register & login.
+2. Click "MFA Setup" (GET) → QR + secret displayed
+3. Scan into authenticator app (e.g., Authy, Google Authenticator)
+4. Enter 6‑digit code in console → POST verify → backup codes displayed
+5. Future enhancement (planned): enforce second factor on login if `mfa_enabled`
+
+### Raw HTTP Panel
+Lets you quickly test evolving endpoints (e.g., adding a new `/api/v1/auth/roles/` route) without leaving the browser or crafting curl manually. Automatically includes bearer token unless overridden by custom header JSON.
+
+### Environment Variables (Node Auth Server)
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | 3001 | Listen port |
+| `JWT_SECRET` | webqx-django-style-jwt-secret-2024 | HS256 signing secret (dev only) |
+| `WEBQX_DATA_DIR` | `django-auth-backend/data` | Persistence directory |
+
+### Dev Notes
+* Not for production use—shared secret JWT, in-memory sessions, and no external store
+* Designed to mimic Django validation patterns (field error arrays) for seamless gateway swap
+* Return shape intentionally stable to allow frontends to test progressive enhancement (e.g., lockout overlay, MFA prompts)
+
+### Next Hardening Ideas (Optional)
+| Enhancement | Rationale |
+|-------------|-----------|
+| Move to RS256 + JWKS | Align with Phase 2 Django key strategy |
+| MFA enforcement during login | Full two-step auth simulation |
+| Refresh rotation + reuse detection | Session hijack mitigation demo |
+| Token blacklist / logout endpoint | Show server-side revocation pattern |
+| Pluggable persistence adapter | Swap JSON for SQLite or Redis easily |
+
+---
 
