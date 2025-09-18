@@ -130,33 +130,7 @@ jobs:
             npm run portal:build || echo "portal:build script missing"; \
           fi
       - name: Assemble Dist Artifact
-        run: |
-          set -e
-          rm -rf dist && mkdir -p dist
-          # Root & shared
-          cp -f index.html dist/ 2>/dev/null || true
-          cp -f index-github-pages.html dist/ 2>/dev/null || true
-          cp -f sw.js webqx-remote-config.js dist/ 2>/dev/null || true
-          [ -d assets ] && cp -r assets dist/
-          [ -d integrations ] && cp -r integrations dist/
-          # Existing static sections
-          for d in provider patient-portal admin-console auth modules demo telehealth; do
-            [ -d "$d" ] && cp -r "$d" dist/ || true;
-          done
-          # Patient portal (parcel output)
-          if [ -d patient-portal/dist ]; then \
-            mkdir -p dist/patient-portal; cp -r patient-portal/dist/* dist/patient-portal/; \
-          fi
-          # Vite portal output (assume portal/dist)
-          if [ -d portal/dist ]; then \
-            mkdir -p dist/portal; cp -r portal/dist/* dist/portal/; \
-          fi
-          # Legacy public/portal fallback (before config change)
-          if [ -d public/portal ] && [ ! -d portal/dist ]; then \
-            mkdir -p dist/portal; cp -r public/portal/* dist/portal/; \
-          fi
-          # Stamp commit for cache busting
-          echo "<!-- build-sha: ${GITHUB_SHA} -->" >> dist/index.html 2>/dev/null || true
+        run: npm run build:dist
       - name: List Dist Contents
         run: |
           echo "=== dist tree (first 200 files) ==="; find dist -maxdepth 4 -type f | head -n 200
