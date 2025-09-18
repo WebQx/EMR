@@ -29,7 +29,7 @@ const AppInner: React.FC = () => {
       <header className="portal-header">
         <h1>WebQX Portal</h1>
         <nav>
-          <a href="#top">Home</a>
+          <a href="#welcome">Welcome</a>
           <a href="#experiences">Experiences</a>
           <a href="#overview">Overview</a>
           <a href="#diagnostics">Diagnostics</a>
