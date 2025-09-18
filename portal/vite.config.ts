@@ -7,8 +7,10 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     root: path.resolve(__dirname, 'src'),
     build: {
-      outDir: path.resolve(__dirname, '../public/portal'),
+      // Output inside portal/dist so CI workflow's copy step (portal/dist) finds it
+      outDir: path.resolve(__dirname, 'dist'),
       emptyOutDir: true,
+      assetsDir: 'assets',
     },
     server: {
       port: 5173,
