@@ -13,7 +13,7 @@ export const SystemStatusPanel: React.FC = () => {
         <div><FeaturesPanel /></div>
         <div><MetricsPanel /></div>
       </div>
-      <footer className="meta">Auto-refreshing snapshots (10–15s cadence). Network failures gracefully degrade.</footer>
+  <footer className="meta">Attempts live endpoints first; on failure switches to Demo Mode (no further polling) for a clean static preview.</footer>
     </div>
   );
 };

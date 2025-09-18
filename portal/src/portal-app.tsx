@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { DashboardCards } from './components/DashboardCards';
 import { AuthPanel } from './components/AuthPanel';
-import { SystemStatusPanel } from './components/SystemStatusPanel';
-import { PlacementStatusPanel } from './components/PlacementStatusPanel';
+// Diagnostics now lazy-toggle (SystemStatus + Placement) inside DiagnosticsSection
 import { ReadmePreview } from './components/ReadmePreview';
 import { PortalContent } from './components/PortalContent';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import { computeBasePath } from './components/basePath';
+import { HeroWelcome } from './components/HeroWelcome';
+import { DiagnosticsSection } from './components/DiagnosticsSection';
 
 const AppInner: React.FC = () => {
   const [selected, setSelected] = useState<string | null>(null);
@@ -30,11 +31,13 @@ const AppInner: React.FC = () => {
         <nav>
           <a href="#top">Home</a>
           <a href="#experiences">Experiences</a>
-          <a href="#observability">Observability</a>
+          <a href="#overview">Overview</a>
+          <a href="#diagnostics">Diagnostics</a>
           <a href="#session">Session</a>
         </nav>
       </header>
       <div className="grid" style={{ gap: '1.25rem' }}>
+        <HeroWelcome />
         {role ? (
           <>
             <section id="experiences">
@@ -53,14 +56,11 @@ const AppInner: React.FC = () => {
             </div>
           </section>
         )}
-        <section id="observability">
-          <SystemStatusPanel />
-        </section>
-        <section id="placement-status">
-          <PlacementStatusPanel />
-        </section>
         <section id="overview">
           <ReadmePreview />
+        </section>
+        <section id="diagnostics">
+          <DiagnosticsSection />
         </section>
         <section id="session" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1.25rem' }}>
           <AuthPanel />

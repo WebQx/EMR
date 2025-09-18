@@ -12,38 +12,43 @@ export const HealthPanel: React.FC = () => {
 
   useEffect(() => {
     let active = true;
+    let interval: any = null;
+    let demoMode = false;
+
     const fetchHealth = async () => {
       try {
         const res = await fetch('/health');
-        if (!res.ok) throw new Error('Health fetch failed');
+        if (!res.ok) throw new Error('Health endpoint not available');
         const data = await res.json();
         if (active) {
           setHealth(data);
           setError('');
         }
-      } catch (e:any) {
+      } catch (e: any) {
         if (active) {
-          setError(e.message);
-          // Provide a static fallback so the panel is still informative on GitHub Pages.
-            if (!health) {
-              setHealth({
-                status: 'offline (mock)',
-                message: 'Static fallback – live /health not reachable',
-                timestamp: new Date().toISOString()
-              });
-            }
+          if (!demoMode) {
+            demoMode = true; // first failure triggers demo fallback and stops polling
+            setError('');
+            setHealth({
+              status: 'Demo Mode',
+              message: 'Running static preview – live backend health endpoint not connected',
+              timestamp: new Date().toISOString(),
+              docs: 'Deploy backend services locally or in cloud to replace this mock.'
+            });
+            if (interval) clearInterval(interval);
+          }
         }
       }
     };
     fetchHealth();
-    const id = setInterval(fetchHealth, 10000);
-    return () => { active = false; clearInterval(id); };
+    interval = setInterval(fetchHealth, 10000);
+    return () => { active = false; if (interval) clearInterval(interval); };
   }, []);
 
   return (
     <div style={panelStyle}>
       <h2 style={titleStyle}>Platform Health</h2>
-  {error && <div style={errorStyle}>{error} (showing fallback)</div>}
+  {error && <div style={errorStyle}>{error}</div>}
       {!health && !error && <div>Loading...</div>}
       {health && (
         <div style={{ display: 'grid', gap: '.5rem' }}>

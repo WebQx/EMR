@@ -13,35 +13,37 @@ export const MetricsPanel: React.FC = () => {
 
   useEffect(() => {
     let active = true;
+    let interval: any = null;
+    let demoMode = false;
     const load = async () => {
       try {
         const res = await fetch('/internal/metrics');
-        if (!res.ok) throw new Error('Failed metrics');
+        if (!res.ok) throw new Error('Metrics endpoint not available');
         const data = await res.json();
         if (active) setMetrics(data);
       } catch (e: any) {
-        if (active) {
-          setError(e.message);
-          if (!metrics) {
+        if (active && !demoMode) {
+          demoMode = true;
+            setError('');
             setMetrics({
               requestCount: 0,
               avgLatencyMs: 0,
-              mode: 'static-fallback',
-              note: 'Live metrics unavailable on static hosting'
+              mode: 'Demo Mode',
+              note: 'Live metrics disabled in static preview'
             });
-          }
+          if (interval) clearInterval(interval);
         }
       }
     };
     load();
-    const id = setInterval(load, 10000);
-    return () => { active = false; clearInterval(id); };
+    interval = setInterval(load, 10000);
+    return () => { active = false; if (interval) clearInterval(interval); };
   }, []);
 
   return (
     <div style={panelStyle}>
       <h2 style={titleStyle}>Runtime Metrics</h2>
-  {error && <div style={errorStyle}>{error} (fallback)</div>}
+  {error && <div style={errorStyle}>{error}</div>}
       {!metrics && !error && <div>Loading...</div>}
       {metrics && (
         <div style={{ display: 'grid', gap: '.35rem' }}>

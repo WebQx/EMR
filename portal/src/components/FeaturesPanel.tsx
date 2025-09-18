@@ -13,43 +13,42 @@ export const FeaturesPanel: React.FC = () => {
 
   useEffect(() => {
     let active = true;
+    let interval: any = null;
+    let demoMode = false;
     const load = async () => {
       try {
         const res = await fetch('/internal/metrics');
-        if (res.ok) {
-          const data = await res.json();
-          const featureLike: FeatureFlags = {
-            USE_FHIR_MOCK: !!data?.env?.USE_FHIR_MOCK,
-            AI_ASSIST_ENABLED: !!data?.env?.AI_ASSIST_ENABLED,
-            USE_REMOTE_OPENEMR: !!data?.env?.USE_REMOTE_OPENEMR
-          };
-          if (active) setFlags(featureLike);
-        } else {
-          throw new Error('metrics not ok');
-        }
-      } catch (e:any) {
-        if (active) {
-          setError(e.message);
-          if (!flags) {
-            setFlags({
-              USE_FHIR_MOCK: true,
-              AI_ASSIST_ENABLED: true,
-              USE_REMOTE_OPENEMR: false,
-              MOCK: true
-            });
-          }
+        if (!res.ok) throw new Error('Metrics endpoint not available');
+        const data = await res.json();
+        const featureLike: FeatureFlags = {
+          USE_FHIR_MOCK: !!data?.env?.USE_FHIR_MOCK,
+          AI_ASSIST_ENABLED: !!data?.env?.AI_ASSIST_ENABLED,
+          USE_REMOTE_OPENEMR: !!data?.env?.USE_REMOTE_OPENEMR
+        };
+        if (active) setFlags(featureLike);
+      } catch (e: any) {
+        if (active && !demoMode) {
+          demoMode = true;
+          setError('');
+          setFlags({
+            USE_FHIR_MOCK: true,
+            AI_ASSIST_ENABLED: true,
+            USE_REMOTE_OPENEMR: false,
+            MODE: 'Demo Mode'
+          });
+          if (interval) clearInterval(interval);
         }
       }
     };
     load();
-    const id = setInterval(load, 15000);
-    return () => { active = false; clearInterval(id); };
+    interval = setInterval(load, 15000);
+    return () => { active = false; if (interval) clearInterval(interval); };
   }, []);
 
   return (
     <div style={panelStyle}>
       <h2 style={titleStyle}>Feature Flags</h2>
-  {error && <div style={errorStyle}>{error} (fallback)</div>}
+  {error && <div style={errorStyle}>{error}</div>}
       {!flags && !error && <div>Loading...</div>}
       {flags && (
         <ul style={{ margin: 0, paddingLeft: '1.1rem' }}>
