@@ -1,34 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import { HealthPanel } from './components/HealthPanel';
-import { FeaturesPanel } from './components/FeaturesPanel';
-import { MetricsPanel } from './components/MetricsPanel';
+import React from 'react';
+import { DashboardCards } from './components/DashboardCards';
+import { AuthPanel } from './components/AuthPanel';
+import { SystemStatusPanel } from './components/SystemStatusPanel';
 
 export const PortalApp: React.FC = () => {
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', padding: '1.5rem', maxWidth: 1280, margin: '0 auto' }}>
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: 600 }}>WebQX Portal</h1>
-        <nav style={{ display: 'flex', gap: '1rem' }}>
-          <a href="#" aria-label="Home">Home</a>
-          <a href="#features">Features</a>
-          <a href="#metrics">Metrics</a>
-          <a href="#ai">AI Assist</a>
+    <div className="portal-shell">
+      <header className="portal-header">
+        <h1>WebQX Portal</h1>
+        <nav>
+          <a href="#top">Home</a>
+          <a href="#experiences">Experiences</a>
+          <a href="#observability">Observability</a>
+          <a href="#session">Session</a>
         </nav>
       </header>
-      <main style={{ display: 'grid', gap: '1.25rem' }}>
-        <section>
-          <HealthPanel />
+      <div className="grid" style={{ gap: '1.25rem' }}>
+        <section id="experiences">
+          <DashboardCards />
         </section>
-        <section id="features">
-          <FeaturesPanel />
+        <section id="observability">
+          <SystemStatusPanel />
         </section>
-        <section id="metrics">
-          <MetricsPanel />
+        <section id="session" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: '1.25rem' }}>
+          <AuthPanel />
         </section>
-      </main>
-      <footer style={{ marginTop: '2rem', fontSize: '.85rem', color: '#666' }}>
-        WebQX Healthcare Platform &copy; {new Date().getFullYear()} - Draft Portal Interface
-      </footer>
+      </div>
+      <footer className="site-footer">WebQX Healthcare Platform © {new Date().getFullYear()} • Enhanced Portal Dashboard Preview</footer>
     </div>
   );
 };
