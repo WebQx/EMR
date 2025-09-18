@@ -129,6 +129,15 @@ jobs:
           if [ -d portal ]; then \
             npm run portal:build || echo "portal:build script missing"; \
           fi
+      - name: Verify Portal Build
+        run: |
+          if [ -d portal/dist ]; then
+            echo 'Portal build contents:'
+            find portal/dist -maxdepth 3 -type f | head -n 60
+            test -f portal/dist/index.html || (echo 'ERROR: portal/dist/index.html missing' && exit 1)
+          else
+            echo 'WARNING: portal/dist not found'; ls -al portal || true
+          fi
       - name: Assemble Dist Artifact
         run: npm run build:dist
       - name: List Dist Contents

@@ -4,6 +4,8 @@ import path from 'path';
 
 export default defineConfig(({ mode }) => {
   return {
+    // Use relative base so the portal works under /webqx/portal/ on GitHub Pages
+    base: './',
     plugins: [react()],
     root: path.resolve(__dirname, 'src'),
     build: {
