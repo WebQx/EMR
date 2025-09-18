@@ -19,7 +19,7 @@ html,body { margin:0; padding:0; background: var(--bg); color: var(--text); }
 .portal-shell { max-width: 1320px; margin:0 auto; padding:1.75rem 1.25rem 4rem; }
 
 header.portal-header { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between; margin-bottom:1.75rem; }
-header.portal-header h1 { font-size:1.9rem; line-height:1.15; margin:0; background:var(--accent-grad); -webkit-background-clip:text; color:transparent; font-weight:650; letter-spacing:.5px; }
+header.portal-header h1 { font-size:1.9rem; line-height:1.15; margin:0; background:var(--accent-grad); -webkit-background-clip:text; background-clip:text; color:transparent; font-weight:650; letter-spacing:.5px; }
 header.portal-header nav { display:flex; gap:.85rem; flex-wrap:wrap; }
 header.portal-header nav a, header.portal-header nav button { text-decoration:none; padding:.5rem .85rem; border-radius: 30px; font-size:.85rem; font-weight:500; color:var(--accent); background:rgba(37,99,235,.08); transition:.18s background,color; border:none; cursor:pointer; }
 header.portal-header nav a:hover, header.portal-header nav button:hover { background:var(--accent); color:#fff; }
@@ -79,3 +79,5 @@ footer.site-footer { margin-top:2.25rem; font-size:.7rem; color:var(--muted); te
 .code-block { font-family:SFMono-Regular,ui-monospace,Menlo,monospace; font-size:.6rem; }
 .btn { background:var(--accent-grad); border:none; color:#fff; font-size:.6rem; padding:.4rem .7rem; border-radius:.45rem; cursor:pointer; letter-spacing:.4px; box-shadow:0 2px 4px rgba(0,0,0,.12); }
 .btn:hover { filter:brightness(1.1); }
+.btn.small { font-size:.55rem; padding:.3rem .55rem; border-radius:.4rem; }
+.btn.secondary { background:#fff; color:var(--accent); border:1px solid var(--border); box-shadow:none; }

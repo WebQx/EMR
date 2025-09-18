@@ -66,8 +66,8 @@ export const PortalContent: React.FC<PortalContentProps> = ({ selectedId, base, 
       <p style={{ marginTop: '.5rem' }}>{meta.description}</p>
       <SectionDivider title="Purpose" />
       <PurposeBlock meta={meta} />
-      <SectionDivider title="Sample / Interactive" />
-      <InteractiveBlock id={meta.id} />
+  <SectionDivider title="Sample / Interactive" />
+  <InteractiveBlock meta={meta} base={base} />
       <SectionDivider title="Implementation Notes" />
       <ImplementationNotes meta={meta} base={base} />
       {meta.externalHref && (
@@ -98,8 +98,13 @@ const PurposeBlock: React.FC<{ meta: ModuleMeta }> = ({ meta }) => {
 };
 
 // Simple interactive block per module id
-const InteractiveBlock: React.FC<{ id: string }> = ({ id }) => {
-  switch (id) {
+const InteractiveBlock: React.FC<{ meta: ModuleMeta; base: string }> = ({ meta, base }) => {
+  // For key modules, embed the actual static demo page inline for an immediate "live" experience.
+  if (meta.externalHref && ['labs','appt','telehealth','login'].includes(meta.id)) {
+    return <ExternalDemoFrame src={base + meta.externalHref} />;
+  }
+  // Fallback to synthetic mini-demos where appropriate
+  switch (meta.id) {
     case 'labs':
       return <FhirObservationDemo />;
     case 'appt':
@@ -112,6 +117,18 @@ const InteractiveBlock: React.FC<{ id: string }> = ({ id }) => {
       return <GenericInfo />;
   }
 };
+
+const ExternalDemoFrame: React.FC<{ src: string }> = ({ src }) => (
+  <div className="mini-block" style={{ background: '#fff' }}>
+    <p style={{ fontSize: '.7rem', marginTop: 0 }}>Inline demo preview (opens from this site). You can also open it in a new tab for full-screen.</p>
+    <div style={{ aspectRatio: '16 / 10', width: '100%', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', background: '#fff' }}>
+      <iframe src={src} title="Inline Demo" style={{ width: '100%', height: '100%', border: '0' }} loading="lazy" />
+    </div>
+    <div style={{ marginTop: '.5rem' }}>
+      <a className="btn small" href={src} target="_blank" rel="noopener noreferrer">Open this demo in a new tab ↗</a>
+    </div>
+  </div>
+);
 
 const GenericInfo: React.FC = () => (
   <div style={{ fontSize: '.7rem' }}>
@@ -190,8 +207,8 @@ const ImplementationNotes: React.FC<{ meta: ModuleMeta; base: string }> = ({ met
       <li>Category: <strong>{meta.category}</strong></li>
       <li>Keywords: {meta.keywords.join(', ')}</li>
       <li>Client-rendered: Content is generated entirely in-portal to remain functional on static hosting.</li>
-      <li>Progressive enhancement path: Replace this block with live API integration once backend endpoints are proxied to Pages.</li>
-      <li>Hash routing: Selection is reflected in URL (<code>#{meta.id}</code>) to allow direct linking.</li>
+  <li>Progressive enhancement path: Inline frame shows the static demo page when available; swap this with native components when backend endpoints are live.</li>
+  <li>Stable URL: Navigation avoids changing the address bar so everything remains at <code>/EMR/</code>.</li>
       {meta.externalHref && <li>Original placement target preserved as external link (opens new tab) to avoid breaking legacy expectations.</li>}
       <li>Zero network dependency (except README & health panels) ensures basic functionality even offline.</li>
     </ul>

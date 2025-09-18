@@ -56,7 +56,12 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ onSelect, select
                 {l.badge && <span className="badge">{l.badge}</span>}
               </div>
               <p>{l.description}</p>
-              {l.href && <span style={{ position: 'absolute', bottom: 6, right: 8, fontSize: '.55rem', opacity: .7 }}>Ext ↗</span>}
+              {l.href && (
+                <div className="card-actions" style={{ display: 'flex', gap: '.4rem', marginTop: '.6rem' }}>
+                  <button className="btn secondary small" onClick={(e) => { e.stopPropagation(); onSelect(l.id); }}>Details</button>
+                  <a className="btn small" href={l.href} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>Open demo ↗</a>
+                </div>
+              )}
             </div>
           );
         })}
