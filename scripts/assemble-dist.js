@@ -62,6 +62,10 @@ function start() {
   } else if (fs.existsSync('public/portal')) { // fallback
     copyRecursive('public/portal', path.join(dist, 'portal'));
   }
+  // Extra portal static pages (404 etc.)
+  if (fs.existsSync('portal/src/404.html')) {
+    copyRecursive('portal/src/404.html', path.join(dist, 'portal', '404.html'));
+  }
 
   // .nojekyll (avoid Jekyll processing edge cases)
   fs.writeFileSync(path.join(dist, '.nojekyll'), '');
