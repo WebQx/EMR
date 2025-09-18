@@ -38,6 +38,9 @@ jobs:
         uses: actions/configure-pages@v4
       
       - name: Build unified site (portal + static)
+        env:
+          RAILWAY_PUBLIC_API_BASE: ${{ secrets.RAILWAY_PUBLIC_API_BASE }}
+          RAILWAY_PUBLIC_EMR_BASE: ${{ secrets.RAILWAY_PUBLIC_EMR_BASE }}
         run: |
           echo "Building unified GitHub Pages artifact via build-pages script"
           npm run build:pages

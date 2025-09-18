@@ -674,6 +674,9 @@ Lets you quickly test evolving endpoints (e.g., adding a new `/api/v1/auth/roles
 ### Dev Notes
 * Not for production use—shared secret JWT, in-memory sessions, and no external store
 * Designed to mimic Django validation patterns (field error arrays) for seamless gateway swap
+### Configure Pages → Railway (WebQX frontend + OpenEMR backend)
+
+To run the full WebQX EMR with a static frontend on GitHub Pages and a production backend on Railway:
 * Return shape intentionally stable to allow frontends to test progressive enhancement (e.g., lockout overlay, MFA prompts)
 
 ### Next Hardening Ideas (Optional)
