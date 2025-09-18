@@ -2,6 +2,8 @@
 
 > Cloud-based, FHIR-compliant, global healthcare ecosystem with OpenEMR integration
 
+> Latest Enhancements (2025-09): Added security middleware stack, AI Assist mock endpoint, optional in-memory FHIR R4 mock (Patient & Appointment), circuit breaker for remote OpenEMR/FHIR proxy, internal metrics & audit endpoints.
+
 ![WebQX CI & Deployment](https://github.com/${GITHUB_REPOSITORY:-webqx/webqx}/actions/workflows/deploy.yml/badge.svg)
 
 ## 🌍 Live Demo
@@ -68,6 +70,122 @@
 - Remote Monitoring (IoT)
 - Electronic Prescriptions
 - Appointment Scheduling
+
+---
+
+## 🧠 AI Assist (Mock Preview)
+
+Endpoint: `POST /api/ai/summary`
+
+Modes (`mode` field): `summary | plan | triage | education`
+
+Request Body (example):
+```json
+{
+	"patientId": "demo-patient-1",
+	"mode": "summary",
+	"transcript": [ { "speaker": "patient", "text": "Headaches improving" } ]
+}
+```
+
+Response (summary mode excerpt):
+```json
+{
+	"patientId": "demo-patient-1",
+	"mode": "summary",
+	"model": "webqx-ai-mock-1",
+	"output": {
+		"headline": "Stable follow-up visit with mild symptom reporting",
+		"soap": { "subjective": "...", "plan": "..." }
+	}
+}
+```
+Feature Flag: `AI_ASSIST_ENABLED=true` (default). Disable with `false` to remove route.
+
+Roadmap: streaming transcript summarization, structured ICD/SNOMED extraction, care plan templating.
+
+---
+
+## 🧪 FHIR Mock Server
+
+Enable fast local prototyping without a full OpenEMR stack.
+
+Flag: `USE_FHIR_MOCK=true`
+
+Resources Implemented (in-memory, volatile):
+| Resource | Routes |
+|----------|--------|
+| Patient | `POST /fhir/Patient`, `GET /fhir/Patient/:id`, search `GET /fhir/Patient?name=` |
+| Appointment | `POST /fhir/Appointment`, `GET /fhir/Appointment/:id`, search `GET /fhir/Appointment?patient=` |
+
+Returns FHIR `Bundle` for collection/search endpoints. Not persistent; state resets on restart.
+
+---
+
+## 🛡️ Service Resilience (Circuit Breaker)
+
+Remote OpenEMR/FHIR proxy protected by a lightweight circuit breaker:
+* Tracks failures within 60s window.
+* Opens circuit after `OPENEMR_CIRCUIT_THRESHOLD` failures (default 5).
+* While open, `/api/openemr/*` & `/fhir/*` return `503 { "error": "OPENEMR_CIRCUIT_OPEN" }`.
+* Automatically probes remote health every few seconds; closes on success or cooldown expiry.
+
+Env Vars:
+```
+OPENEMR_CIRCUIT_THRESHOLD=5
+OPENEMR_CIRCUIT_COOLDOWN_MS=15000
+```
+
+---
+
+## 📊 Internal Observability (Dev Only)
+
+| Endpoint | Description |
+|----------|-------------|
+| `/internal/metrics` | Per-route aggregated count / avg / p95 (in-memory) |
+| `/internal/audit` | Recent request audit trail (last 50 entries) |
+
+Do NOT expose publicly without auth. Future: secure with JWT scope + IP allowlist.
+
+---
+
+## ⚙️ Feature Flags & Key Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `USE_REMOTE_OPENEMR` | false | Proxy to hosted OpenEMR instead of local integration layer |
+| `OPENEMR_REMOTE_URL` | (empty) | Base URL for remote OpenEMR when remote mode enabled |
+| `USE_FHIR_MOCK` | true | Serve in-memory FHIR mock instead of proxying FHIR |
+| `AI_ASSIST_ENABLED` | true | Enable `/api/ai` routes |
+| `OPENEMR_CIRCUIT_THRESHOLD` | 5 | Failures per 60s before circuit opens |
+| `OPENEMR_CIRCUIT_COOLDOWN_MS` | 15000 | Circuit open duration before probe re-checks |
+
+Full list: see `.env.example`.
+
+---
+
+## 🚀 Quick Start (Unified Server)
+
+Run with mock FHIR + AI Assist:
+```bash
+git clone https://github.com/WebQx/webqx
+cd webqx
+npm install
+export USE_FHIR_MOCK=true
+export AI_ASSIST_ENABLED=true
+node server.js
+```
+Visit:
+* Health: http://localhost:3000/health
+* AI Assist: `POST http://localhost:3000/api/ai/summary`
+* Create Patient: `POST http://localhost:3000/fhir/Patient`
+
+Switch to remote OpenEMR:
+```bash
+export USE_REMOTE_OPENEMR=true
+export OPENEMR_REMOTE_URL="https://your-remote-openemr.example"
+node server.js
+```
 
 ---
 
