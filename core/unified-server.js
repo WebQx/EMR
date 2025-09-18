@@ -38,6 +38,10 @@ class UnifiedHealthcareServer {
     constructor() {
         this.portManager = new PortManager();
         this.services = new Map();
+        this.log = (level, msg) => {
+            const ts = new Date().toISOString();
+            console.log(`[Unified][${level.toUpperCase()}][${ts}] ${msg}`);
+        };
         this.config = {
             mainPort: process.env.MAIN_PORT || 3000,
             djangoPort: process.env.DJANGO_PORT || 3001,
@@ -63,7 +67,7 @@ class UnifiedHealthcareServer {
             main: false
         };
         
-        console.log('🏥 Initializing WebQX Unified Healthcare Server...');
+        this.log('info', 'Initializing WebQX Unified Healthcare Server');
     }
 
     /**
@@ -71,7 +75,18 @@ class UnifiedHealthcareServer {
      */
     async start() {
         try {
-            console.log('🚀 Starting WebQX Healthcare Services...\n');
+            this.log('info', 'Starting WebQX Healthcare Services');
+            // Reserve ports early to avoid race conflicts
+            try {
+                this.config.djangoPort = await this.portManager.reservePort('django', this.config.djangoPort);
+                if (!this.config.useRemoteOpenEMR) {
+                    this.config.openEMRPort = await this.portManager.reservePort('openemr', this.config.openEMRPort);
+                }
+                this.config.telehealthPort = await this.portManager.reservePort('telehealth', this.config.telehealthPort);
+                this.config.mainPort = await this.portManager.reservePort('main', this.config.mainPort);
+            } catch (e) {
+                this.log('warn', `Port reservation issue: ${e.message}`);
+            }
             
             // Create main API gateway
             await this.createMainGateway();
@@ -100,11 +115,11 @@ class UnifiedHealthcareServer {
                 this.scheduleRemoteOpenEMRProbe();
             }
             
-            console.log('\n✅ All WebQX Healthcare Services are running!');
+            this.log('info', 'All WebQX Healthcare Services are running');
             this.printServiceStatus();
             
         } catch (error) {
-            console.error('❌ Failed to start unified server:', error);
+            this.log('error', `Failed to start unified server: ${error.message}`);
             await this.shutdown();
             process.exit(1);
         }
@@ -332,52 +347,117 @@ class UnifiedHealthcareServer {
             }
             next();
         };
-        // Django Authentication Service Proxy
-        this.app.use('/api/auth', createProxyMiddleware({
+        // Django Authentication Service Proxy (robust path preservation)
+        this.app.use('/api/auth', (req, res, next) => {
+            // Ensure body is captured BEFORE proxy consumes the stream
+            const rawBodyChunks = [];
+            req.on('data', chunk => rawBodyChunks.push(chunk));
+            req.on('end', () => {
+                req.rawBodyBuffer = Buffer.concat(rawBodyChunks);
+            });
+            next();
+        }, createProxyMiddleware({
             target: `http://localhost:${this.config.djangoPort}`,
             changeOrigin: true,
-            pathRewrite: { '^/api/auth': '/api/v1/auth' },
+            selfHandleResponse: false,
+            pathRewrite: (path, req) => {
+                if (path === '/api/auth') return '/api/v1/auth';
+                if (path.startsWith('/api/auth/')) {
+                    const suffix = path.substring('/api/auth/'.length);
+                    return '/api/v1/auth/' + suffix;
+                }
+                return path;
+            },
+            onProxyReq: (proxyReq, req, res) => {
+                if (this.config.environment !== 'production') {
+                    console.log('[Proxy][Auth] inbound:', req.method, req.originalUrl, 'rewritten->', proxyReq.path);
+                }
+                // Re-stream JSON body if present and method supports body
+                if (req.method && ['POST','PUT','PATCH'].includes(req.method.toUpperCase())) {
+                    const bodyData = req.rawBodyBuffer || (req.body && Object.keys(req.body).length ? Buffer.from(JSON.stringify(req.body)) : null);
+                    if (bodyData && bodyData.length) {
+                        // Set proper headers for downstream server
+                        if (!proxyReq.getHeader('Content-Type')) {
+                            proxyReq.setHeader('Content-Type', 'application/json');
+                        }
+                        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+                        try { proxyReq.write(bodyData); } catch (e) { console.warn('Auth proxy body write failed:', e.message); }
+                    }
+                }
+            },
             onError: (err, req, res) => {
                 console.error('❌ Django Auth proxy error:', err.message);
-                res.status(503).json({ error: 'Authentication service unavailable' });
+                if (!res.headersSent) res.status(503).json({ error: 'Authentication service unavailable' });
             }
         }));
 
-        // OpenEMR Service Proxy (local or remote)
-        const openEMRTarget = this.config.useRemoteOpenEMR && this.config.remoteOpenEMRUrl
-            ? this.config.remoteOpenEMRUrl.replace(/\/$/, '')
-            : `http://localhost:${this.config.openEMRPort}`;
-        this.app.use('/api/openemr', circuitGuard, createProxyMiddleware({
-            target: openEMRTarget,
-            changeOrigin: true,
-            pathRewrite: { '^/api/openemr': '/api/v1/openemr' },
-            onError: (err, req, res) => {
-                console.error('❌ OpenEMR proxy error:', err.message);
-                if (this.recordOpenEMRFailure) this.recordOpenEMRFailure();
-                res.status(503).json({ error: 'OpenEMR service unavailable', remote: this.config.useRemoteOpenEMR, circuitOpen: this.isOpenEMRCircuitOpen && this.isOpenEMRCircuitOpen() });
-            }
-        }));
+        // Deferred mounting for OpenEMR/FHIR proxies until service health is true
+        const mountOpenEMRAndFhir = () => {
+            const openEMRTarget = this.config.useRemoteOpenEMR && this.config.remoteOpenEMRUrl
+                ? this.config.remoteOpenEMRUrl.replace(/\/$/, '')
+                : `http://localhost:${this.config.openEMRPort}`;
 
-        // FHIR mock or proxy
-        if (this.config.useFhirMock && mockFhirRouter) {
-            this.app.use('/fhir', mockFhirRouter);
-            console.log('🧪 FHIR mock enabled at /fhir');
-        } else {
-            this.app.use('/fhir', circuitGuard, createProxyMiddleware({
+            this.app.use('/api/openemr', circuitGuard, createProxyMiddleware({
                 target: openEMRTarget,
                 changeOrigin: true,
-                pathRewrite: (path) => {
-                    if (!path.startsWith('/fhir/')) {
-                        return '/fhir' + path;
-                    }
-                    return path;
-                },
+                pathRewrite: { '^/api/openemr': '/api/v1/openemr' },
                 onError: (err, req, res) => {
-                    console.error('❌ FHIR proxy error:', err.message);
+                    console.error('❌ OpenEMR proxy error:', err.message);
                     if (this.recordOpenEMRFailure) this.recordOpenEMRFailure();
-                    res.status(503).json({ error: 'FHIR service unavailable', remote: this.config.useRemoteOpenEMR, circuitOpen: this.isOpenEMRCircuitOpen && this.isOpenEMRCircuitOpen() });
+                    res.status(503).json({ error: 'OpenEMR service unavailable', remote: this.config.useRemoteOpenEMR, circuitOpen: this.isOpenEMRCircuitOpen && this.isOpenEMRCircuitOpen() });
                 }
             }));
+
+            if (this.config.useFhirMock && mockFhirRouter) {
+                this.app.use('/fhir', mockFhirRouter);
+                console.log('🧪 FHIR mock enabled at /fhir');
+            } else {
+                this.app.use('/fhir', circuitGuard, createProxyMiddleware({
+                    target: openEMRTarget,
+                    changeOrigin: true,
+                    pathRewrite: (path) => {
+                        if (!path.startsWith('/fhir/')) {
+                            return '/fhir' + path;
+                        }
+                        return path;
+                    },
+                    onError: (err, req, res) => {
+                        console.error('❌ FHIR proxy error:', err.message);
+                        if (this.recordOpenEMRFailure) this.recordOpenEMRFailure();
+                        res.status(503).json({ error: 'FHIR service unavailable', remote: this.config.useRemoteOpenEMR, circuitOpen: this.isOpenEMRCircuitOpen && this.isOpenEMRCircuitOpen() });
+                    }
+                }));
+            }
+            console.log('🔌 OpenEMR & FHIR proxies mounted');
+        };
+
+        // Temporary holding handlers until readiness
+        this.app.use('/api/openemr', (req, res, next) => {
+            if (this.serviceHealth.openemr) return next('route');
+            return res.status(503).json({ error: 'OPENEMR_STARTING', message: 'OpenEMR service not yet ready' });
+        });
+        this.app.use('/fhir', (req, res, next) => {
+            if (this.serviceHealth.openemr || (this.config.useFhirMock && mockFhirRouter)) return next('route');
+            return res.status(503).json({ error: 'FHIR_STARTING', message: 'FHIR service not yet ready' });
+        });
+
+        // Poll until openemr health becomes true then mount real proxies once
+        if (this.config.useRemoteOpenEMR && this.config.remoteOpenEMRUrl) {
+            // For remote we assume ready immediately
+            mountOpenEMRAndFhir();
+        } else {
+            const readyInterval = setInterval(() => {
+                if (this.serviceHealth.openemr) {
+                    clearInterval(readyInterval);
+                    mountOpenEMRAndFhir();
+                }
+            }, 500);
+            // Safety timeout (10s) mount anyway
+            setTimeout(() => {
+                if (!this._openemrProxiesMounted) {
+                    mountOpenEMRAndFhir();
+                }
+            }, 10000);
         }
 
         // Telehealth Service Proxy
@@ -495,7 +575,7 @@ class UnifiedHealthcareServer {
                 this.createMinimalDjangoServer();
             }
             
-            const djangoProcess = spawn('node', [djangoServerPath], {
+            const launch = () => spawn('node', [djangoServerPath], {
                 env: {
                     ...process.env,
                     PORT: this.config.djangoPort,
@@ -503,25 +583,37 @@ class UnifiedHealthcareServer {
                 },
                 stdio: ['pipe', 'pipe', 'pipe']
             });
+            let attempts = 0;
+            const startChild = () => {
+                attempts++;
+                const djangoProcess = launch();
 
-            djangoProcess.stdout.on('data', (data) => {
+                djangoProcess.stdout.on('data', (data) => {
                 console.log(`[Django] ${data.toString().trim()}`);
                 if (data.toString().includes('Started') || data.toString().includes('listening')) {
                     this.serviceHealth.django = true;
                     resolve();
                 }
             });
-
-            djangoProcess.stderr.on('data', (data) => {
-                console.error(`[Django Error] ${data.toString().trim()}`);
-            });
-
-            djangoProcess.on('error', (error) => {
-                console.error('❌ Failed to start Django server:', error);
-                reject(error);
-            });
-
-            this.services.set('django', djangoProcess);
+                djangoProcess.stderr.on('data', (data) => {
+                    const msg = data.toString().trim();
+                    console.error(`[Django Error] ${msg}`);
+                    if (/EADDRINUSE/.test(msg) && attempts < 3) {
+                        console.warn('🔁 Retrying Django server start due to port in use...');
+                        setTimeout(startChild, 1000 * attempts);
+                    }
+                });
+                djangoProcess.on('error', (error) => {
+                    if (error.code === 'EADDRINUSE' && attempts < 3) {
+                        console.warn('🔁 Retrying Django server (error event)');
+                        return setTimeout(startChild, 1000 * attempts);
+                    }
+                    console.error('❌ Failed to start Django server:', error);
+                    reject(error);
+                });
+                this.services.set('django', djangoProcess);
+            };
+            startChild();
             
             // Timeout fallback
             setTimeout(() => {
@@ -545,7 +637,7 @@ class UnifiedHealthcareServer {
             this.createOpenEMRServer();
             
             const openEMRServerPath = path.join(__dirname, 'openemr-server.js');
-            const openEMRProcess = spawn('node', [openEMRServerPath], {
+            const launch = () => spawn('node', [openEMRServerPath], {
                 env: {
                     ...process.env,
                     PORT: this.config.openEMRPort,
@@ -553,8 +645,12 @@ class UnifiedHealthcareServer {
                 },
                 stdio: ['pipe', 'pipe', 'pipe']
             });
+            let attempts = 0;
+            const startChild = () => {
+                attempts++;
+                const openEMRProcess = launch();
 
-            openEMRProcess.stdout.on('data', (data) => {
+                openEMRProcess.stdout.on('data', (data) => {
                 const line = data.toString().trim();
                 console.log(`[OpenEMR] ${line}`);
                 if (!this.serviceHealth.openemr && /(started on port|Server initialized|listening)/i.test(line)) {
@@ -562,17 +658,25 @@ class UnifiedHealthcareServer {
                     resolve();
                 }
             });
-
-            openEMRProcess.stderr.on('data', (data) => {
-                console.error(`[OpenEMR Error] ${data.toString().trim()}`);
-            });
-
-            openEMRProcess.on('error', (error) => {
-                console.error('❌ Failed to start OpenEMR server:', error);
-                reject(error);
-            });
-
-            this.services.set('openemr', openEMRProcess);
+                openEMRProcess.stderr.on('data', (data) => {
+                    const msg = data.toString().trim();
+                    console.error(`[OpenEMR Error] ${msg}`);
+                    if (/EADDRINUSE/.test(msg) && attempts < 3) {
+                        console.warn('🔁 Retrying OpenEMR server start due to port in use...');
+                        setTimeout(startChild, 1000 * attempts);
+                    }
+                });
+                openEMRProcess.on('error', (error) => {
+                    if (error.code === 'EADDRINUSE' && attempts < 3) {
+                        console.warn('🔁 Retrying OpenEMR server (error event)');
+                        return setTimeout(startChild, 1000 * attempts);
+                    }
+                    console.error('❌ Failed to start OpenEMR server:', error);
+                    reject(error);
+                });
+                this.services.set('openemr', openEMRProcess);
+            };
+            startChild();
             
             // Active probe to reduce false timeouts
             const probeStart = Date.now();
@@ -612,7 +716,7 @@ class UnifiedHealthcareServer {
             this.createTelehealthServer();
             
             const telehealthServerPath = path.join(__dirname, 'telehealth-server.js');
-            const telehealthProcess = spawn('node', [telehealthServerPath], {
+            const launch = () => spawn('node', [telehealthServerPath], {
                 env: {
                     ...process.env,
                     PORT: this.config.telehealthPort,
@@ -620,8 +724,12 @@ class UnifiedHealthcareServer {
                 },
                 stdio: ['pipe', 'pipe', 'pipe']
             });
+            let attempts = 0;
+            const startChild = () => {
+                attempts++;
+                const telehealthProcess = launch();
 
-            telehealthProcess.stdout.on('data', (data) => {
+                telehealthProcess.stdout.on('data', (data) => {
                 const line = data.toString().trim();
                 console.log(`[Telehealth] ${line}`);
                 if (!this.serviceHealth.telehealth && /(Server initialized|Services Server started|listening)/i.test(line)) {
@@ -629,17 +737,25 @@ class UnifiedHealthcareServer {
                     resolve();
                 }
             });
-
-            telehealthProcess.stderr.on('data', (data) => {
-                console.error(`[Telehealth Error] ${data.toString().trim()}`);
-            });
-
-            telehealthProcess.on('error', (error) => {
-                console.error('❌ Failed to start Telehealth server:', error);
-                reject(error);
-            });
-
-            this.services.set('telehealth', telehealthProcess);
+                telehealthProcess.stderr.on('data', (data) => {
+                    const msg = data.toString().trim();
+                    console.error(`[Telehealth Error] ${msg}`);
+                    if (/EADDRINUSE/.test(msg) && attempts < 3) {
+                        console.warn('🔁 Retrying Telehealth server start due to port in use...');
+                        setTimeout(startChild, 1000 * attempts);
+                    }
+                });
+                telehealthProcess.on('error', (error) => {
+                    if (error.code === 'EADDRINUSE' && attempts < 3) {
+                        console.warn('🔁 Retrying Telehealth server (error event)');
+                        return setTimeout(startChild, 1000 * attempts);
+                    }
+                    console.error('❌ Failed to start Telehealth server:', error);
+                    reject(error);
+                });
+                this.services.set('telehealth', telehealthProcess);
+            };
+            startChild();
             
             // Active probe to reduce false timeouts
             const probeStart = Date.now();
@@ -672,18 +788,25 @@ class UnifiedHealthcareServer {
      */
     async startMainServer() {
         return new Promise((resolve, reject) => {
-            const server = this.app.listen(this.config.mainPort, '0.0.0.0', () => {
-                console.log(`🌐 Main Gateway Server started on port ${this.config.mainPort}`);
-                this.serviceHealth.main = true;
-                resolve(server);
-            });
-
-            server.on('error', (error) => {
-                console.error('❌ Failed to start main server:', error);
-                reject(error);
-            });
-
-            this.services.set('main', server);
+            let attempts = 0;
+            const startListen = () => {
+                attempts++;
+                const server = this.app.listen(this.config.mainPort, '0.0.0.0', () => {
+                    console.log(`🌐 Main Gateway Server started on port ${this.config.mainPort}`);
+                    this.serviceHealth.main = true;
+                    resolve(server);
+                });
+                server.on('error', (error) => {
+                    if (error.code === 'EADDRINUSE' && attempts < 3) {
+                        console.warn('🔁 Retrying main gateway bind...');
+                        return setTimeout(startListen, 1000 * attempts);
+                    }
+                    console.error('❌ Failed to start main server:', error);
+                    reject(error);
+                });
+                this.services.set('main', server);
+            };
+            startListen();
         });
     }
 
