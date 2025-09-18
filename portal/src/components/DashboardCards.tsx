@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { MODULE_CATALOG } from './PortalContent';
+import { useAuth } from './AuthContext';
 
 export interface DashboardLink {
   id: string;
@@ -24,19 +25,22 @@ const guessBase = (): string => {
 interface DashboardCardsProps { onSelect: (id: string) => void; selectedId: string | null; }
 
 export const DashboardCards: React.FC<DashboardCardsProps> = ({ onSelect, selectedId }) => {
+  const { role } = useAuth();
   const base = guessBase();
-  const links: DashboardLink[] = useMemo(() => MODULE_CATALOG.map(m => ({
-    id: m.id,
-    title: m.title,
-    description: m.description,
-    href: m.externalHref ? base + m.externalHref : undefined,
-    badge: m.category === 'FHIR' ? 'FHIR' : (m.category === 'Docs' ? 'Docs' : undefined),
-    category: m.category
-  })), [base]);
+  const links: DashboardLink[] = useMemo(() => MODULE_CATALOG
+    .filter(m => !role || !m.roles || m.roles.includes(role))
+    .map(m => ({
+      id: m.id,
+      title: m.title,
+      description: m.description,
+      href: m.externalHref ? base + m.externalHref : undefined,
+      badge: m.category === 'FHIR' ? 'FHIR' : (m.category === 'Docs' ? 'Docs' : undefined),
+      category: m.category
+    })), [base, role]);
 
   return (
     <div className="panel" style={{ gridColumn: '1 / -1' }}>
-      <h2 style={{ marginTop: 0 }}>Experience & Demo Surfaces</h2>
+  <h2 style={{ marginTop: 0 }}>Experience & Demo Surfaces {role && <span style={{ fontSize: '.6rem', color: 'var(--muted)', fontWeight: 400 }}>({role} view)</span>}</h2>
       <div className="cards">
         {links.map(l => {
           const active = l.id === selectedId;
@@ -65,7 +69,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ onSelect, select
           );
         })}
       </div>
-      <footer className="meta" style={{ fontSize: '.55rem' }}>Click to view details inline • Ctrl/Cmd+Click opens legacy destination</footer>
+      <footer className="meta" style={{ fontSize: '.55rem' }}>Click to view details inline • Ctrl/Cmd+Click opens legacy destination • {links.length} modules</footer>
     </div>
   );
 };

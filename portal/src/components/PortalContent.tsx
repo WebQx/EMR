@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useAuth } from './AuthContext';
 
 // Re-exported type to keep consistency with DashboardCards definitions
 export interface ModuleMeta {
@@ -8,23 +9,25 @@ export interface ModuleMeta {
   externalHref?: string; // original target link if it exists
   category: string;
   keywords: string[];
+  roles?: string[]; // permitted roles (undefined => all)
 }
 
 // Central catalog of modules/cards so both the card grid and content panel stay in sync
 export const MODULE_CATALOG: ModuleMeta[] = [
-  { id: 'patient', title: 'Patient Portal', description: 'Patient-facing experience & onboarding flows', externalHref: 'patient-portal/', category: 'Experience', keywords: ['patient','onboarding','engagement'] },
-  { id: 'provider', title: 'Provider Workspace', description: 'Clinical tools & encounter management', externalHref: 'provider/', category: 'Experience', keywords: ['provider','clinical','encounter'] },
-  { id: 'telehealth', title: 'Telehealth Demo', description: 'Live session / virtual visit examples', externalHref: 'telehealth-demo.html', category: 'Demo', keywords: ['telehealth','video','virtual-care'] },
-  { id: 'labs', title: 'Lab Results Viewer', description: 'FHIR R4 lab result rendering demo', externalHref: 'demo-lab-results-viewer.html', category: 'FHIR', keywords: ['lab','results','fhir'] },
-  { id: 'appt', title: 'Appointment Booking', description: 'FHIR scheduling demonstration', externalHref: 'demo-fhir-r4-appointment-booking.html', category: 'FHIR', keywords: ['appointment','scheduling','fhir'] },
-  { id: 'login', title: 'Login Page', description: 'Standalone authentication UI example', externalHref: 'login.html', category: 'Auth', keywords: ['login','auth'] },
-  { id: 'admin', title: 'Admin Console', description: 'Operational oversight & configuration', externalHref: 'admin-console/', category: 'Operations', keywords: ['admin','ops'] },
-  { id: 'docs', title: 'System README', description: 'Platform architecture & guidance', externalHref: 'README.md', category: 'Docs', keywords: ['docs','readme'] }
+  { id: 'patient', title: 'Patient Portal', description: 'Patient-facing experience & onboarding flows', externalHref: 'patient-portal/', category: 'Experience', keywords: ['patient','onboarding','engagement'], roles: ['patient'] },
+  { id: 'provider', title: 'Provider Workspace', description: 'Clinical tools & encounter management', externalHref: 'provider/', category: 'Experience', keywords: ['provider','clinical','encounter'], roles: ['provider'] },
+  { id: 'telehealth', title: 'Telehealth Demo', description: 'Live session / virtual visit examples', externalHref: 'telehealth-demo.html', category: 'Demo', keywords: ['telehealth','video','virtual-care'], roles: ['patient','provider','admin'] },
+  { id: 'labs', title: 'Lab Results Viewer', description: 'FHIR R4 lab result rendering demo', externalHref: 'demo-lab-results-viewer.html', category: 'FHIR', keywords: ['lab','results','fhir'], roles: ['patient','provider'] },
+  { id: 'appt', title: 'Appointment Booking', description: 'FHIR scheduling demonstration', externalHref: 'demo-fhir-r4-appointment-booking.html', category: 'FHIR', keywords: ['appointment','scheduling','fhir'], roles: ['patient','provider'] },
+  { id: 'login', title: 'Login Page', description: 'Standalone authentication UI example', externalHref: 'login.html', category: 'Auth', keywords: ['login','auth'], roles: ['patient','provider','admin'] },
+  { id: 'admin', title: 'Admin Console', description: 'Operational oversight & configuration', externalHref: 'admin-console/', category: 'Operations', keywords: ['admin','ops'], roles: ['admin'] },
+  { id: 'docs', title: 'System README', description: 'Platform architecture & guidance', externalHref: 'README.md', category: 'Docs', keywords: ['docs','readme'], roles: ['patient','provider','admin'] }
 ];
 
 interface PortalContentProps { selectedId: string | null; base: string; onClose: () => void; }
 
 export const PortalContent: React.FC<PortalContentProps> = ({ selectedId, base, onClose }) => {
+  const { role } = useAuth();
   const meta = MODULE_CATALOG.find(m => m.id === selectedId);
   if (!selectedId) {
     return (
@@ -41,6 +44,15 @@ export const PortalContent: React.FC<PortalContentProps> = ({ selectedId, base, 
         <h2>Unknown Selection</h2>
         <p>No metadata found for id <code>{selectedId}</code>.</p>
         <button className="btn" onClick={onClose}>Back</button>
+      </div>
+    );
+  }
+  if (role && meta.roles && !meta.roles.includes(role)) {
+    return (
+      <div className="panel" style={{ gridColumn: '1 / -1' }}>
+        <h2 style={{ margin: 0 }}>{meta.title}</h2>
+        <p style={{ fontSize: '.7rem' }}>This module is not available for the current role <strong>{role}</strong>. Select a different role in the Session panel to view it.</p>
+        <button className="btn" onClick={onClose} style={{ fontSize: '.6rem' }}>Close</button>
       </div>
     );
   }

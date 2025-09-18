@@ -1,40 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 interface MockUser { id: string; name: string; role: string; email: string; }
 
 const MOCK_USERS: MockUser[] = [
-  { id: 'u-demo-1', name: 'Alice Patient', role: 'PATIENT', email: 'alice.patient@example.test' },
-  { id: 'u-demo-2', name: 'Dr. Brian Health', role: 'PHYSICIAN', email: 'brian.physician@example.test' },
-  { id: 'u-demo-3', name: 'Nina Nurse', role: 'NURSE', email: 'nina.nurse@example.test' }
+  { id: 'u-demo-1', name: 'Alice Patient', role: 'patient', email: 'alice.patient@example.test' },
+  { id: 'u-demo-2', name: 'Dr. Brian Health', role: 'provider', email: 'brian.provider@example.test' },
+  { id: 'u-demo-3', name: 'Ada Admin', role: 'admin', email: 'ada.admin@example.test' }
 ];
 
 export const AuthPanel: React.FC = () => {
+  const { role, setRole, reset } = useAuth();
   const [user, setUser] = useState<MockUser | null>(null);
   const [expanded, setExpanded] = useState(true);
 
-  const login = (u: MockUser) => {
-    setUser(u);
-    try {
-      localStorage.setItem('portalUser', JSON.stringify(u));
-    } catch {}
-  };
-  const logout = () => { setUser(null); localStorage.removeItem('portalUser'); };
-
-  React.useEffect(() => {
+  useEffect(() => {
     try { const raw = localStorage.getItem('portalUser'); if (raw) setUser(JSON.parse(raw)); } catch {}
   }, []);
+
+  const login = (u: MockUser) => {
+    setUser(u);
+    setRole(u.role);
+    try { localStorage.setItem('portalUser', JSON.stringify(u)); } catch {}
+  };
+  const logout = () => { setUser(null); reset(); localStorage.removeItem('portalUser'); };
 
   return (
     <div className="panel" style={{ position: 'relative' }}>
       <h2 style={{ marginTop: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span>Session (Mock)</span>
+        <span>Session / Role</span>
         <button onClick={() => setExpanded(e => !e)} style={{ fontSize: '.65rem', border: '1px solid var(--border)', background: '#fff', borderRadius: 20, padding: '.25rem .6rem', cursor: 'pointer' }}>{expanded ? 'Hide' : 'Show'}</button>
       </h2>
       {expanded && (
         <div className="auth-box">
           {!user && (
             <>
-              <div style={{ fontSize: '.7rem', color: 'var(--muted)' }}>Select a mock persona to simulate login:</div>
+              <div style={{ fontSize: '.7rem', color: 'var(--muted)' }}>Select a mock user to establish a role:</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
                 {MOCK_USERS.map(u => (
                   <button key={u.id} onClick={() => login(u)} className="secondary" style={{ flex: '1 1 110px', minWidth: 110, background: '#fff', color: 'var(--accent)', border: '1px solid var(--border)' }}>{u.role}</button>
@@ -54,7 +55,7 @@ export const AuthPanel: React.FC = () => {
           )}
         </div>
       )}
-      <footer className="meta">Local-only mock – no network auth.</footer>
+      <footer className="meta">Role: {role || 'none'} • Local-only mock</footer>
     </div>
   );
 };

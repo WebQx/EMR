@@ -5,9 +5,11 @@ import { SystemStatusPanel } from './components/SystemStatusPanel';
 import { PlacementStatusPanel } from './components/PlacementStatusPanel';
 import { ReadmePreview } from './components/ReadmePreview';
 import { PortalContent } from './components/PortalContent';
+import { AuthProvider, useAuth } from './components/AuthContext';
 
-export const PortalApp: React.FC = () => {
+const AppInner: React.FC = () => {
   const [selected, setSelected] = useState<string | null>(null);
+  const { role } = useAuth();
 
   // Initialize from hash for deep linking
   useEffect(() => {
@@ -32,12 +34,24 @@ export const PortalApp: React.FC = () => {
         </nav>
       </header>
       <div className="grid" style={{ gap: '1.25rem' }}>
-        <section id="experiences">
-          <DashboardCards onSelect={setSelected} selectedId={selected} />
-        </section>
-        <section id="content-detail">
-          <PortalContent selectedId={selected} base={deriveBase()} onClose={() => { setSelected(null); window.location.hash = ''; }} />
-        </section>
+        {role ? (
+          <>
+            <section id="experiences">
+              <DashboardCards onSelect={setSelected} selectedId={selected} />
+            </section>
+            <section id="content-detail">
+              <PortalContent selectedId={selected} base={deriveBase()} onClose={() => { setSelected(null); window.location.hash = ''; }} />
+            </section>
+          </>
+        ) : (
+          <section style={{ gridColumn: '1 / -1' }}>
+            <div className="panel" style={{ textAlign: 'center' }}>
+              <h2 style={{ marginTop: 0 }}>Welcome to WebQX Unified Portal</h2>
+              <p style={{ fontSize: '.75rem', maxWidth: 620, margin: '.5rem auto 1rem' }}>Select a role in the Session panel to load tailored modules. This unified experience merges the legacy root landing page and the Vite portal into a single role-aware dashboard.</p>
+              <p style={{ fontSize: '.6rem', color: 'var(--muted)' }}>Modules remain client-side demos while backend services are not available on static hosting.</p>
+            </div>
+          </section>
+        )}
         <section id="observability">
           <SystemStatusPanel />
         </section>
@@ -55,6 +69,12 @@ export const PortalApp: React.FC = () => {
     </div>
   );
 };
+
+export const PortalApp: React.FC = () => (
+  <AuthProvider>
+    <AppInner />
+  </AuthProvider>
+);
 
 function deriveBase(): string {
   const loc = window.location.pathname; // /webqx/portal/

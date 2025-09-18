@@ -347,21 +347,20 @@ Visit the GitHub Pages deployment to see the platform in action.
 fs.writeFileSync(path.join(distDir, 'README.md'), readmeContent);
 console.log('Created: README.md');
 
-// Copy portal dist output if built
+// Copy portal dist output if built, but place at root (unified SPA)
 const portalDist = path.join(__dirname, '..', 'portal', 'dist');
 if (fs.existsSync(portalDist)) {
-    const destPortal = path.join(distDir, 'portal');
-    copyDirectoryRecursive(portalDist, destPortal);
-    console.log('Copied: portal dist → dist/portal');
-    // Create a lightweight 404.html inside portal for SPA refresh handling on Pages
-    const portal404 = path.join(destPortal, '404.html');
-    if (!fs.existsSync(portal404)) {
-        const portalIndex = path.join(destPortal, 'index.html');
-        if (fs.existsSync(portalIndex)) {
-            fs.copyFileSync(portalIndex, portal404);
-            console.log('Created: portal/404.html for SPA routing support');
-        }
-    }
+    // Copy all portal build artifacts into root dist (overwriting any existing index.html with SPA version)
+    copyDirectoryRecursive(portalDist, distDir);
+    console.log('Unified: portal dist merged into dist/ root');
+
+    // Backwards compatibility: create /portal/ redirect that points to root index with hash
+    const legacyPortalDir = path.join(distDir, 'portal');
+    if (!fs.existsSync(legacyPortalDir)) fs.mkdirSync(legacyPortalDir, { recursive: true });
+    const redirectHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta http-equiv="refresh" content="0; url=../index.html#portal"/><title>Redirecting…</title><script>window.location.replace('../index.html#'+(window.location.hash?window.location.hash.substring(1):'portal'));</script><style>body{font-family:system-ui,Segoe UI,Roboto,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#f5f7fb;color:#334155}</style></head><body><p>Redirecting to unified portal…</p></body></html>`;
+    fs.writeFileSync(path.join(legacyPortalDir, 'index.html'), redirectHtml);
+    fs.writeFileSync(path.join(legacyPortalDir, '404.html'), redirectHtml);
+    console.log('Created legacy /portal redirect (index.html & 404.html)');
 }
 
 // Create .nojekyll file to ensure GitHub Pages serves all files
