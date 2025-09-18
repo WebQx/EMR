@@ -11,6 +11,20 @@ if (!fs.existsSync(distDir)) {
 
 console.log('Building static site for GitHub Pages...');
 
+// Build the React portal (Vite) if its package.json exists
+try {
+    const portalPkg = path.join(__dirname, '..', 'portal', 'package.json');
+    if (fs.existsSync(portalPkg)) {
+        console.log('Detected portal app. Building with Vite...');
+        const { execSync } = require('child_process');
+        execSync('npm run portal:build', { stdio: 'inherit', cwd: path.join(__dirname, '..') });
+    } else {
+        console.log('Portal app not found, skipping portal build.');
+    }
+} catch (err) {
+    console.warn('Portal build failed (continuing without portal):', err.message);
+}
+
 // HTML files to copy
 const htmlFiles = [
     'index.html',
@@ -324,6 +338,23 @@ Visit the GitHub Pages deployment to see the platform in action.
 
 fs.writeFileSync(path.join(distDir, 'README.md'), readmeContent);
 console.log('Created: README.md');
+
+// Copy portal dist output if built
+const portalDist = path.join(__dirname, '..', 'portal', 'dist');
+if (fs.existsSync(portalDist)) {
+    const destPortal = path.join(distDir, 'portal');
+    copyDirectoryRecursive(portalDist, destPortal);
+    console.log('Copied: portal dist → dist/portal');
+    // Create a lightweight 404.html inside portal for SPA refresh handling on Pages
+    const portal404 = path.join(destPortal, '404.html');
+    if (!fs.existsSync(portal404)) {
+        const portalIndex = path.join(destPortal, 'index.html');
+        if (fs.existsSync(portalIndex)) {
+            fs.copyFileSync(portalIndex, portal404);
+            console.log('Created: portal/404.html for SPA routing support');
+        }
+    }
+}
 
 // Create .nojekyll file to ensure GitHub Pages serves all files
 fs.writeFileSync(path.join(distDir, '.nojekyll'), '');
