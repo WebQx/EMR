@@ -73,6 +73,14 @@ directoriesToCopy.forEach(dirName => {
     if (fs.existsSync(srcDir)) {
         copyDirectoryRecursive(srcDir, destDir);
         console.log(`Copied directory: ${dirName}`);
+        // Generate an index.html stub if none exists to support portal placement cards
+        const indexPath = path.join(destDir, 'index.html');
+        if (!fs.existsSync(indexPath)) {
+            const title = dirName.replace(/[-_]/g, ' ');
+            const stub = `<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"/><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"/><title>${title} • WebQX</title><style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;margin:0;padding:40px;background:#f5f7fb;color:#1a202c}h1{font-size:1.6rem;margin:0 0 1rem;background:linear-gradient(135deg,#2563eb,#4f46e5);-webkit-background-clip:text;color:transparent}a{color:#2563eb;text-decoration:none}a:hover{text-decoration:underline}footer{margin-top:3rem;font-size:.65rem;color:#64748b}</style></head><body><h1>${title} Section</h1><p>No dedicated landing page was found for <code>${dirName}/</code>. This stub was auto-generated during the GitHub Pages build so navigation cards remain functional.</p><p><a href=\"../index.html\">← Back to Root</a> • <a href=\"../portal/\">Portal Dashboard</a></p><footer>Auto-generated stub • ${new Date().toISOString()}</footer></body></html>`;
+            fs.writeFileSync(indexPath, stub);
+            console.log(`Created stub index.html for ${dirName}`);
+        }
     } else {
         console.log(`Directory not found: ${dirName}`);
     }
