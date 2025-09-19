@@ -1,0 +1,71 @@
+name: Deploy Pages to EMR repo
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci --ignore-scripts
+
+      - name: Build Pages artifact
+        env:
+          RAILWAY_PUBLIC_API_BASE: ${{ secrets.RAILWAY_PUBLIC_API_BASE }}
+          RAILWAY_PUBLIC_EMR_BASE: ${{ secrets.RAILWAY_PUBLIC_EMR_BASE }}
+        run: npm run build:pages
+
+      - name: Checkout target EMR repository
+        uses: actions/checkout@v4
+        with:
+          repository: WebQx/EMR
+          token: ${{ secrets.EMR_DEPLOY_TOKEN }}
+          path: emr-repo
+
+      - name: Prepare gh-pages branch
+        working-directory: emr-repo
+        shell: bash
+        run: |
+          git fetch origin || true
+          if git show-ref --quiet refs/heads/gh-pages; then
+            git checkout gh-pages
+          else
+            git checkout --orphan gh-pages
+            rm -rf * .[^.]* || true
+            echo '<!doctype html><meta charset="utf-8"><title>Initializing…</title>' > index.html
+            git add -A
+            git commit -m "chore: initialize gh-pages branch"
+          fi
+
+      - name: Replace contents with built dist
+        shell: bash
+        run: |
+          rsync -a --delete dist/ emr-repo/
+          cd emr-repo
+          touch .nojekyll
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to publish."
+            exit 0
+          fi
+          git commit -m "deploy: update Pages artifact from webqx repo"
+          git push origin gh-pages
+
+      - name: Post info
+        run: |
+          echo "If not already configured, enable GitHub Pages for WebQx/EMR to serve from branch 'gh-pages' / root."

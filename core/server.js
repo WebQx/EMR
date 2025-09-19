@@ -56,8 +56,7 @@ const patientPortalAuthRoutes = require('./patient-portal/auth/authRoutes');
 const providerAuthRoutes = require('./auth/providers/routes');
 const providerSSORoutes = require('./auth/providers/sso-routes');
 
-// Ottehr Integration imports
-const ottehrRoutes = require('./auth/ottehr/routes');
+// Ottehr Integration imports (removed)
 
 const { PortManager } = require('./port-manager');
 
@@ -239,8 +238,7 @@ try {
     console.warn('⚠️ OpenEvidence authentication routes not available:', error.message);
 }
 
-// Ottehr API routes
-app.use('/api/ottehr', ottehrRoutes);
+// Ottehr API routes (removed)
 
 // Telepsychiatry API routes
 const sessionRoutes = require('./routes/session');

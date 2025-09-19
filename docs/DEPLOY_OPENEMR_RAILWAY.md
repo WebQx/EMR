@@ -8,7 +8,7 @@ Instead of spawning a local integration server, WebQX can proxy FHIR & core Open
 USE_REMOTE_OPENEMR=true
 OPENEMR_REMOTE_URL=https://your-railway-openemr.app
 ```
-The unified server will:
+The healthcare platform gateway will:
 - Skip local OpenEMR process startup
 - Mark OpenEMR health as ready
 - Proxy `/api/openemr/*` → `<OPENEMR_REMOTE_URL>/api/v1/openemr/*`
@@ -55,7 +55,7 @@ To switch back to local mode, unset or set:
 ```
 USE_REMOTE_OPENEMR=false
 ```
-The unified server will again spawn the embedded `openemr-server.js` integration layer.
+The healthcare platform gateway will again spawn the embedded `openemr-server.js` integration layer.
 
 ## 6. Health & Observability
 - The gateway `/health` marks `openemr: true` immediately in remote mode (optimistic). Future enhancement: active probe to `OPENEMR_REMOTE_URL/fhir/metadata` before marking ready.

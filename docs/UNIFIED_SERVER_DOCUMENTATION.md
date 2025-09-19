@@ -1,8 +1,8 @@
-# WebQX™ Unified Healthcare Server Documentation
+# WebQX™ Healthcare Platform Gateway (formerly Unified Healthcare Server)
 
 ## Overview
 
-The WebQX Unified Healthcare Server is a comprehensive solution that integrates three essential healthcare services into a single, unified platform:
+The WebQX Healthcare Platform Gateway is a comprehensive solution that integrates three essential healthcare services into a single, unified platform:
 
 - **Django Authentication Server** (Port 3001) - JWT-based authentication, user management, and security
 - **OpenEMR Integration Server** (Port 3002) - FHIR APIs, patient data, and EHR connectivity
@@ -13,7 +13,7 @@ The WebQX Unified Healthcare Server is a comprehensive solution that integrates 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                    WebQX Unified Healthcare Server             │
+│                    WebQX Healthcare Platform Gateway           │
 ├─────────────────────────────────────────────────────────────────┤
 │  Main API Gateway (Port 3000)                                  │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐             │

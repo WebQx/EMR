@@ -1,5 +1,5 @@
 /**
- * WebQX™ Unified Healthcare Server
+ * WebQX™ Healthcare Platform Gateway
  * 
  * Comprehensive server setup for OpenEMR, Telehealth, and Django authentication
  * Provides a single entry point for all healthcare services with proper isolation
@@ -40,10 +40,11 @@ class UnifiedHealthcareServer {
         this.services = new Map();
         this.log = (level, msg) => {
             const ts = new Date().toISOString();
-            console.log(`[Unified][${level.toUpperCase()}][${ts}] ${msg}`);
+            console.log(`[Gateway][${level.toUpperCase()}][${ts}] ${msg}`);
         };
         this.config = {
-            mainPort: process.env.MAIN_PORT || 3000,
+            // Prefer platform-provided PORT (e.g., Railway/Heroku), fallback to MAIN_PORT or 3000
+            mainPort: process.env.PORT || process.env.MAIN_PORT || 3000,
             djangoPort: process.env.DJANGO_PORT || 3001,
             openEMRPort: process.env.OPENEMR_PORT || 3002,
             telehealthPort: process.env.TELEHEALTH_PORT || 3003,
@@ -67,7 +68,7 @@ class UnifiedHealthcareServer {
             main: false
         };
         
-        this.log('info', 'Initializing WebQX Unified Healthcare Server');
+        this.log('info', 'Initializing WebQX Healthcare Platform Gateway');
     }
 
     /**
@@ -75,7 +76,7 @@ class UnifiedHealthcareServer {
      */
     async start() {
         try {
-            this.log('info', 'Starting WebQX Healthcare Services');
+            this.log('info', 'Starting WebQX Healthcare Platform Services');
             // Reserve ports early to avoid race conflicts
             try {
                 this.config.djangoPort = await this.portManager.reservePort('django', this.config.djangoPort);
@@ -115,11 +116,11 @@ class UnifiedHealthcareServer {
                 this.scheduleRemoteOpenEMRProbe();
             }
             
-            this.log('info', 'All WebQX Healthcare Services are running');
+            this.log('info', 'All WebQX Healthcare Platform Services are running');
             this.printServiceStatus();
             
         } catch (error) {
-            this.log('error', `Failed to start unified server: ${error.message}`);
+            this.log('error', `Failed to start platform gateway: ${error.message}`);
             await this.shutdown();
             process.exit(1);
         }
@@ -131,50 +132,38 @@ class UnifiedHealthcareServer {
     async createMainGateway() {
         this.app = express();
         
-        // Security middleware with remote access support
+        // Security middleware with remote access support (fixed CSP)
         this.app.use(helmet({
             crossOriginEmbedderPolicy: false,
             contentSecurityPolicy: {
                 directives: {
                     defaultSrc: ["'self'"],
                     scriptSrc: [
-                        "'self'", 
-                        "'unsafe-inline'", 
-                        "'unsafe-eval'", 
+                        "'self'",
+                        "'unsafe-inline'",
+                        "'unsafe-eval'",
                         "https://cdn.tailwindcss.com",
                         "https://unpkg.com",
                         "https://cdnjs.cloudflare.com"
                     ],
                     styleSrc: [
-                        "'self'", 
-                        "'unsafe-inline'", 
+                        "'self'",
+                        "'unsafe-inline'",
                         "https://cdn.tailwindcss.com",
                         "https://cdnjs.cloudflare.com"
                     ],
                     connectSrc: [
-                        "'self'", 
-                        "ws:", 
-                        "wss:", 
-                        `http://localhost:${this.config.djangoPort}`, 
-                        `http://localhost:${this.config.openEMRPort}`, 
-                        `http://localhost:${this.config.telehealthPort}`,
-                        "https:",
+                        "'self'",
+                        "ws:",
+                        "wss:",
                         "http:",
-                        "ws://localhost:*",
-                        "wss://localhost:*",
-                        `ws://*:${this.config.mainPort}`,
-                        `wss://*:${this.config.mainPort}`
-                    ],
-                    imgSrc: ["'self'", "data:", "https:", "http:"],
-                    fontSrc: ["'self'", "https:", "data:"],
-                    mediaSrc: ["'self'", "https:", "http:", "blob:"],
-                    frameSrc: ["'self'", "https:", "http:"]
-                },
+                        "https:"
+                    ]
+                }
             },
             hsts: {
                 maxAge: 31536000,
-                includeSubDomains: true,
-                preload: true
+                includeSubDomains: true
             }
         }));
 
@@ -188,7 +177,8 @@ class UnifiedHealthcareServer {
                 if (this.config.environment === 'production') {
                     // Add your allowed domains here
                     const allowedOrigins = [
-                        /^https?:\/\/.*\.webqx\..*$/,  // WebQX domains
+                        /^https?:\/\/.*\.webqx\..*$/,  // WebQX subdomains on any TLD (e.g., app.webqx.com)
+                        /^https?:\/\/webqx\.github\.io$/, // GitHub Pages for this repo/org
                         /^https?:\/\/localhost:\d+$/,   // Local development
                         /^https?:\/\/192\.168\.\d+\.\d+:\d+$/,  // Local network
                         /^https?:\/\/10\.\d+\.\d+\.\d+:\d+$/,   // Private network
@@ -226,6 +216,8 @@ class UnifiedHealthcareServer {
         };
         
         this.app.use(cors(corsOptions));
+        // Ensure preflight requests are handled for all routes
+        this.app.options('*', cors(corsOptions));
         
             // Remote server management endpoints
             /**
@@ -255,7 +247,7 @@ class UnifiedHealthcareServer {
                     timestamp: new Date().toISOString(),
                     services: this.serviceHealth,
                     ports: this.config,
-                    message: 'WebQX Unified Healthcare Server is online'
+                    message: 'WebQX Healthcare Platform Gateway is online'
                 });
             });
 
@@ -283,11 +275,11 @@ class UnifiedHealthcareServer {
         // Patient portal routes
         this.setupPatientPortalRoutes();
 
-        // Health check for the unified server
+        // Health check for the platform gateway
         this.app.get('/health', (req, res) => {
             res.json({
                 status: 'healthy',
-                service: 'WebQX Unified Healthcare Server',
+                service: 'WebQX Healthcare Platform Gateway',
                 timestamp: new Date().toISOString(),
                 version: '1.0.0',
                 services: this.serviceHealth,
@@ -838,7 +830,7 @@ class UnifiedHealthcareServer {
      * Print service status
      */
     printServiceStatus() {
-        console.log('\n🏥 WebQX Healthcare Services Status:');
+    console.log('\n🏥 WebQX Healthcare Platform Services Status:');
         console.log('═══════════════════════════════════════════════════════════');
         console.log(`🌐 Main Gateway     : http://localhost:${this.config.mainPort} ${this.serviceHealth.main ? '✅' : '❌'}`);
         console.log(`🔐 Django Auth      : http://localhost:${this.config.djangoPort} ${this.serviceHealth.django ? '✅' : '❌'}`);
@@ -859,7 +851,7 @@ class UnifiedHealthcareServer {
         if (this.config.aiAssistEnabled) console.log(`   • AI Assist       : http://localhost:${this.config.mainPort}/api/ai/summary`);
         if (this.config.useFhirMock) console.log('   • FHIR Mock       : ENABLED (Patient, Appointment)');
         console.log(`   • WebSocket       : ws://localhost:${this.config.mainPort}/ws`);
-        console.log('\n🎯 All services are proxied through the main gateway for unified access');
+    console.log('\n🎯 All services are proxied through the main gateway for unified access');
     }
 
     // ---- Circuit Breaker Helpers ----
@@ -937,7 +929,7 @@ process.on('SIGTERM', async () => {
 // Only start if this file is run directly
 if (require.main === module) {
     server.start().catch((error) => {
-        console.error('❌ Failed to start unified server:', error);
+        console.error('❌ Failed to start platform gateway:', error);
         process.exit(1);
     });
 }

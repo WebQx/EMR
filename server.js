@@ -7,9 +7,9 @@
     const UnifiedServer = require('./core/unified-server.js');
     const unified = new UnifiedServer();
     await unified.start();
-    console.log(`✅ Unified server started (${Date.now() - startTime}ms)`);
+    console.log(`✅ WebQX Healthcare Platform Gateway started (${Date.now() - startTime}ms)`);
   } catch (e) {
-    console.warn('⚠️ Unified server failed:', e.message);
+    console.warn('⚠️ Platform gateway failed:', e.message);
     try {
       const Legacy = require('./core/start-webqx-server.js');
       const mgr = new Legacy();

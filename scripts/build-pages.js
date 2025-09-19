@@ -39,8 +39,6 @@ const htmlFiles = [
     'demo-lab-results-simple.html',
     'demo-lab-results-viewer.html',
     'header-demo.html',
-    'ottehr-demo.html',
-    'ottehr-keycloak-demo.html',
     'telehealth_demo.html',
     'telehealth-demo.html',
     'telehealth-session-demo.html',
@@ -57,7 +55,14 @@ htmlFiles.forEach(file => {
         fs.copyFileSync(srcPath, destPath);
         console.log(`Copied: ${file}`);
     } else {
-        console.warn(`File not found: ${file}`);
+        // Fallback: certain demos live under archive/demos
+        const altPath = path.join(__dirname, '..', 'archive', 'demos', file);
+        if (fs.existsSync(altPath)) {
+            fs.copyFileSync(altPath, destPath);
+            console.log(`Copied (from archive/demos): ${file}`);
+        } else {
+            console.warn(`File not found: ${file}`);
+        }
     }
 });
 
@@ -338,7 +343,6 @@ This is a static demo deployment of the WebQX Healthcare Platform.
 - [FHIR Appointment Booking](demo-fhir-r4-appointment-booking.html)
 - [Lab Results Viewer](demo-lab-results-viewer.html)
 - [OpenEMR Integration](whisper-openemr-demo.html)
-- [Ottehr Integration](ottehr-demo.html)
 
 ## Features Demonstrated:
 - Patient portal interface
@@ -387,16 +391,24 @@ if (fs.existsSync(portalDist)) {
         if (html.includes('</head>')) {
             const tags = [];
             // Load runtime-config first (if present), then remote-config, then small integration patch.
-            if (USING_RUNTIME_CONFIG) tags.push('  <script src="/runtime-config.js"></script>');
+            if (USING_RUNTIME_CONFIG) tags.push('  <script src="./runtime-config.js"></script>');
             // Ensure remote config is available to the SPA at runtime
-            tags.push('  <script src="/webqx-remote-config.js"></script>');
+            tags.push('  <script src="./webqx-remote-config.js"></script>');
+                        // Route relative /api and /fhir calls to Railway from Pages
+                        if (fs.existsSync(path.join(__dirname, '..', 'integrations', 'pages-spa-api-proxy.js'))) {
+                                fs.copyFileSync(
+                                    path.join(__dirname, '..', 'integrations', 'pages-spa-api-proxy.js'),
+                                    path.join(distDir, 'pages-spa-api-proxy.js')
+                                );
+                                tags.push('  <script src="./pages-spa-api-proxy.js"></script>');
+                        }
             // Keep small integrations helper (does not mock fetch)
             if (fs.existsSync(path.join(distDir, 'github-pages-integration-patch.js'))) {
-                tags.push('  <script src="/github-pages-integration-patch.js"></script>');
+                tags.push('  <script src="./github-pages-integration-patch.js"></script>');
             }
             // Avoid adding mock API to SPA when we expect a real Railway backend
             if (!USING_RUNTIME_CONFIG && !html.includes('api-mock.js') && fs.existsSync(path.join(distDir, 'api-mock.js'))) {
-                tags.push('  <script src="/api-mock.js"></script>');
+                tags.push('  <script src="./api-mock.js"></script>');
             }
             // Only insert if not already present
             const marker = '<!-- webqx-runtime-injected -->';
@@ -412,6 +424,19 @@ if (fs.existsSync(portalDist)) {
 // Create .nojekyll file to ensure GitHub Pages serves all files
 fs.writeFileSync(path.join(distDir, '.nojekyll'), '');
 console.log('Created: .nojekyll');
+
+// Create SPA 404 fallback to support deep links under GitHub Pages (/EMR/whatever -> index.html)
+try {
+    const indexPath = path.join(distDir, 'index.html');
+    const fallbackPath = path.join(distDir, '404.html');
+    if (fs.existsSync(indexPath) && !fs.existsSync(fallbackPath)) {
+        const indexHtml = fs.readFileSync(indexPath);
+        fs.writeFileSync(fallbackPath, indexHtml);
+        console.log('Created: 404.html SPA fallback');
+    }
+} catch (e) {
+    console.warn('Could not create 404.html fallback:', e.message);
+}
 
 console.log('\\nBuild complete! The static site is ready in the dist/ directory.');
 console.log('You can now commit and push to trigger GitHub Pages deployment.');

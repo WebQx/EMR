@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * WebQX™ Unified Healthcare Server Startup Script
+ * WebQX™ Healthcare Platform Gateway Startup Script (legacy orchestrator)
  * 
  * Single command to start all healthcare services:
  * - Main API Gateway (Port 3000)
@@ -97,7 +97,7 @@ class WebQXServerManager {
      * Start all services in order
      */
     async startServices() {
-        console.log('🚀 Starting WebQX Healthcare Services...\n');
+    console.log('🚀 Starting WebQX Healthcare Platform Services...\n');
         
         for (const service of this.startupOrder) {
             await this.startService(service);

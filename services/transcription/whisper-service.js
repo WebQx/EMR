@@ -1,7 +1,7 @@
 // Mock Whisper transcription service router
 // Future: streaming, SSE partials, diarization, language detection
-import express from 'express';
-import { applyBranding } from '../../config/branding.js';
+const express = require('express');
+const { applyBranding } = require('../../config/branding.js');
 
 const router = express.Router();
 
@@ -55,4 +55,4 @@ router.post('/mock', express.json({ limit: '2mb' }), (req, res) => {
   res.status(201).json(payload);
 });
 
-export default router;
+module.exports = router;

@@ -4,7 +4,7 @@
 
 > Latest Enhancements (2025-09): Added security middleware stack, AI Assist mock endpoint, optional in-memory FHIR R4 mock (Patient & Appointment), circuit breaker for remote OpenEMR/FHIR proxy, internal metrics & audit endpoints.
 
-> Operational Hardening (2025-09-18): Port reservation & retry (prevents EADDRINUSE), dual user lookup (email + UUID) fixing inactive profile issue, deferred OpenEMR/FHIR proxy mounting (eliminates early 404/metadata race), structured unified server logging helper, dev diagnostics endpoint `/internal/users` (non-production), graceful retry for child service startup.
+> Operational Hardening (2025-09-18): Port reservation & retry (prevents EADDRINUSE), dual user lookup (email + UUID) fixing inactive profile issue, deferred OpenEMR/FHIR proxy mounting (eliminates early 404/metadata race), structured platform gateway logging helper, dev diagnostics endpoint `/internal/users` (non-production), graceful retry for child service startup.
 
 ![WebQX CI & Deployment](https://github.com/${GITHUB_REPOSITORY:-webqx/webqx}/actions/workflows/deploy.yml/badge.svg)
 
@@ -166,7 +166,7 @@ Full list: see `.env.example`.
 
 ---
 
-## 🚀 Quick Start (Unified Server)
+## 🚀 Quick Start (Healthcare Platform Gateway)
 
 Run with mock FHIR + AI Assist:
 ```bash

@@ -27,7 +27,7 @@ export const DashboardCards: React.FC<DashboardCardsProps> = ({ onSelect, select
       title: m.title,
       description: m.description,
       href: m.externalHref ? base + m.externalHref : undefined,
-      badge: m.category === 'FHIR' ? 'FHIR' : (m.category === 'Docs' ? 'Docs' : undefined),
+      badge: m.category === 'FHIR' ? 'FHIR' : (m.category === 'Docs' ? 'Docs' : (m.category === 'AI' ? 'AI' : undefined)),
       category: m.category
     })), [base, role]);
 

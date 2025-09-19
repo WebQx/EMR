@@ -20,6 +20,9 @@ export const MODULE_CATALOG: ModuleMeta[] = [
   { id: 'labs', title: 'Lab Results Viewer', description: 'FHIR R4 lab result rendering demo', externalHref: 'demo-lab-results-viewer.html', category: 'FHIR', keywords: ['lab','results','fhir'], roles: ['patient','provider'] },
   { id: 'appt', title: 'Appointment Booking', description: 'FHIR scheduling demonstration', externalHref: 'demo-fhir-r4-appointment-booking.html', category: 'FHIR', keywords: ['appointment','scheduling','fhir'], roles: ['patient','provider'] },
   { id: 'login', title: 'Login Page', description: 'Standalone authentication UI example', externalHref: 'login.html', category: 'Auth', keywords: ['login','auth'], roles: ['patient','provider','admin'] },
+  { id: 'ai', title: 'AI Assist', description: 'Summarize notes, extract tasks, draft plans (mock)', category: 'AI', keywords: ['ai','summary','assistant'], roles: ['provider','admin'] },
+  { id: 'transcription', title: 'Medical Transcription', description: 'WebQx Medical Transcription using Whisper (mock)', category: 'AI', keywords: ['whisper','transcription','voice'], roles: ['provider','admin'] },
+  { id: 'whisper', title: 'Whisper Full Demo', description: 'Standalone Whisper UI demo pages (file & realtime)', externalHref: 'whisper-demo.html', category: 'AI', keywords: ['whisper','demo'], roles: ['provider','admin'] },
   { id: 'admin', title: 'Admin Console', description: 'Operational oversight & configuration', externalHref: 'admin-console/', category: 'Operations', keywords: ['admin','ops'], roles: ['admin'] },
   { id: 'docs', title: 'System README', description: 'Platform architecture & guidance', externalHref: 'README.md', category: 'Docs', keywords: ['docs','readme'], roles: ['patient','provider','admin'] }
 ];
@@ -117,6 +120,10 @@ const InteractiveBlock: React.FC<{ meta: ModuleMeta; base: string }> = ({ meta, 
       return <PatientChartMini />;
     case 'provider':
       return <EncounterNoteDemo />;
+    case 'ai':
+      return <AiAssistDemo />;
+    case 'transcription':
+      return <TranscriptionDemo />;
     case 'admin':
       return <AdminFlagsDemo />;
     default:
@@ -274,3 +281,95 @@ function randomId() {
 
 // Lightweight styling hooks (leveraging existing .panel and tokens)
 // Additional small utility classes could eventually move to styles.css if reused.
+
+// AI Assist inline demo ---------------------------------------------------------------
+const AiAssistDemo: React.FC = () => {
+  const [text, setText] = useState('Patient reports intermittent headaches with light sensitivity. Sleep quality improved over last week. No vision changes.');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const runSummary = async () => {
+    setLoading(true); setError(null); setResult(null);
+    try {
+      const res = await fetch('/api/ai/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: text, patient: { id: 'P001', name: 'John Doe' }, context: { visitType: 'follow-up' } })
+      });
+      if (!res.ok) throw new Error('Request failed: ' + res.status);
+      const data = await res.json();
+      setResult(data);
+    } catch (e:any) {
+      setError(e.message || 'Unknown error');
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="mini-block">
+      <p style={{ fontSize: '.7rem', marginTop: 0 }}>Draft a clinical summary from free text (mock endpoint).</p>
+      <textarea value={text} onChange={e=>setText(e.target.value)} style={{ width:'100%', minHeight:100, fontFamily:'monospace', fontSize:'.7rem' }} />
+      <div style={{ display:'flex', gap:'.5rem', marginTop:'.4rem' }}>
+        <button className="btn" onClick={runSummary} disabled={loading}>{loading ? 'Summarizing…' : 'Summarize'}</button>
+        <button className="btn secondary" onClick={()=>{setText(''); setResult(null); setError(null);}}>Clear</button>
+      </div>
+      {error && <div style={{ color:'#b00020', fontSize:'.7rem', marginTop:'.4rem' }}>{error}</div>}
+      {result && (
+        <div style={{ marginTop: '.6rem' }}>
+          <pre className="code-block" style={{ maxHeight: 220, overflow:'auto' }}>{JSON.stringify(result, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Transcription inline demo (mock Whisper) --------------------------------------------
+const TranscriptionDemo: React.FC = () => {
+  const [language, setLanguage] = useState('en');
+  const [mode, setMode] = useState<'encounter'|'dictation'>('encounter');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const runMock = async () => {
+    setLoading(true); setError(null); setResult(null);
+    try {
+      const res = await fetch('/api/transcription/mock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language, mode })
+      });
+      if (!res.ok) throw new Error('Request failed: ' + res.status);
+      const data = await res.json();
+      setResult(data);
+    } catch (e:any) {
+      setError(e.message || 'Unknown error');
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="mini-block">
+      <p style={{ fontSize: '.7rem', marginTop: 0 }}>WebQx Medical Transcription using Whisper (mock). Generates transcript and summary.</p>
+      <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap', alignItems:'center' }}>
+        <label style={{ fontSize: '.65rem' }}>Language</label>
+        <select value={language} onChange={e=>setLanguage(e.target.value)}>
+          <option value="en">English</option>
+          <option value="es">Spanish</option>
+          <option value="fr">French</option>
+        </select>
+        <label style={{ fontSize: '.65rem' }}>Mode</label>
+        <select value={mode} onChange={e=>setMode(e.target.value as any)}>
+          <option value="encounter">Encounter</option>
+          <option value="dictation">Dictation</option>
+        </select>
+        <button className="btn" onClick={runMock} disabled={loading}>{loading ? 'Transcribing…' : 'Run mock'}</button>
+      </div>
+      {error && <div style={{ color:'#b00020', fontSize:'.7rem', marginTop:'.4rem' }}>{error}</div>}
+      {result && (
+        <div style={{ marginTop: '.6rem' }}>
+          <pre className="code-block" style={{ maxHeight: 220, overflow:'auto' }}>{JSON.stringify(result, null, 2)}</pre>
+        </div>
+      )}
+    </div>
+  );
+};
