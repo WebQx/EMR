@@ -16,10 +16,14 @@ export interface ModuleMeta {
 export const MODULE_CATALOG: ModuleMeta[] = [
   { id: 'patient', title: 'Patient Portal', description: 'Patient-facing experience & onboarding flows', externalHref: 'patient-portal/', category: 'Experience', keywords: ['patient','onboarding','engagement'], roles: ['patient'] },
   { id: 'provider', title: 'Provider Workspace', description: 'Clinical tools & encounter management', externalHref: 'provider/', category: 'Experience', keywords: ['provider','clinical','encounter'], roles: ['provider'] },
+  { id: 'emr', title: 'EMR (Read-only Demo)', description: 'EMR dashboard preview (static sample)', externalHref: 'emr-dashboard.html', category: 'Experience', keywords: ['emr','ehr'], roles: ['provider','admin'] },
   { id: 'telehealth', title: 'Telehealth Demo', description: 'Live session / virtual visit examples', externalHref: 'telehealth-demo.html', category: 'Demo', keywords: ['telehealth','video','virtual-care'], roles: ['patient','provider','admin'] },
   { id: 'labs', title: 'Lab Results Viewer', description: 'FHIR R4 lab result rendering demo', externalHref: 'demo-lab-results-viewer.html', category: 'FHIR', keywords: ['lab','results','fhir'], roles: ['patient','provider'] },
   { id: 'appt', title: 'Appointment Booking', description: 'FHIR scheduling demonstration', externalHref: 'demo-fhir-r4-appointment-booking.html', category: 'FHIR', keywords: ['appointment','scheduling','fhir'], roles: ['patient','provider'] },
   { id: 'login', title: 'Login Page', description: 'Standalone authentication UI example', externalHref: 'login.html', category: 'Auth', keywords: ['login','auth'], roles: ['patient','provider','admin'] },
+  { id: 'billing', title: 'Medical Billing', description: 'Submit and track mock claims (resets daily 08:00 UTC)', category: 'Operations', keywords: ['billing','claims'], roles: ['provider','admin'] },
+  { id: 'accounting', title: 'Accounting', description: 'Create demo invoices and totals (resets daily 08:00 UTC)', category: 'Operations', keywords: ['accounting','invoices'], roles: ['admin'] },
+  { id: 'access', title: 'Access Controls', description: 'Assign roles to demo users (resets daily 08:00 UTC)', category: 'Operations', keywords: ['access','roles'], roles: ['admin'] },
   { id: 'ai', title: 'AI Assist', description: 'Summarize notes, extract tasks, draft plans (mock)', category: 'AI', keywords: ['ai','summary','assistant'], roles: ['provider','admin'] },
   { id: 'transcription', title: 'Medical Transcription', description: 'WebQx Medical Transcription using Whisper (mock)', category: 'AI', keywords: ['whisper','transcription','voice'], roles: ['provider','admin'] },
   { id: 'whisper', title: 'Whisper Full Demo', description: 'Standalone Whisper UI demo pages (file & realtime)', externalHref: 'whisper-demo.html', category: 'AI', keywords: ['whisper','demo'], roles: ['provider','admin'] },
@@ -108,6 +112,12 @@ const InteractiveBlock: React.FC<{ meta: ModuleMeta; base: string }> = ({ meta, 
   }
   // Fallback to synthetic mini-demos where appropriate
   switch (meta.id) {
+    case 'billing':
+      return <BillingDemo />;
+    case 'accounting':
+      return <AccountingDemo />;
+    case 'access':
+      return <AccessDemo />;
     case 'labs':
       return <FhirObservationDemo />;
     case 'appt':
@@ -319,6 +329,110 @@ const AiAssistDemo: React.FC = () => {
           <pre className="code-block" style={{ maxHeight: 220, overflow:'auto' }}>{JSON.stringify(result, null, 2)}</pre>
         </div>
       )}
+    </div>
+  );
+};
+
+// Billing demo (uses /api/v1/demo/billing/*) ----------------------------------------
+const BillingDemo: React.FC = () => {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const load = async () => {
+    try {
+      setLoading(true); setError(null);
+      const r = await fetch('/api/v1/demo/billing/claims');
+      if (!r.ok) throw new Error(String(r.status));
+      setItems(await r.json());
+    } catch (e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const add = async () => {
+    const payload = { patient: 'John Doe', code: '99213', amount: 125.00 };
+    await fetch('/api/v1/demo/billing/claims', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+    load();
+  };
+  useEffect(() => { load(); }, []);
+  return (
+    <div className="mini-block">
+      <p style={{ fontSize: '.7rem', marginTop: 0 }}>Create and view mock claims. Resets daily at 08:00 UTC.</p>
+      <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap' }}>
+        <button className="btn" onClick={add} disabled={loading}>New claim</button>
+        <button className="btn secondary" onClick={load} disabled={loading}>Refresh</button>
+      </div>
+      {error && <div style={{ color:'#b00020', fontSize:'.7rem' }}>{error}</div>}
+      <pre className="code-block" style={{ maxHeight: 220, overflow:'auto' }}>{JSON.stringify(items, null, 2)}</pre>
+    </div>
+  );
+};
+
+// Accounting demo (uses /api/v1/demo/accounting/*) ----------------------------------
+const AccountingDemo: React.FC = () => {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const load = async () => {
+    try {
+      setLoading(true); setError(null);
+      const r = await fetch('/api/v1/demo/accounting/invoices');
+      if (!r.ok) throw new Error(String(r.status));
+      setItems(await r.json());
+    } catch (e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const add = async () => {
+    const payload = { patient: 'John Doe', items:[{ desc:'Consult', qty:1, price:125 } ] };
+    await fetch('/api/v1/demo/accounting/invoices', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+    load();
+  };
+  useEffect(() => { load(); }, []);
+  return (
+    <div className="mini-block">
+      <p style={{ fontSize: '.7rem', marginTop: 0 }}>Create and view demo invoices. Resets daily at 08:00 UTC.</p>
+      <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap' }}>
+        <button className="btn" onClick={add} disabled={loading}>New invoice</button>
+        <button className="btn secondary" onClick={load} disabled={loading}>Refresh</button>
+      </div>
+      {error && <div style={{ color:'#b00020', fontSize:'.7rem' }}>{error}</div>}
+      <pre className="code-block" style={{ maxHeight: 220, overflow:'auto' }}>{JSON.stringify(items, null, 2)}</pre>
+    </div>
+  );
+};
+
+// Access controls demo (uses /api/v1/demo/access/*) ---------------------------------
+const AccessDemo: React.FC = () => {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState('demo-user');
+  const [role, setRole] = useState('patient');
+  const load = async () => {
+    try {
+      setLoading(true); setError(null);
+      const r = await fetch('/api/v1/demo/access/roles');
+      if (!r.ok) throw new Error(String(r.status));
+      setItems(await r.json());
+    } catch (e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const add = async () => {
+    const payload = { user, role };
+    await fetch('/api/v1/demo/access/roles', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+    load();
+  };
+  useEffect(() => { load(); }, []);
+  return (
+    <div className="mini-block">
+      <p style={{ fontSize: '.7rem', marginTop: 0 }}>Assign roles for demo users (no persistence; daily reset 08:00 UTC).</p>
+      <div style={{ display:'flex', gap:'.5rem', flexWrap:'wrap', alignItems:'center' }}>
+        <input style={{ fontSize:'.7rem' }} value={user} onChange={e=>setUser(e.target.value)} placeholder="user id" />
+        <select value={role} onChange={e=>setRole(e.target.value)}>
+          <option value="patient">patient</option>
+          <option value="provider">provider</option>
+          <option value="admin">admin</option>
+        </select>
+        <button className="btn" onClick={add} disabled={loading}>Assign</button>
+        <button className="btn secondary" onClick={load} disabled={loading}>Refresh</button>
+      </div>
+      {error && <div style={{ color:'#b00020', fontSize:'.7rem' }}>{error}</div>}
+      <pre className="code-block" style={{ maxHeight: 220, overflow:'auto' }}>{JSON.stringify(items, null, 2)}</pre>
     </div>
   );
 };

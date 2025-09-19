@@ -67,8 +67,48 @@ class UnifiedHealthcareServer {
             telehealth: false,
             main: false
         };
+
+        // In-memory demo stores (reset daily 08:00 UTC)
+        this.demoStore = {
+            billing: { claims: [] },
+            accounting: { invoices: [] },
+            access: { roles: [] },
+            nextResetAt: null
+        };
+        this.scheduleDailyDemoReset();
         
         this.log('info', 'Initializing WebQX Healthcare Platform Gateway');
+    }
+
+    // --- Demo store reset helpers ---
+    resetDemoStores() {
+        this.demoStore.billing.claims = [];
+        this.demoStore.accounting.invoices = [];
+        this.demoStore.access.roles = [];
+        // Compute next 08:00 UTC from now
+        const now = new Date();
+        const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 8, 0, 0, 0));
+        if (now.getUTCHours() >= 8) {
+            // today 08:00 passed; schedule for tomorrow
+            next.setUTCDate(next.getUTCDate() + 1);
+        }
+        this.demoStore.nextResetAt = next.toISOString();
+        console.log(`🧹 Demo stores reset. Next reset at ${this.demoStore.nextResetAt}`);
+    }
+
+    scheduleDailyDemoReset() {
+        // Initial reset on startup
+        this.resetDemoStores();
+        const tick = () => {
+            const now = new Date();
+            // If we've reached/passed nextResetAt, reset and compute the next one.
+            const due = this.demoStore.nextResetAt ? new Date(this.demoStore.nextResetAt).getTime() : 0;
+            if (now.getTime() >= due) {
+                this.resetDemoStores();
+            }
+        };
+        // Check every 60s (simple scheduler sufficient here)
+        setInterval(tick, 60 * 1000);
     }
 
     /**
@@ -374,6 +414,94 @@ class UnifiedHealthcareServer {
         // Serve main frontend
         this.app.get('/', (req, res) => {
             res.sendFile(path.join(__dirname, 'index.html'));
+        });
+
+        // ---- Demo APIs (stateless demo data, resets daily @ 08:00 UTC) ----
+        // Info endpoint
+        this.app.get('/api/v1/demo/info', (req, res) => {
+            res.json({ nextResetAt: this.demoStore.nextResetAt });
+        });
+        // Manual reset (for QA)
+        this.app.post('/api/v1/demo/reset', (req, res) => {
+            this.resetDemoStores();
+            res.json({ ok: true, nextResetAt: this.demoStore.nextResetAt });
+        });
+
+        // Billing: claims
+        this.app.get('/api/v1/demo/billing/claims', (req, res) => {
+            res.json(this.demoStore.billing.claims);
+        });
+        this.app.post('/api/v1/demo/billing/claims', (req, res) => {
+            const claim = req.body || {};
+            const id = 'clm_' + Math.random().toString(36).slice(2, 10);
+            const now = new Date().toISOString();
+            const record = {
+                id,
+                createdAt: now,
+                patient: claim.patient || 'John Doe',
+                code: claim.code || '99213',
+                amount: Number(claim.amount || 125.00),
+                status: claim.status || 'submitted',
+                payer: claim.payer || 'Demo Health Plan'
+            };
+            this.demoStore.billing.claims.unshift(record);
+            res.status(201).json(record);
+        });
+        this.app.post('/api/v1/demo/billing/seed', (req, res) => {
+            const seeds = [
+                { patient: 'Alice Patient', code: '99213', amount: 125.00, status: 'submitted', payer: 'Demo Health Plan' },
+                { patient: 'Bob Member', code: '93000', amount: 210.00, status: 'adjudicated', payer: 'Demo Health Plan' },
+                { patient: 'Cara Test', code: '80053', amount: 75.50, status: 'denied', payer: 'Demo Health Plan' }
+            ];
+            seeds.forEach(s => {
+                const id = 'clm_' + Math.random().toString(36).slice(2, 10);
+                this.demoStore.billing.claims.push({ id, createdAt: new Date().toISOString(), ...s });
+            });
+            res.json({ ok: true, count: this.demoStore.billing.claims.length });
+        });
+        this.app.delete('/api/v1/demo/billing/reset', (req, res) => {
+            this.demoStore.billing.claims = [];
+            res.json({ ok: true });
+        });
+
+        // Accounting: invoices
+        this.app.get('/api/v1/demo/accounting/invoices', (req, res) => {
+            res.json(this.demoStore.accounting.invoices);
+        });
+        this.app.post('/api/v1/demo/accounting/invoices', (req, res) => {
+            const inv = req.body || {};
+            const id = 'inv_' + Math.random().toString(36).slice(2, 10);
+            const now = new Date().toISOString();
+            const rec = {
+                id,
+                createdAt: now,
+                patient: inv.patient || 'John Doe',
+                items: Array.isArray(inv.items) ? inv.items : [{ desc: 'Consultation', qty: 1, price: 125.00 }],
+                total: Number(inv.total || (Array.isArray(inv.items) ? inv.items.reduce((s, it) => s + (it.qty*it.price||0), 0) : 125.00)),
+                status: inv.status || 'unpaid'
+            };
+            this.demoStore.accounting.invoices.unshift(rec);
+            res.status(201).json(rec);
+        });
+        this.app.delete('/api/v1/demo/accounting/reset', (req, res) => {
+            this.demoStore.accounting.invoices = [];
+            res.json({ ok: true });
+        });
+
+        // Access controls: roles
+        this.app.get('/api/v1/demo/access/roles', (req, res) => {
+            res.json(this.demoStore.access.roles);
+        });
+        this.app.post('/api/v1/demo/access/roles', (req, res) => {
+            const body = req.body || {};
+            const id = 'role_' + Math.random().toString(36).slice(2, 10);
+            const rec = { id, user: body.user || 'demo-user', role: body.role || 'patient', assignedAt: new Date().toISOString() };
+            this.demoStore.access.roles.unshift(rec);
+            res.status(201).json(rec);
+        });
+        this.app.delete('/api/v1/demo/access/reset', (req, res) => {
+            this.demoStore.access.roles = [];
+            res.json({ ok: true });
         });
         
         console.log('✅ Main API Gateway created');

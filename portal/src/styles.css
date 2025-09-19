@@ -81,3 +81,7 @@ footer.site-footer { margin-top:2.25rem; font-size:.7rem; color:var(--muted); te
 .btn:hover { filter:brightness(1.1); }
 .btn.small { font-size:.55rem; padding:.3rem .55rem; border-radius:.4rem; }
 .btn.secondary { background:#fff; color:var(--accent); border:1px solid var(--border); box-shadow:none; }
+
+/* Modal overlay for role gate */
+.overlay { position:fixed; inset:0; background:rgba(15,23,42,.44); display:flex; align-items:center; justify-content:center; z-index:9999; backdrop-filter: blur(2px); }
+.overlay .modal { width:min(92vw,560px); background:#fff; border:1px solid var(--border); border-radius:12px; padding:1rem 1.1rem 1.2rem; box-shadow:0 10px 30px rgba(0,0,0,.15); }

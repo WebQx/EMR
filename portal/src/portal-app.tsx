@@ -9,6 +9,7 @@ import { computeBasePath } from './components/basePath';
 import { HeroWelcome } from './components/HeroWelcome';
 import { DiagnosticsSection } from './components/DiagnosticsSection';
 import { QuickStart } from './components/QuickStart';
+import { RoleGate } from './components/RoleGate';
 
 const AppInner: React.FC = () => {
   const [selected, setSelected] = useState<string | null>(null);
@@ -22,6 +23,7 @@ const AppInner: React.FC = () => {
 
   return (
     <div className="portal-shell">
+      <RoleGate />
       <header className="portal-header">
         <h1>WebQX Portal</h1>
         <nav>

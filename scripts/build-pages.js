@@ -56,6 +56,7 @@ const htmlFiles = [
     'index.html',
     'login.html',
     'demo.html',
+    'emr-dashboard.html',
     'demo-fhir-r4-appointment-booking.html',
     'demo-lab-results-simple.html',
     'demo-lab-results-viewer.html',
