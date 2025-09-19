@@ -437,6 +437,25 @@ if (fs.existsSync(portalDist)) {
     }
 }
 
+// Ensure top-level favicons exist at dist/ for GitHub Pages (/EMR/favicon.*)
+try {
+    const portalPublic = path.join(__dirname, '..', 'portal', 'public');
+    const candidates = [
+        { name: 'favicon.svg', type: 'image/svg+xml' },
+        { name: 'favicon.ico', type: 'image/x-icon' }
+    ];
+    candidates.forEach(({ name }) => {
+        const src = path.join(portalPublic, name);
+        const dest = path.join(distDir, name);
+        if (fs.existsSync(src)) {
+            fs.copyFileSync(src, dest);
+            console.log(`Copied favicon: ${name}`);
+        }
+    });
+} catch (e) {
+    console.warn('Favicons copy step failed:', e.message);
+}
+
 // Create .nojekyll file to ensure GitHub Pages serves all files
 fs.writeFileSync(path.join(distDir, '.nojekyll'), '');
 console.log('Created: .nojekyll');
