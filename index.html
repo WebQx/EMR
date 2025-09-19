@@ -464,6 +464,15 @@
     </footer>
 
     <script>
+        // Resolve EMR base from runtime config or fallback
+        function getEmrBase() {
+            const cfg = (window.WEBQX_CONFIG && window.WEBQX_CONFIG.getConfig && window.WEBQX_CONFIG.getConfig()) || {};
+            const base = window.WEBQX_PROD_EMR || cfg.emr_base || cfg.api_base || window.location.origin;
+            return String(base).replace(/\/$/, '');
+        }
+        const __IS_LOCAL__ = ['localhost','127.0.0.1'].includes(location.hostname);
+        const __EMR_BASE__ = getEmrBase();
+        const __TRY_EMR__ = __IS_LOCAL__ || /^https?:\/\/(localhost|127\.0\.0\.1)(:|\b)/.test(__EMR_BASE__);
         // MariaDB Server Control
         function startMariaDBServer() {
             const button = document.getElementById('startBackend');
@@ -474,7 +483,7 @@
             button.disabled = true;
             statusText.textContent = 'MariaDB Server: Starting...';
             
-            // Simulate server start
+            // Attempt server start (only meaningful for dev envs with backend)
             fetch('/api/start-mariadb', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
@@ -489,7 +498,7 @@
                     
                     // Auto-redirect to EMR after 2 seconds
                     setTimeout(() => {
-                        window.open('http://localhost:8080', '_blank');
+                        window.open(__EMR_BASE__, '_blank');
                     }, 2000);
                 } else {
                     throw new Error(data.message || 'Failed to start server');
@@ -514,12 +523,17 @@
             const loginData = { username: 'demo@patient.com', password: 'patient123', role: 'patient' };
             localStorage.setItem('webqx_auto_login', JSON.stringify(loginData));
             
-            fetch('http://localhost:8080/api/status')
-            .then(() => window.open('http://localhost:8080/login?auto=patient', '_blank'))
-            .catch(() => {
-                startMariaDBServer();
-                setTimeout(() => window.open('patient-portal/?auto=patient', '_blank'), 3000);
-            });
+            if (__TRY_EMR__) {
+                fetch(__EMR_BASE__ + '/api/status')
+                .then(() => window.open(__EMR_BASE__ + '/login?auto=patient', '_blank'))
+                .catch(() => {
+                    startMariaDBServer();
+                    setTimeout(() => window.open('patient-portal/?auto=patient', '_blank'), 3000);
+                });
+            } else {
+                // In hosted environments, go to unified portal patient view
+                window.open('patient-portal/?auto=patient', '_blank');
+            }
         }
         
         function launchProviderPortal() {
@@ -527,12 +541,16 @@
             const loginData = { username: 'physician@webqx.com', password: 'demo123', role: 'physician' };
             localStorage.setItem('webqx_auto_login', JSON.stringify(loginData));
             
-            fetch('http://localhost:8080/api/status')
-            .then(() => window.open('http://localhost:8080/login?auto=physician', '_blank'))
-            .catch(() => {
-                startMariaDBServer();
-                setTimeout(() => window.open('provider/?auto=physician', '_blank'), 3000);
-            });
+            if (__TRY_EMR__) {
+                fetch(__EMR_BASE__ + '/api/status')
+                .then(() => window.open(__EMR_BASE__ + '/login?auto=physician', '_blank'))
+                .catch(() => {
+                    startMariaDBServer();
+                    setTimeout(() => window.open('provider/?auto=physician', '_blank'), 3000);
+                });
+            } else {
+                window.open('provider/?auto=physician', '_blank');
+            }
         }
         
         function launchAdminConsole() {
@@ -540,12 +558,16 @@
             const loginData = { username: 'admin@webqx.com', password: 'admin123', role: 'admin' };
             localStorage.setItem('webqx_auto_login', JSON.stringify(loginData));
             
-            fetch('http://localhost:8080/api/status')
-            .then(() => window.open('http://localhost:8080/login?auto=admin', '_blank'))
-            .catch(() => {
-                startMariaDBServer();
-                setTimeout(() => window.open('admin-console/?auto=admin', '_blank'), 3000);
-            });
+            if (__TRY_EMR__) {
+                fetch(__EMR_BASE__ + '/api/status')
+                .then(() => window.open(__EMR_BASE__ + '/login?auto=admin', '_blank'))
+                .catch(() => {
+                    startMariaDBServer();
+                    setTimeout(() => window.open('admin-console/?auto=admin', '_blank'), 3000);
+                });
+            } else {
+                window.open('admin-console/?auto=admin', '_blank');
+            }
         }
         
         // Check server status on load
@@ -553,20 +575,28 @@
             const statusText = document.getElementById('statusText');
             const statusIndicator = document.getElementById('backendStatus');
             
-            // Check if MariaDB is running
-            fetch('http://localhost:8080/api/status')
-            .then(response => response.json())
-            .then(data => {
+            // Check if EMR is running (dev only); in hosted environments, show platform online
+            if (__TRY_EMR__) {
+                fetch(__EMR_BASE__ + '/api/status')
+                .then(response => response.json())
+                .then(() => {
+                    statusIndicator.className = 'status-indicator status-online';
+                    statusText.textContent = 'MariaDB Server: Online - EMR Ready';
+                    const btn = document.getElementById('startBackend');
+                    if (btn) { btn.textContent = 'Server Running'; btn.style.background = '#10b981'; }
+                })
+                .catch(() => {
+                    statusIndicator.className = 'status-indicator status-offline';
+                    statusText.textContent = 'MariaDB Server: Offline - Click to start';
+                    const btn = document.getElementById('startBackend');
+                    if (btn) btn.style.display = 'inline-block';
+                });
+            } else {
                 statusIndicator.className = 'status-indicator status-online';
-                statusText.textContent = 'MariaDB Server: Online - EMR Ready';
-                document.getElementById('startBackend').textContent = 'Server Running';
-                document.getElementById('startBackend').style.background = '#10b981';
-            })
-            .catch(error => {
-                statusIndicator.className = 'status-indicator status-offline';
-                statusText.textContent = 'MariaDB Server: Offline - Click to start';
-                document.getElementById('startBackend').style.display = 'inline-block';
-            });
+                statusText.textContent = 'Platform: Online';
+                const btn = document.getElementById('startBackend');
+                if (btn) btn.style.display = 'none';
+            }
         });
     </script>
 </body>
