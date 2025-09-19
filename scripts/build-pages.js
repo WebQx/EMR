@@ -11,9 +11,17 @@ if (!fs.existsSync(distDir)) {
 
 console.log('Building static site for GitHub Pages...');
 
-// Detect Railway-backed API/EMR endpoints provided via CI environment
-const RUNTIME_API_BASE = process.env.RAILWAY_PUBLIC_API_BASE || '';
-const RUNTIME_EMR_BASE = process.env.RAILWAY_PUBLIC_EMR_BASE || '';
+// Detect Railway-backed API/EMR endpoints provided via CI environment or local config/pages-runtime.json
+let RUNTIME_API_BASE = process.env.RAILWAY_PUBLIC_API_BASE || '';
+let RUNTIME_EMR_BASE = process.env.RAILWAY_PUBLIC_EMR_BASE || '';
+if (!RUNTIME_API_BASE) {
+    try {
+        const json = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'config', 'pages-runtime.json'), 'utf8'));
+        RUNTIME_API_BASE = json.apiBase || '';
+        RUNTIME_EMR_BASE = json.emrBase || '';
+        if (RUNTIME_API_BASE) console.log('Using runtime config from config/pages-runtime.json');
+    } catch (_) {}
+}
 const USING_RUNTIME_CONFIG = Boolean(RUNTIME_API_BASE);
 
 // Build the React portal (Vite) if its package.json exists
