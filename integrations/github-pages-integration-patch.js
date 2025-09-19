@@ -207,18 +207,19 @@ class WebQXIntegration {
     }
 
     async updateModuleStatus() {
+        // Always derive a baseline from /health to avoid noisy 404s
+        await this.updateModuleStatusFromHealth();
+        // Optionally refine using /api/v1/modules/status when explicitly enabled
+        const tryModulesStatus = (window && window.WEBQX_TRY_MODULE_STATUS === true);
+        if (!tryModulesStatus) return;
         try {
-            const response = await fetch(`${this.getApiUrl()}/modules/status`);
+            const response = await fetch(`${this.getApiUrl()}/modules/status`, { method: 'GET' });
             if (response.ok) {
                 const moduleStatuses = await response.json();
                 this.applyModuleStatuses(moduleStatuses);
-                return;
             }
-            // Fallback on 404 or non-ok
-            await this.updateModuleStatusFromHealth();
-        } catch (error) {
-            // Graceful fallback to /health to reduce console 404 spam until backend includes modules/status
-            await this.updateModuleStatusFromHealth();
+        } catch (_) {
+            // Silent: health-based status remains
         }
     }
 
