@@ -230,10 +230,10 @@
         </div>
 
         <!-- Role Selector -->
-        <div class="role-selector">
-            <button class="role-btn active" onclick="selectRole('patient')">Patient</button>
-            <button class="role-btn" onclick="selectRole('provider')">Provider</button>
-            <button class="role-btn" onclick="selectRole('admin')">Admin</button>
+        <div class="role-selector" id="roleSelector">
+            <button class="role-btn active" data-role="patient">Patient</button>
+            <button class="role-btn" data-role="provider">Provider</button>
+            <button class="role-btn" data-role="admin">Admin</button>
         </div>
 
         <!-- Login Form -->
@@ -266,10 +266,10 @@
             <span>or try social login (requires setup)</span>
         </div>
 
-        <div class="social-login">
-            <button class="social-btn" onclick="socialLogin('google')" disabled style="opacity: 0.5; cursor: not-allowed;">Google (Setup Required)</button>
-            <button class="social-btn" onclick="socialLogin('microsoft')" disabled style="opacity: 0.5; cursor: not-allowed;">Microsoft (Setup Required)</button>
-            <button class="social-btn" onclick="socialLogin('apple')" disabled style="opacity: 0.5; cursor: not-allowed;">Apple (Coming Soon)</button>
+        <div class="social-login" id="socialButtons">
+            <button class="social-btn" data-provider="google" disabled style="opacity: 0.5; cursor: not-allowed;">Google (Setup Required)</button>
+            <button class="social-btn" data-provider="microsoft" disabled style="opacity: 0.5; cursor: not-allowed;">Microsoft (Setup Required)</button>
+            <button class="social-btn" data-provider="apple" disabled style="opacity: 0.5; cursor: not-allowed;">Apple (Coming Soon)</button>
         </div>
 
         <!-- Demo Accounts -->
@@ -310,10 +310,6 @@
 
     <script>
         function selectRole(role) {
-            // Update active button
-            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-
             // Show/hide facility selector for providers
             const facilityGroup = document.getElementById('facilityGroup');
             if (role === 'provider' || role === 'admin') {
@@ -533,14 +529,57 @@
                         <p style="color: #4a5568; margin-bottom: 2rem;">
                             You're already logged in via ${provider}
                         </p>
-                        <button onclick="goToDashboard()" class="login-btn" style="margin-bottom: 1rem;">
+                        <button class="login-btn" style="margin-bottom: 1rem;" data-action="goToDashboard">
                             Continue to Dashboard
                         </button>
-                        <button onclick="logout()" class="social-btn" style="width: 100%; background: #fed7d7; color: #c53030;">
+                        <button class="social-btn" style="width: 100%; background: #fed7d7; color: #c53030;" data-action="logout">
                             Sign Out
                         </button>
                     </div>
                 `;
+            }
+        }
+
+        // CSP-safe event wiring (no inline event attributes)
+        function initCspSafeHandlers() {
+            // Role selector delegation
+            const roleSelector = document.getElementById('roleSelector');
+            if (roleSelector) {
+                roleSelector.addEventListener('click', (e) => {
+                    const btn = e.target.closest('button.role-btn');
+                    if (!btn) return;
+                    const role = btn.getAttribute('data-role');
+                    if (!role) return;
+                    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    selectRole(role);
+                });
+            }
+
+            // Social login delegation
+            const social = document.getElementById('socialButtons');
+            if (social) {
+                social.addEventListener('click', (e) => {
+                    const btn = e.target.closest('button[data-provider]');
+                    if (!btn || btn.disabled) return;
+                    const provider = btn.getAttribute('data-provider');
+                    if (provider) socialLogin(provider);
+                });
+            }
+
+            // Actions inside dynamically replaced container
+            const container = document.querySelector('.login-container');
+            if (container) {
+                container.addEventListener('click', (e) => {
+                    const el = e.target.closest('[data-action]');
+                    if (!el) return;
+                    const action = el.getAttribute('data-action');
+                    if (action === 'goToDashboard') {
+                        goToDashboard();
+                    } else if (action === 'logout') {
+                        logout();
+                    }
+                });
             }
         }
 
@@ -570,6 +609,9 @@
             
             // Initialize demo accounts
             updateDemoAccounts('patient');
+
+            // Wire CSP-safe handlers
+            initCspSafeHandlers();
         });
     </script>
 </body>

@@ -531,10 +531,10 @@
                 <p class="subtitle" data-i18n="provider.subtitle">Secure Healthcare Professional Access</p>
                 
                 <!-- Language Selector -->
-                <div class="language-selector">
-                    <button onclick="changeLanguage('en')" class="lang-btn active" id="lang-en">English</button>
-                    <button onclick="changeLanguage('es')" class="lang-btn" id="lang-es">Español</button>
-                    <button onclick="changeLanguage('ar')" class="lang-btn" id="lang-ar">العربية</button>
+                <div class="language-selector" id="langSelector">
+                    <button class="lang-btn active" id="lang-en" data-lang="en">English</button>
+                    <button class="lang-btn" id="lang-es" data-lang="es">Español</button>
+                    <button class="lang-btn" id="lang-ar" data-lang="ar">العربية</button>
                 </div>
             </div>
 
@@ -575,7 +575,7 @@
                             required
                             autocomplete="current-password"
                         >
-                        <button type="button" onclick="togglePassword()" class="password-toggle">
+                        <button type="button" class="password-toggle" data-action="togglePassword">
                             <svg id="eyeIcon" class="sso-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -591,7 +591,7 @@
                         <input type="checkbox" id="rememberMe" name="rememberMe" class="checkbox">
                         <span data-i18n="form.rememberMe">Remember me</span>
                     </label>
-                    <a href="#" onclick="showForgotPassword()" class="forgot-link" data-i18n="form.forgotPassword">Forgot Password?</a>
+                    <a href="#" class="forgot-link" data-i18n="form.forgotPassword" data-action="showForgotPassword">Forgot Password?</a>
                 </div>
 
                 <!-- Login Button -->
@@ -614,7 +614,7 @@
 
                     <div class="sso-buttons">
                         <!-- Keycloak SSO -->
-                        <button type="button" onclick="initiateSSO('keycloak')" class="sso-button">
+                        <button type="button" class="sso-button" data-sso="keycloak">
                             <span class="sr-only">Sign in with Keycloak</span>
                             <svg class="sso-icon" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 2L2 7v10c0 5.55 3.84 9.95 9 11 5.16-1.05 9-5.45 9-11V7l-10-5z"/>
@@ -622,7 +622,7 @@
                         </button>
 
                         <!-- Microsoft SSO -->
-                        <button type="button" onclick="initiateSSO('microsoft')" class="sso-button">
+                        <button type="button" class="sso-button" data-sso="microsoft">
                             <span class="sr-only">Sign in with Microsoft</span>
                             <svg class="sso-icon" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zM24 11.4H12.6V0H24v11.4z"/>
@@ -630,7 +630,7 @@
                         </button>
 
                         <!-- SMART on FHIR SSO -->
-                        <button type="button" onclick="initiateSSO('smart-fhir')" class="sso-button">
+                        <button type="button" class="sso-button" data-sso="smart-fhir">
                             <span class="sr-only">Sign in with SMART on FHIR</span>
                             <svg class="sso-icon" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -658,8 +658,8 @@
             </div>
             
             <div class="modal-buttons">
-                <button onclick="cancelRoleSelection()" class="modal-button modal-button-secondary" data-i18n="roleModal.cancel">Cancel</button>
-                <button onclick="confirmRole()" id="confirmRoleBtn" class="modal-button modal-button-primary" data-i18n="roleModal.confirm" disabled>Confirm</button>
+                <button class="modal-button modal-button-secondary" data-action="cancelRoleSelection" data-i18n="roleModal.cancel">Cancel</button>
+                <button id="confirmRoleBtn" class="modal-button modal-button-primary" data-action="confirmRole" data-i18n="roleModal.confirm" disabled>Confirm</button>
             </div>
         </div>
     </div>
@@ -683,7 +683,7 @@
                 >
                 
                 <div class="modal-buttons">
-                    <button type="button" onclick="closeForgotPassword()" class="modal-button modal-button-secondary" data-i18n="forgotPassword.cancel">Cancel</button>
+                    <button type="button" class="modal-button modal-button-secondary" data-action="closeForgotPassword" data-i18n="forgotPassword.cancel">Cancel</button>
                     <button type="submit" class="modal-button modal-button-primary" data-i18n="forgotPassword.sendInstructions">Send Instructions</button>
                 </div>
             </form>
@@ -1065,6 +1065,36 @@
         // Initialize when DOM loads
         document.addEventListener('DOMContentLoaded', () => {
             window.providerAuth = new GitHubPagesProviderAuth();
+
+            // Language switch delegation
+            const langSel = document.getElementById('langSelector');
+            if (langSel) {
+                langSel.addEventListener('click', (e) => {
+                    const btn = e.target.closest('button[data-lang]');
+                    if (!btn) return;
+                    changeLanguage(btn.getAttribute('data-lang'));
+                });
+            }
+
+            // Password toggle / forgot password / modal actions
+            document.body.addEventListener('click', (e) => {
+                const actionEl = e.target.closest('[data-action]');
+                if (!actionEl) return;
+                const action = actionEl.getAttribute('data-action');
+                if (action === 'togglePassword') return togglePassword();
+                if (action === 'showForgotPassword') return showForgotPassword();
+                if (action === 'closeForgotPassword') return closeForgotPassword();
+                if (action === 'cancelRoleSelection') return cancelRoleSelection();
+                if (action === 'confirmRole') return confirmRole();
+            });
+
+            // SSO delegation
+            document.body.addEventListener('click', (e) => {
+                const ssoBtn = e.target.closest('button[data-sso]');
+                if (!ssoBtn) return;
+                const provider = ssoBtn.getAttribute('data-sso');
+                initiateSSO(provider);
+            });
         });
     </script>
     
