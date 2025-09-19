@@ -395,6 +395,12 @@
                                 Token stored securely. Your session will remain active.
                             </p>
                         </div>
+                        <button class="login-btn" style="margin-bottom: 1rem;" data-action="goToDashboard">
+                            Go to Dashboard Now
+                        </button>
+                        <button class="social-btn" style="width: 100%; background: #fed7d7; color: #c53030;" data-action="logout">
+                            Logout
+                        </button>
                     </div>
                 `;
 
@@ -411,8 +417,8 @@
 
         // Traditional login with backend integration
         async function performTraditionalLogin(email, password, role) {
-            const publicEmrUrl = 'https://yourdomain.com'; // Replace with your backend domain
-            const proxyUrl = 'https://yourdomain.com';
+            // Resolve backend base (same-origin by default)
+            const publicEmrUrl = (window.WEBQX_PROD_API || '').trim() || window.location.origin;
             
             try {
                 // Always use public backend
@@ -460,14 +466,14 @@
         
         function getDashboardUrl(role) {
             const dashboardMap = {
-                patient: 'http://localhost:3000/patient-portal/',
-                provider: 'http://localhost:3000/provider/',
-                doctor: 'http://localhost:3000/provider/',
-                nurse: 'http://localhost:3000/provider/',
-                admin: 'http://localhost:3000/admin-console/'
+                patient: '/patient-portal/',
+                provider: '/provider/',
+                doctor: '/provider/',
+                nurse: '/provider/',
+                admin: '/admin-console/'
             };
             
-            return dashboardMap[role] || 'http://localhost:3000/patient-portal/';
+            return dashboardMap[role] || '/patient-portal/';
         }
 
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
@@ -492,6 +498,12 @@
                 } else if (username === 'physician@webqx.com' && password === 'demo123') {
                     window.location.href = 'provider/';
                 } else if (username === 'admin@webqx.com' && password === 'admin123') {
+                    window.location.href = 'admin-console/';
+                } else if (username === 'physician' && password === 'physician') { // OpenEMR demo
+                    window.location.href = 'provider/';
+                } else if (username === 'clinician' && password === 'clinician') { // OpenEMR demo
+                    window.location.href = 'provider/';
+                } else if (username === 'admin' && password === 'pass') { // OpenEMR demo
                     window.location.href = 'admin-console/';
                 } else if (username === 'demo' && password === 'patient123') {
                     window.location.href = 'patient-portal/';
