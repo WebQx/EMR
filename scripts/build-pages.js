@@ -397,34 +397,29 @@ if (fs.existsSync(portalDist)) {
     if (fs.existsSync(spaIndex)) {
         let html = fs.readFileSync(spaIndex, 'utf8');
         if (html.includes('</head>')) {
-            const tags = [];
-            // Load runtime-config first (if present), then remote-config, then small integration patch.
-            if (USING_RUNTIME_CONFIG) tags.push('  <script src="./runtime-config.js"></script>');
-            // Ensure remote config is available to the SPA at runtime
-            tags.push('  <script src="./webqx-remote-config.js"></script>');
-                        // Route relative /api and /fhir calls to Railway from Pages
-                        if (fs.existsSync(path.join(__dirname, '..', 'integrations', 'pages-spa-api-proxy.js'))) {
-                                fs.copyFileSync(
-                                    path.join(__dirname, '..', 'integrations', 'pages-spa-api-proxy.js'),
-                                    path.join(distDir, 'pages-spa-api-proxy.js')
-                                );
-                                tags.push('  <script src="./pages-spa-api-proxy.js"></script>');
-                        }
-            // Keep small integrations helper (does not mock fetch)
+            const ver = (process.env.GITHUB_SHA ? process.env.GITHUB_SHA.substring(0, 8) : Date.now().toString());
+            const ensure = (snippet) => { if (!html.includes(snippet)) { html = html.replace('</head>', snippet + '\n</head>'); } };
+            // Copy proxy helper into dist if available
+            const proxySrc = path.join(__dirname, '..', 'integrations', 'pages-spa-api-proxy.js');
+            if (fs.existsSync(proxySrc)) {
+                fs.copyFileSync(proxySrc, path.join(distDir, 'pages-spa-api-proxy.js'));
+            }
+            // Ensure tags (idempotent)
+            if (USING_RUNTIME_CONFIG) ensure(`  <script src="./runtime-config.js?v=${ver}"></script>`);
+            ensure(`  <script src="./webqx-remote-config.js?v=${ver}"></script>`);
+            ensure(`  <script src="./pages-spa-api-proxy.js?v=${ver}"></script>`);
             if (fs.existsSync(path.join(distDir, 'github-pages-integration-patch.js'))) {
-                tags.push('  <script src="./github-pages-integration-patch.js"></script>');
+                ensure(`  <script src="./github-pages-integration-patch.js?v=${ver}"></script>`);
             }
-            // Avoid adding mock API to SPA when we expect a real Railway backend
-            if (!USING_RUNTIME_CONFIG && !html.includes('api-mock.js') && fs.existsSync(path.join(distDir, 'api-mock.js'))) {
-                tags.push('  <script src="./api-mock.js"></script>');
+            if (!USING_RUNTIME_CONFIG && fs.existsSync(path.join(distDir, 'api-mock.js'))) {
+                ensure(`  <script src="./api-mock.js?v=${ver}"></script>`);
             }
-            // Only insert if not already present
             const marker = '<!-- webqx-runtime-injected -->';
             if (!html.includes(marker)) {
-                html = html.replace('</head>', tags.join('\n') + '\n  ' + marker + '\n</head>');
-                fs.writeFileSync(spaIndex, html);
-                console.log('Injected runtime config scripts into SPA index.html');
+                html = html.replace('</head>', '  ' + marker + '\n</head>');
             }
+            fs.writeFileSync(spaIndex, html);
+            console.log('Ensured runtime config scripts are present in SPA index.html');
         }
     }
 }
