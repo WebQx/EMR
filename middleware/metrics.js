@@ -18,9 +18,17 @@ module.exports = function metricsMiddleware(req, res, next) {
 module.exports.metricsEndpoint = function metricsEndpoint(req, res) {
   const data = {};
   Object.entries(req.app.locals.__metrics || {}).forEach(([k, v]) => {
-    const sorted = [...v.p95Window].sort((a,b)=>a-b);
-    const p95 = sorted.length ? sorted[Math.floor(sorted.length*0.95)-1] : 0;
-    data[k] = { count: v.count, avg: +(v.total / v.count).toFixed(2), p95: +p95.toFixed(2) };
+    const count = v?.count || 0;
+    const total = v?.total || 0;
+    const win = Array.isArray(v?.p95Window) ? v.p95Window : [];
+    const sorted = [...win].sort((a,b)=>a-b);
+    let p95 = 0;
+    if (sorted.length > 0) {
+      const idx = Math.max(0, Math.floor(sorted.length * 0.95) - 1);
+      p95 = sorted[idx] || 0;
+    }
+    const avg = count > 0 ? +(total / count).toFixed(2) : 0;
+    data[k] = { count, avg, p95: +p95.toFixed(2) };
   });
   res.json({ collected: Object.keys(data).length, metrics: data });
 };

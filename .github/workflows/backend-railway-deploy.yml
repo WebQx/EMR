@@ -3,15 +3,6 @@ name: Backend Deploy (Railway)
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'api-proxy-server.js'
-      - 'server.js'
-      - 'core/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - 'railway.json'
-      - 'services/**'
-      - 'nginx-webqx.conf'
   workflow_dispatch:
 
 jobs:
