@@ -5,8 +5,10 @@
 
 class WebQXIntegration {
     constructor() {
-        this.apiBaseUrl = 'https://webqx-api.herokuapp.com/api/v1';
-        this.localApiUrl = 'http://localhost:3001/api/v1';
+        // Resolve API base from runtime config; on GitHub Pages, relative requests are rewritten by pages-spa-api-proxy.js
+        const cfg = (window.WEBQX_CONFIG && window.WEBQX_CONFIG.getConfig && window.WEBQX_CONFIG.getConfig()) || {};
+        this.apiBaseUrl = (cfg.api_base ? cfg.api_base.replace(/\/$/, '') : '') + '/api/v1';
+        this.localApiUrl = '';
         this.modules = new Map();
         this.placementCards = new Map();
         this.authToken = null;
@@ -185,42 +187,22 @@ class WebQXIntegration {
         const startButton = document.getElementById('startBackend');
 
         try {
-            // Try local API first
-            const response = await fetch(`${this.localApiUrl}/health`, {
-                method: 'GET',
-                timeout: 5000
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                statusIndicator?.classList.remove('status-offline');
-                statusIndicator?.classList.add('status-online');
-                if (statusText) statusText.textContent = `WebQx Server: Online (${data.version || 'v1.0'})`;
-                if (startButton) startButton.style.display = 'none';
-                
-                // Update module status
-                await this.updateModuleStatus();
-            } else {
-                throw new Error('Server not responding');
-            }
+            // Try relative /health first; on GitHub Pages this will be rewritten to the configured backend by pages-spa-api-proxy.js
+            const response = await fetch(`/health`, { method: 'GET' });
+            if (!response.ok) throw new Error('Server not responding');
+            const data = await response.json();
+            statusIndicator?.classList.remove('status-offline');
+            statusIndicator?.classList.add('status-online');
+            if (statusText) statusText.textContent = `WebQx Server: Online (${data.version || 'v1.0'})`;
+            if (startButton) startButton.style.display = 'none';
+            // Update module status
+            await this.updateModuleStatus();
         } catch (error) {
-            // Try remote API as fallback
-            try {
-                const response = await fetch(`${this.apiBaseUrl}/health`);
-                if (response.ok) {
-                    statusIndicator?.classList.remove('status-offline');
-                    statusIndicator?.classList.add('status-online');
-                    if (statusText) statusText.textContent = 'WebQx Server: Online (Remote)';
-                    if (startButton) startButton.style.display = 'none';
-                } else {
-                    throw new Error('Remote server not responding');
-                }
-            } catch (remoteError) {
-                statusIndicator?.classList.remove('status-online');
-                statusIndicator?.classList.add('status-offline');
-                if (statusText) statusText.textContent = 'WebQx Server: Offline';
-                if (startButton) startButton.style.display = 'inline-block';
-            }
+            // Mark offline; relative /health will be the single source of truth on Pages
+            statusIndicator?.classList.remove('status-online');
+            statusIndicator?.classList.add('status-offline');
+            if (statusText) statusText.textContent = 'WebQx Server: Offline';
+            if (startButton) startButton.style.display = 'inline-block';
         }
     }
 

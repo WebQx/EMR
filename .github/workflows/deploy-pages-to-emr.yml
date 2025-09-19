@@ -36,11 +36,14 @@ jobs:
           repository: WebQx/EMR
           token: ${{ secrets.EMR_DEPLOY_TOKEN }}
           path: emr-repo
+          fetch-depth: 0
 
       - name: Prepare gh-pages branch
         working-directory: emr-repo
         shell: bash
         run: |
+          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
           git fetch origin || true
           if git show-ref --quiet refs/heads/gh-pages; then
             git checkout gh-pages
