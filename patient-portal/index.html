@@ -1,12 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebQX™ Patient Portal</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>WebQX™ Patient Portal</title>
+        <meta http-equiv="refresh" content="0; url=../index.html#patient-portal">
+        <style>
+            body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol'; padding: 24px; }
+            .card { max-width: 720px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+            .muted { color: #6b7280; font-size: 14px; }
+            a { color: #047857; }
+        </style>
 </head>
 <body>
-    <div id="root"></div>
-    <script type="module" src="js/index.js"></script>
+    <div class="card">
+        <h1>Patient Portal moved</h1>
+        <p class="muted">You’re being redirected to the unified WebQX app.</p>
+        <p>
+            If you’re not redirected automatically, <a href="../index.html#patient-portal">click here to continue</a>.
+        </p>
+    </div>
+    <script>
+        // Fallback redirect (meta refresh above handles most cases)
+        try { window.location.replace('../index.html#patient-portal'); } catch {}
+    </script>
 </body>
 </html>

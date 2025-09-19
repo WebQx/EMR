@@ -453,7 +453,7 @@
                     <div class="user-menu">
                         <div class="user-avatar" id="userInitials">DR</div>
                         <span class="user-role" id="userRole">Provider</span>
-                        <button class="logout-btn" onclick="logout()">
+                        <button class="logout-btn" id="logoutHeaderBtn">
                             <svg class="arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                             </svg>
@@ -475,12 +475,12 @@
             
             <!-- Dashboard Modules -->
             <div class="dashboard-grid">
-                <div class="module-card" onclick="window.open('http://localhost:8080', '_blank')">
+                <div class="module-card" id="card-emr" data-action="open-emr">
                     <div class="module-header">
                         <div class="module-icon">🏥</div>
                         <div class="module-info">
                             <h3>WebQX EMR Patient Management</h3>
-                            <p>Live server: http://localhost:8080</p>
+                            <p>Live server: <span id="emrServerUrl">(auto)</span></p>
                         </div>
                     </div>
                     <div class="module-status">
@@ -491,7 +491,7 @@
                     </div>
                 </div>
                 
-                <div class="module-card" onclick="window.location.href='../telehealth.html'">
+                <div class="module-card" data-href="../telehealth.html">
                     <div class="module-header">
                         <div class="module-icon">📹</div>
                         <div class="module-info">
@@ -507,7 +507,7 @@
                     </div>
                 </div>
                 
-                <div class="module-card" onclick="window.location.href='../demo-fhir-r4-appointment-booking.html'">
+                <div class="module-card" data-href="../demo-fhir-r4-appointment-booking.html">
                     <div class="module-header">
                         <div class="module-icon">�</div>
                         <div class="module-info">
@@ -523,7 +523,7 @@
                     </div>
                 </div>
                 
-                <div class="module-card" onclick="window.location.href='../demo-lab-results-viewer.html'">
+                <div class="module-card" data-href="../demo-lab-results-viewer.html">
                     <div class="module-header">
                         <div class="module-icon">�</div>
                         <div class="module-info">
@@ -539,7 +539,7 @@
                     </div>
                 </div>
                 
-                <div class="module-card admin-only" onclick="window.location.href='../admin-console/'" id="adminModule" style="display: none;">
+                <div class="module-card admin-only" data-href="../admin-console/" id="adminModule" style="display: none;">
                     <div class="module-header">
                         <div class="module-icon">⚙️</div>
                         <div class="module-info">
@@ -559,11 +559,11 @@
             <!-- Quick Actions -->
             <div class="quick-actions">
                 <h2>WebQX EMR Quick Actions</h2>
-                <div class="actions-grid">
-                    <button class="action-btn" onclick="quickAction('openemr-patient-search')">🔍 Search Patients</button>
-                    <button class="action-btn schedule" onclick="quickAction('openemr-appointments')">📅 FHIR Scheduling</button>
-                    <button class="action-btn urgent" onclick="quickAction('urgent-telehealth')">🚨 Urgent Telehealth</button>
-                    <button class="action-btn home" onclick="quickAction('back-to-main')">🏠 Main Portal</button>
+                <div class="actions-grid" id="quickActions">
+                    <button class="action-btn" data-action="openemr-patient-search">🔍 Search Patients</button>
+                    <button class="action-btn schedule" data-action="openemr-appointments">📅 FHIR Scheduling</button>
+                    <button class="action-btn urgent" data-action="urgent-telehealth">🚨 Urgent Telehealth</button>
+                    <button class="action-btn home" data-action="back-to-main">🏠 Main Portal</button>
                     <!-- Future Feature: Uncomment when transcription mock integrated UI side
                     <button class="action-btn" onclick="quickAction('ai-assist')">🤖 AI Assist (Preview)</button>
                     -->
@@ -576,31 +576,69 @@
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', () => {
             loadUserData();
-            
-            // Auto-login to MariaDB EMR dashboard
-            setTimeout(() => {
-                const loginData = { username: 'admin', password: 'webqx123', role: 'physician' };
-                localStorage.setItem('webqx_auto_login', JSON.stringify(loginData));
-                
-                // Check if server is running and auto-open dashboard
-                fetch('http://localhost:8080/api/status')
-                .then(response => response.json())
-                .then(data => {
-                    showNotification('✅ MariaDB EMR Server Online - Opening Dashboard...');
-                    setTimeout(() => {
-                        window.open('http://localhost:8080/dashboard', '_blank');
-                    }, 2000);
-                })
-                .catch(error => {
-                    showNotification('⚠️ MariaDB EMR Server offline. Please start the server first.');
+            // Wire header logout button (CSP-safe)
+            const logoutBtn = document.getElementById('logoutHeaderBtn');
+            if (logoutBtn) logoutBtn.addEventListener('click', logout);
+
+            // Display EMR base in the card subtitle
+            try {
+                const el = document.getElementById('emrServerUrl');
+                if (el) el.textContent = getEmrBase();
+            } catch {}
+
+            // Module cards: handle clicks via data-attrs
+            document.querySelectorAll('.module-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const href = card.getAttribute('data-href');
+                    const action = card.getAttribute('data-action');
+                    if (href) {
+                        window.location.href = href;
+                        return;
+                    }
+                    if (action === 'open-emr') {
+                        window.open(getEmrBase(), '_blank');
+                    }
                 });
-            }, 1000);
+            });
+
+            // Quick actions container: delegate button clicks
+            const qa = document.getElementById('quickActions');
+            if (qa) {
+                qa.addEventListener('click', (ev) => {
+                    const btn = (ev.target && ev.target.closest) ? ev.target.closest('button[data-action]') : null;
+                    if (!btn) return;
+                    const act = btn.getAttribute('data-action');
+                    if (act) quickAction(act);
+                });
+            }
+            
+            // Dev-only: auto-login seed and local EMR check
+            if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+                setTimeout(() => {
+                    const loginData = { username: 'admin', password: 'webqx123', role: 'physician' };
+                    try { localStorage.setItem('webqx_auto_login', JSON.stringify(loginData)); } catch {}
+                    const emr = getEmrBase();
+                    fetch(emr + '/api/status').then(r => r.json()).then(() => {
+                        showNotification('✅ Local EMR Online - Opening Dashboard...');
+                        setTimeout(() => { window.open(emr + '/dashboard', '_blank'); }, 1500);
+                    }).catch(() => {
+                        showNotification('ℹ️ Local EMR not detected. Skipping auto-open.');
+                    });
+                }, 1000);
+            }
             
             // Debug: Check OpenEMR integration status
             setTimeout(() => {
                 checkOpenEMRIntegration();
             }, 2000);
         });
+
+        // Resolve EMR base URL from runtime config
+        function getEmrBase() {
+            const cfg = (window.WEBQX_CONFIG && window.WEBQX_CONFIG.getConfig && window.WEBQX_CONFIG.getConfig()) || {};
+            const base = window.WEBQX_PROD_EMR || cfg.emr_base || cfg.api_base || window.location.origin;
+            return String(base).replace(/\/$/, '');
+        }
 
         function checkOpenEMRIntegration() {
                     console.log('🔍 Checking WebQX EMR integration status...');
@@ -786,11 +824,11 @@
             const modal = document.createElement('div');
             modal.className = 'openemr-modal';
             modal.innerHTML = `
-                <div class="modal-overlay" onclick="closeOpenEMRModal()"></div>
+                <div class="modal-overlay" data-action="close"></div>
                 <div class="modal-content">
                     <div class="modal-header">
                         <h2>🏥 WebQX EMR Patient Management</h2>
-                        <button class="close-btn" onclick="closeOpenEMRModal()">×</button>
+                        <button class="close-btn" data-action="close">×</button>
                     </div>
                     <div class="modal-body">
                         <div class="openemr-interface">
@@ -813,12 +851,12 @@
                             <div class="patient-actions">
                                 <h3>WebQX EMR Actions</h3>
                                 <div class="actions-grid">
-                                    <button class="openemr-action" onclick="openEMRAction('patient-list')">📋 Patient List</button>
-                                    <button class="openemr-action" onclick="openEMRAction('new-patient')">➕ New Patient</button>
-                                    <button class="openemr-action" onclick="openEMRAction('encounters')">🩺 Encounters</button>
-                                    <button class="openemr-action" onclick="openEMRAction('demographics')">👤 Demographics</button>
-                                    <button class="openemr-action" onclick="openEMRAction('medical-history')">📜 Medical History</button>
-                                    <button class="openemr-action" onclick="openEMRAction('medications')">💊 Medications</button>
+                                    <button class="openemr-action" data-openemr-action="patient-list">📋 Patient List</button>
+                                    <button class="openemr-action" data-openemr-action="new-patient">➕ New Patient</button>
+                                    <button class="openemr-action" data-openemr-action="encounters">🩺 Encounters</button>
+                                    <button class="openemr-action" data-openemr-action="demographics">👤 Demographics</button>
+                                    <button class="openemr-action" data-openemr-action="medical-history">📜 Medical History</button>
+                                    <button class="openemr-action" data-openemr-action="medications">💊 Medications</button>
                                 </div>
                             </div>
                             
@@ -846,8 +884,8 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn-secondary" onclick="closeOpenEMRModal()">Close</button>
-                        <button class="btn-primary" onclick="launchOpenEMR()">Launch WebQX EMR</button>
+                        <button class="btn-secondary" data-action="close">Close</button>
+                        <button class="btn-primary" data-action="launch-openemr">Launch WebQX EMR</button>
                     </div>
                 </div>
             `;
@@ -1064,6 +1102,19 @@
             
             document.head.appendChild(style);
             document.body.appendChild(modal);
+
+            // Delegated listeners for modal actions
+            modal.addEventListener('click', (ev) => {
+                const t = ev.target;
+                if (!t) return;
+                if (t.classList && t.classList.contains('modal-overlay')) { closeOpenEMRModal(); return; }
+                const closeEl = t.closest('[data-action="close"]');
+                if (closeEl) { closeOpenEMRModal(); return; }
+                const launchEl = t.closest('[data-action="launch-openemr"]');
+                if (launchEl) { launchOpenEMR(); return; }
+                const actionEl = t.closest('[data-openemr-action]');
+                if (actionEl) { const a = actionEl.getAttribute('data-openemr-action'); if (a) openEMRAction(a); }
+            });
         }
 
         function createOpenEMRSchedulingInterface() {
@@ -1207,23 +1258,24 @@
         }
 
         function showModuleLoading(moduleName) {
-            // Find the clicked module card
-            const moduleCards = document.querySelectorAll('.module-card');
-            moduleCards.forEach(card => {
-                const onClick = card.getAttribute('onclick');
-                if (onClick && onClick.includes(moduleName)) {
-                    // Add loading state
-                    card.style.opacity = '0.7';
-                    card.style.transform = 'scale(0.98)';
-                    
-                    // Add loading indicator
-                    const statusSpan = card.querySelector('.status-available');
-                    if (statusSpan) {
-                        statusSpan.innerHTML = '⏳ Loading...';
-                        statusSpan.style.color = '#f59e0b';
-                    }
-                }
-            });
+            // Find the matching module card by known mapping
+            const map = {
+                'openemr-patients': '#card-emr',
+                'telehealth': '.module-card[data-href="../telehealth.html"]',
+                'openemr-appointments': '.module-card[data-href="../demo-fhir-r4-appointment-booking.html"]',
+                'openemr-clinical': '.module-card[data-href="../demo-lab-results-viewer.html"]',
+                'admin': '#adminModule'
+            };
+            const sel = map[moduleName];
+            const card = sel ? document.querySelector(sel) : null;
+            if (!card) return;
+            card.style.opacity = '0.7';
+            card.style.transform = 'scale(0.98)';
+            const statusSpan = card.querySelector('.status-available');
+            if (statusSpan) {
+                statusSpan.innerHTML = '⏳ Loading...';
+                statusSpan.style.color = '#f59e0b';
+            }
         }
 
         function hideModuleLoading() {
@@ -1248,14 +1300,19 @@
                 existing.remove();
             }
             
-            // Create notification
+            // Create notification without inline events
             const notification = document.createElement('div');
             notification.className = 'notification';
-            notification.innerHTML = `
-                ${message}
-                <button class="close-btn" onclick="this.parentElement.remove()">×</button>
-            `;
-            
+            const msg = document.createElement('span');
+            msg.textContent = String(message);
+            const close = document.createElement('button');
+            close.className = 'close-btn';
+            close.textContent = '×';
+            close.addEventListener('click', () => {
+                if (notification.parentElement) notification.parentElement.removeChild(notification);
+            });
+            notification.appendChild(msg);
+            notification.appendChild(close);
             document.body.appendChild(notification);
             
             // Show notification
