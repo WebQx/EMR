@@ -420,6 +420,22 @@ if (fs.existsSync(portalDist)) {
             }
             // Ensure tags (idempotent)
             if (USING_RUNTIME_CONFIG) ensure(`  <script src="./runtime-config.js?v=${ver}"></script>`);
+            // Redirect GitHub Pages visitors to the live Railway app (can be disabled via WEBQX_DISABLE_REDIRECT)
+            const redirectSnippet = [
+                '  <script id="webqx-redirect">',
+                '    (function(){try{',
+                '      if (window.WEBQX_DISABLE_REDIRECT) return;',
+                '      var isPages = /github\\.io$/i.test(location.hostname);',
+                '      var p = location.pathname.toLowerCase();',
+                "      var isEMR = p.indexOf('/emr') === 0 || p === '/' || p.endsWith('/index.html') || p.endsWith('/emr/index.html');",
+                '      if (!isPages || !isEMR) return;',
+                "      var target = (window.WEBQX_PROD_EMR || 'https://webqx-production.up.railway.app').replace(/\\/$/, '');",
+                "      var dest = target + '/index.html';",
+                '      if (location.href !== dest) { location.replace(dest); }',
+                '    }catch(e){console.warn("redirect skipped:", e);} })();',
+                '  </script>'
+            ].join('\n');
+            ensure(redirectSnippet);
             ensure(`  <script src="./webqx-remote-config.js?v=${ver}"></script>`);
             ensure(`  <script src="./pages-spa-api-proxy.js?v=${ver}"></script>`);
             if (fs.existsSync(path.join(distDir, 'github-pages-integration-patch.js'))) {
