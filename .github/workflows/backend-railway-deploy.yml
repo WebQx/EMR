@@ -27,10 +27,15 @@ jobs:
       - name: Deploy to Railway
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_PROJECT_ID: ${{ secrets.RAILWAY_PROJECT_ID }}
         run: |
           if [ -z "$RAILWAY_TOKEN" ]; then
             echo "RAILWAY_TOKEN secret missing" >&2
             exit 1
+          fi
+          if [ -n "$RAILWAY_PROJECT_ID" ]; then
+            echo "Linking Railway project $RAILWAY_PROJECT_ID";
+            railway link --project "$RAILWAY_PROJECT_ID" || true
           fi
           railway up --service webqx-api --detach || railway up --detach
 

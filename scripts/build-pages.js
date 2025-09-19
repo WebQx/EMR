@@ -24,6 +24,19 @@ if (!RUNTIME_API_BASE) {
 }
 const USING_RUNTIME_CONFIG = Boolean(RUNTIME_API_BASE);
 
+// Normalize runtime bases: ensure https:// scheme for GitHub Pages
+function normalizeBase(u) {
+    if (!u) return '';
+    // already has scheme
+    if (/^https?:\/\//i.test(u)) return u;
+    // add https by default for public backends
+    return 'https://' + u.replace(/^\/*/, '');
+}
+if (USING_RUNTIME_CONFIG) {
+    RUNTIME_API_BASE = normalizeBase(RUNTIME_API_BASE);
+    if (RUNTIME_EMR_BASE) RUNTIME_EMR_BASE = normalizeBase(RUNTIME_EMR_BASE);
+}
+
 // Build the React portal (Vite) if its package.json exists
 try {
     const portalPkg = path.join(__dirname, '..', 'portal', 'package.json');

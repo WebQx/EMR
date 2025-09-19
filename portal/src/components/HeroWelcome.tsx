@@ -40,6 +40,14 @@ export const HeroWelcome: React.FC = () => {
             Explore patient, provider, and admin perspectives in a single experience. Select a role below to load tailored modules.
             This static deployment runs in <strong>Demo Mode</strong> — interactive examples use mock data (no live backend required).
           </p>
+          <div style={{ fontSize: '.9rem', lineHeight: 1.5, maxWidth: 860, margin: '0 0 1.0rem', color: 'rgba(255,255,255,.95)' }}>
+            <p style={{ margin: '0 0 .5rem' }}>
+              An open-source healthcare platform built to bridge the gap between expensive commercial systems and the underserved communities that need them most. Offering affordable, multilingual, and customizable solutions for safety-net clinics and community hospitals
+            </p>
+            <p style={{ margin: 0 }}>
+              Cloud-based, FHIR-compliant, global healthcare ecosystem with telehealth, Medical Transcription , patient portals, and provider tools integrated with AI.
+            </p>
+          </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.6rem', marginBottom: '1rem' }}>
             {['patient','provider','admin'].map(r => (
               <button key={r} onClick={() => setRole(r)} style={{
