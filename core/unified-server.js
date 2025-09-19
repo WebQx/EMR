@@ -311,6 +311,57 @@ class UnifiedHealthcareServer {
             this.app.get('/internal/audit', auditMiddleware.auditEndpoint);
         }
 
+            // Lightweight module/status API expected by GitHub Pages integration
+            // GET /api/v1/modules/status -> [{ id, status }]
+            this.app.get('/api/v1/modules/status', (req, res) => {
+                try {
+                    const statuses = [
+                        { id: 'patient-portal', status: 'active' },
+                        { id: 'provider-portal', status: 'active' },
+                        { id: 'admin-console', status: 'active' },
+                        { id: 'telehealth', status: this.serviceHealth.telehealth ? 'active' : 'degraded' },
+                        { id: 'emr-system', status: this.serviceHealth.openemr ? 'active' : 'degraded' }
+                    ];
+                    res.json(statuses);
+                } catch (e) {
+                    res.status(500).json({ error: 'MODULE_STATUS_ERROR', message: e.message });
+                }
+            });
+
+            // POST /api/v1/analytics/module-access (fire-and-forget logging stub)
+            this.app.post('/api/v1/analytics/module-access', (req, res) => {
+                try {
+                    const payload = req.body || {};
+                    console.log('[Analytics] module-access', JSON.stringify(payload));
+                    res.status(202).json({ ok: true });
+                } catch (e) {
+                    res.status(500).json({ error: 'ANALYTICS_ERROR', message: e.message });
+                }
+            });
+
+            // GET /api/v1/placement-cards/:id/data -> mocked dynamic data used by homepage cards
+            this.app.get('/api/v1/placement-cards/:id/data', (req, res) => {
+                const { id } = req.params;
+                try {
+                    switch (id) {
+                        case 'patient-appointments':
+                            return res.json({ count: 2, next: 'Dr. Smith - Tomorrow 2:00 PM' });
+                        case 'patient-records':
+                            return res.json({ newResults: 2, totalRecords: 45 });
+                        case 'patient-prescriptions':
+                            return res.json({ active: 3, readyForPickup: 1 });
+                        case 'provider-patients':
+                            return res.json({ totalPatients: 156, todayAppointments: 8 });
+                        case 'provider-schedule':
+                            return res.json({ todaySlots: 8, availableSlots: 3 });
+                        default:
+                            return res.json({ ok: true });
+                    }
+                } catch (e) {
+                    res.status(500).json({ error: 'CARD_DATA_ERROR', message: e.message });
+                }
+            });
+
         // Setup service proxies
         this.setupServiceProxies();
 
@@ -382,6 +433,40 @@ class UnifiedHealthcareServer {
                 if (!res.headersSent) res.status(503).json({ error: 'Authentication service unavailable' });
             }
         }));
+
+            // Also support clients calling /api/v1/auth/* directly (no rewrite necessary)
+            this.app.use('/api/v1/auth', (req, res, next) => {
+                // Ensure body captured before proxy
+                const rawBodyChunks = [];
+                req.on('data', chunk => rawBodyChunks.push(chunk));
+                req.on('end', () => {
+                    req.rawBodyBuffer = Buffer.concat(rawBodyChunks);
+                });
+                next();
+            }, createProxyMiddleware({
+                target: `http://localhost:${this.config.djangoPort}`,
+                changeOrigin: true,
+                selfHandleResponse: false,
+                onProxyReq: (proxyReq, req, res) => {
+                    if (this.config.environment !== 'production') {
+                        console.log('[Proxy][Auth v1] inbound:', req.method, req.originalUrl);
+                    }
+                    if (req.method && ['POST','PUT','PATCH'].includes(req.method.toUpperCase())) {
+                        const bodyData = req.rawBodyBuffer || (req.body && Object.keys(req.body).length ? Buffer.from(JSON.stringify(req.body)) : null);
+                        if (bodyData && bodyData.length) {
+                            if (!proxyReq.getHeader('Content-Type')) {
+                                proxyReq.setHeader('Content-Type', 'application/json');
+                            }
+                            proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+                            try { proxyReq.write(bodyData); } catch (e) { console.warn('Auth v1 proxy body write failed:', e.message); }
+                        }
+                    }
+                },
+                onError: (err, req, res) => {
+                    console.error('❌ Django Auth (/api/v1/auth) proxy error:', err.message);
+                    if (!res.headersSent) res.status(503).json({ error: 'Authentication service unavailable' });
+                }
+            }));
 
         // Deferred mounting for OpenEMR/FHIR proxies until service health is true
         const mountOpenEMRAndFhir = () => {
