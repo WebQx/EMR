@@ -309,8 +309,29 @@ class UnifiedHealthcareServer {
     if (metricsMiddleware) this.app.use(metricsMiddleware);
     if (auditMiddleware) this.app.use(auditMiddleware);
 
-        // Serve static files
+        // Serve static files (prefer built artifacts if present)
+        const cwd = process.cwd();
+        const distDir = path.join(cwd, 'dist');
+        const portalDistDir = path.join(cwd, 'portal', 'dist');
+        if (fs.existsSync(distDir)) {
+            this.log('info', `Serving static content from dist/: ${distDir}`);
+            this.app.use(express.static(distDir));
+        }
+        if (fs.existsSync(portalDistDir)) {
+            this.log('info', `Serving static content from portal/dist: ${portalDistDir}`);
+            this.app.use(express.static(portalDistDir));
+        }
+        // Fallback to repo root for legacy static files
         this.app.use(express.static('.'));
+
+        // Friendly redirects for legacy SPA paths
+        this.app.get(['/portal', '/portal/'], (req, res) => {
+            // Redirect to unified SPA with portal hash
+            return res.redirect(302, '/index.html#portal');
+        });
+        this.app.get('/portal/*', (req, res) => {
+            return res.redirect(302, '/index.html#portal');
+        });
 
         // Patient portal routes
         this.setupPatientPortalRoutes();
@@ -401,6 +422,26 @@ class UnifiedHealthcareServer {
                     res.status(500).json({ error: 'CARD_DATA_ERROR', message: e.message });
                 }
             });
+
+        // SPA HTML fallback for unknown GET routes (after all APIs and static)
+        this.app.get('*', (req, res, next) => {
+            try {
+                // Only handle HTML navigations
+                if (req.method === 'GET' && (req.accepts('html') || req.headers.accept?.includes('text/html'))) {
+                    const candidates = [
+                        path.join(distDir, 'index.html'),
+                        path.join(portalDistDir, 'index.html'),
+                        path.join(cwd, 'index.html')
+                    ];
+                    for (const p of candidates) {
+                        if (p && fs.existsSync(p)) {
+                            return res.sendFile(p);
+                        }
+                    }
+                }
+            } catch (_) {}
+            return next();
+        });
 
         // Setup service proxies
         this.setupServiceProxies();

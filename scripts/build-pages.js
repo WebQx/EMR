@@ -424,7 +424,10 @@ if (fs.existsSync(portalDist)) {
             const redirectSnippet = [
                 '  <script id="webqx-redirect">',
                 '    (function(){try{',
-                '      if (window.WEBQX_DISABLE_REDIRECT) return;',
+                '      // Opt-out via global, localStorage flag, or query param',
+                "      var qsNo = /[?&]no-redirect=1(?:&|$)/.test(location.search);",
+                "      var lsNo = false; try { lsNo = localStorage.getItem('WEBQX_DISABLE_REDIRECT') === 'true'; } catch(e) {}",
+                '      if (window.WEBQX_DISABLE_REDIRECT || lsNo || qsNo) return;',
                 '      var isPages = /github\\.io$/i.test(location.hostname);',
                 '      var p = location.pathname.toLowerCase();',
                 "      var isEMR = p.indexOf('/emr') === 0 || p === '/' || p.endsWith('/index.html') || p.endsWith('/emr/index.html');",

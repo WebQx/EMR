@@ -6,6 +6,7 @@
     <title>WebQX Provider Portal</title>
     <link rel="stylesheet" href="../assets/webqx-emr-theme.css" />
     <script src="../assets/webqx-theme-init.js" defer></script>
+    <script src="../assets/openemr-launcher-shim.js" defer></script>
     <style>
         body.webqx-theme { background: linear-gradient(140deg,var(--wqx-bg) 0%,var(--wqx-bg-alt) 100%); color: var(--wqx-text); }
         .wqx-topbar { justify-content: space-between; }
@@ -101,6 +102,10 @@
             font-size: 14px;
             color: #10b981;
         }
+        /* Status variations */
+        .status-dot.offline { background: #ef4444; }
+        .status-text.offline { color: #ef4444; }
+        .status-text.checking { color: #f59e0b; }
         
         .user-menu {
             display: flex;
@@ -631,6 +636,11 @@
             setTimeout(() => {
                 checkOpenEMRIntegration();
             }, 2000);
+
+            // Backend status banner probe (read-only)
+            try {
+                startBackendStatusProbe();
+            } catch {}
         });
 
         // Resolve EMR base URL from runtime config
@@ -664,6 +674,45 @@
                 console.error('❌ WebQX EMR launcher not available');
                 showNotification('⚠️ WebQX EMR launcher not loaded. Please refresh the page.', 'warning');
             }
+        }
+
+        function startBackendStatusProbe() {
+            const dot = document.querySelector('.status-indicator .status-dot');
+            const text = document.querySelector('.status-indicator .status-text');
+            if (!dot || !text) return;
+
+            const setState = (state) => {
+                dot.classList.remove('offline');
+                text.classList.remove('offline', 'checking');
+                if (state === 'checking') {
+                    text.textContent = 'Checking…';
+                    text.classList.add('checking');
+                } else if (state === 'online') {
+                    text.textContent = 'System Online';
+                } else {
+                    text.textContent = 'System Offline';
+                    dot.classList.add('offline');
+                    text.classList.add('offline');
+                }
+            };
+
+            const ping = async () => {
+                setState('checking');
+                try {
+                    const ctrl = new AbortController();
+                    const t = setTimeout(() => ctrl.abort(), 3500);
+                    const res = await fetch('/health', { cache: 'no-store', signal: ctrl.signal });
+                    clearTimeout(t);
+                    if (!res.ok) throw new Error('bad status ' + res.status);
+                    // Any JSON is acceptable; we treat HTTP 200 as online
+                    setState('online');
+                } catch (_) {
+                    setState('offline');
+                }
+            };
+
+            ping();
+            setInterval(ping, 30000);
         }
 
         function loadUserData() {

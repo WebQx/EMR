@@ -3,7 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebQX EMR - Provider Portal</title>
+        <title>WebQX EMR - Provider Portal</title>
+        <script src="../../assets/openemr-launcher-shim.js" defer></script>
+        <script>
+        // CSP-safe helpers
+        function getEmrBase(){
+            try {
+                const cfg = (window.WEBQX_CONFIG && window.WEBQX_CONFIG.getConfig && window.WEBQX_CONFIG.getConfig()) || {};
+                return String(window.WEBQX_PROD_EMR || cfg.emr_base || cfg.api_base || window.location.origin).replace(/\/$/,'');
+            } catch { return window.location.origin; }
+        }
+        document.addEventListener('DOMContentLoaded', function(){
+            const root = document.body;
+            root.addEventListener('click', function(ev){
+                const btn = ev.target && ev.target.closest('[data-action]');
+                if (!btn) return;
+                const act = btn.getAttribute('data-action');
+                if (act === 'telehealth:start') {
+                    alert('🔗 Connecting to Telehealth Service...');
+                    return;
+                }
+                if (act && act.startsWith('openemr:')){
+                    const module = act.split(':')[1] || 'home';
+                    if (window.openEMRLauncher) {
+                        window.openEMRLauncher.launchOpenEMR({ module, mode: 'window' });
+                    } else {
+                        window.open(getEmrBase() + '/', '_blank');
+                    }
+                }
+            });
+        });
+        </script>
     <link rel="stylesheet" href="../themes/webqx-modern.css">
     <style>
         body {
@@ -191,8 +221,8 @@
                 <h3><span class="icon">👥</span> Patient Management</h3>
                 <p>Access patient charts, review medical histories, and manage patient care plans. View appointments and update treatment protocols.</p>
                 <div style="margin-top: 1rem;">
-                    <button onclick="openEMR('patient_finder')" class="provider-btn">Find Patient</button>
-                    <button onclick="openEMR('calendar')" class="provider-btn secondary">Schedule</button>
+                    <button data-action="openemr:patient_finder" class="provider-btn">Find Patient</button>
+                    <button data-action="openemr:calendar" class="provider-btn secondary">Schedule</button>
                 </div>
             </div>
 
@@ -200,8 +230,8 @@
                 <h3><span class="icon">📋</span> Clinical Documentation</h3>
                 <p>Create and update clinical notes, SOAP notes, and treatment plans. Access templates and clinical decision support tools.</p>
                 <div style="margin-top: 1rem;">
-                    <button onclick="openEMR('clinical_notes')" class="provider-btn">New Note</button>
-                    <button onclick="openEMR('templates')" class="provider-btn secondary">Templates</button>
+                    <button data-action="openemr:clinical_notes" class="provider-btn">New Note</button>
+                    <button data-action="openemr:templates" class="provider-btn secondary">Templates</button>
                 </div>
             </div>
 
@@ -209,8 +239,8 @@
                 <h3><span class="icon">🔬</span> Lab Results & Reports</h3>
                 <p>Review laboratory results, imaging reports, and diagnostic tests. Track trends and flag abnormal values for follow-up.</p>
                 <div style="margin-top: 1rem;">
-                    <button onclick="openEMR('lab_results')" class="provider-btn">View Results</button>
-                    <button onclick="openEMR('pending_results')" class="provider-btn secondary">Pending</button>
+                    <button data-action="openemr:lab_results" class="provider-btn">View Results</button>
+                    <button data-action="openemr:pending_results" class="provider-btn secondary">Pending</button>
                 </div>
             </div>
 
@@ -218,8 +248,8 @@
                 <h3><span class="icon">💊</span> Prescription Management</h3>
                 <p>Prescribe medications, manage drug interactions, and send electronic prescriptions. Access formulary and dosing guidelines.</p>
                 <div style="margin-top: 1rem;">
-                    <button onclick="openEMR('prescriptions')" class="provider-btn">Prescribe</button>
-                    <button onclick="openEMR('drug_interactions')" class="provider-btn secondary">Interactions</button>
+                    <button data-action="openemr:prescriptions" class="provider-btn">Prescribe</button>
+                    <button data-action="openemr:drug_interactions" class="provider-btn secondary">Interactions</button>
                 </div>
             </div>
 
@@ -227,8 +257,8 @@
                 <h3><span class="icon">📅</span> Appointment Scheduling</h3>
                 <p>Manage your schedule, view upcoming appointments, and coordinate with other providers. Handle cancellations and rescheduling.</p>
                 <div style="margin-top: 1rem;">
-                    <button onclick="openEMR('calendar')" class="provider-btn">My Schedule</button>
-                    <button onclick="openEMR('availability')" class="provider-btn secondary">Availability</button>
+                    <button data-action="openemr:calendar" class="provider-btn">My Schedule</button>
+                    <button data-action="openemr:availability" class="provider-btn secondary">Availability</button>
                 </div>
             </div>
 
@@ -236,8 +266,8 @@
                 <h3><span class="icon">📊</span> Clinical Reports</h3>
                 <p>Generate clinical reports, quality measures, and population health analytics. Track performance metrics and outcomes.</p>
                 <div style="margin-top: 1rem;">
-                    <button onclick="openEMR('reports')" class="provider-btn">Generate Report</button>
-                    <button onclick="openEMR('analytics')" class="provider-btn secondary">Analytics</button>
+                    <button data-action="openemr:reports" class="provider-btn">Generate Report</button>
+                    <button data-action="openemr:analytics" class="provider-btn secondary">Analytics</button>
                 </div>
             </div>
 
@@ -245,8 +275,8 @@
                 <h3><span class="icon">📹</span> Telehealth Consultations</h3>
                 <p>Conduct virtual patient consultations, emergency teleconsults, and remote monitoring. Access telemedicine tools and protocols.</p>
                 <div style="margin-top: 1rem;">
-                    <button onclick="startTelehealth()" class="provider-btn">Start Video Call</button>
-                    <button onclick="openEMR('telehealth_history')" class="provider-btn secondary">History</button>
+                    <button data-action="telehealth:start" class="provider-btn">Start Video Call</button>
+                    <button data-action="openemr:telehealth_history" class="provider-btn secondary">History</button>
                 </div>
             </div>
 
@@ -255,7 +285,7 @@
                 <p>Access community health programs, mobile clinic schedules, and population health data. Coordinate outreach services.</p>
                 <div style="margin-top: 1rem;">
                     <button onclick="openCommunityHealth()" class="provider-btn">Community Programs</button>
-                    <button onclick="openEMR('mobile_clinic')" class="provider-btn secondary">Mobile Clinic</button>
+                    <button data-action="openemr:mobile_clinic" class="provider-btn secondary">Mobile Clinic</button>
                 </div>
             </div>
 
@@ -264,7 +294,7 @@
                 <p>Access FHIR APIs, manage health information exchange, and coordinate care with external providers and systems.</p>
                 <div style="margin-top: 1rem;">
                     <button onclick="openFHIR()" class="provider-btn">FHIR Console</button>
-                    <button onclick="openEMR('care_coordination')" class="provider-btn secondary">Care Coordination</button>
+                    <button data-action="openemr:care_coordination" class="provider-btn secondary">Care Coordination</button>
                 </div>
             </div>
         </div>
@@ -294,67 +324,7 @@
     </div>
 
     <script>
-        function openEMR(module) {
-            // Redirect to specific OpenEMR module
-            const moduleUrls = {
-                'patient_finder': '../core/interface/main/finder/patient_select.php',
-                'calendar': '../core/interface/main/calendar/index.php',
-                'clinical_notes': '../core/interface/forms/note/new.php',
-                'templates': '../core/interface/forms/',
-                'lab_results': '../core/interface/orders/orders_results.php',
-                'pending_results': '../core/interface/orders/pending_orders.php',
-                'prescriptions': '../core/interface/drugs/drug_inventory.php',
-                'drug_interactions': '../core/interface/drugs/',
-                'reports': '../core/interface/reports/',
-                'analytics': '../core/interface/reports/',
-                'telehealth_history': '../core/interface/main/finder/patient_select.php',
-                'mobile_clinic': '../core/interface/main/calendar/index.php',
-                'care_coordination': '../core/interface/main/'
-            };
-            
-            const url = moduleUrls[module] || '../core/';
-            window.open(url, '_blank');
-        }
-        
-        function startTelehealth() {
-            alert('🔗 Connecting to Telehealth Service...\n\nThis would normally open the integrated video consultation platform.');
-        }
-        
-        function openCommunityHealth() {
-            // Open community health dashboard
-            window.open('../includes/webqx-dashboard.php', '_blank');
-        }
-        
-        function openFHIR() {
-            // Open FHIR API console
-            window.open('../webqx-api.php', '_blank');
-        }
-        
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                window.location.href = '../core/interface/logout.php';
-            }
-        }
-        
-        // Check WebQX EMR status
-    fetch('https://yourdomain.com/webqx-api.php?action=status')
-            .then(response => response.json())
-            .then(data => {
-                console.log('WebQX EMR Status:', data);
-                if (data.status === 'online') {
-                    document.body.classList.add('emr-connected');
-                    
-                    // Update stats with real data if available
-                    fetch('/webqx-api.php?action=community-stats')
-                        .then(response => response.json())
-                        .then(stats => {
-                            console.log('Community Stats:', stats);
-                        });
-                }
-            })
-            .catch(error => {
-                console.log('EMR not accessible, using demo data');
-            });
+        // Remove legacy network calls to unknown endpoints; community stats are handled elsewhere now.
     </script>
 </body>
 </html>

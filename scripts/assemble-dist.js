@@ -58,7 +58,16 @@ function start() {
 
   // Vite portal output
   if (fs.existsSync('portal/dist')) {
+    // Copy both under /portal for GH Pages compatibility and into root for Railway serving
     copyRecursive('portal/dist', path.join(dist, 'portal'));
+    // Root SPA: copy index.html and assets to root so / loads the app on Railway
+    copyRecursive('portal/dist/index.html', path.join(dist, 'index.html'));
+    ['assets','css','js'].forEach(folder => {
+      const src = path.join('portal/dist', folder);
+      if (fs.existsSync(src)) {
+        copyRecursive(src, path.join(dist, folder));
+      }
+    });
   } else if (fs.existsSync('public/portal')) { // fallback
     copyRecursive('public/portal', path.join(dist, 'portal'));
   }

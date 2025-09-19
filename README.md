@@ -459,6 +459,28 @@ If older path already deployed:
 JWKS_URL=https://auth.example.com/api/v1/auth/.well-known/jwks.json  # still supported
 ```
 
+---
+
+## 🌐 GitHub Pages Runtime Behavior
+
+When hosted on GitHub Pages, the unified SPA includes a small client-side redirect to the live Railway UI for a friendlier experience. You can disable this for testing or deep-linking by defining a global flag before the SPA scripts load:
+
+```html
+<script>window.WEBQX_DISABLE_REDIRECT = true;</script>
+```
+
+You can also configure the SPA at runtime to point API and EMR calls to a specific backend by defining these globals (normally injected by the Pages build as `runtime-config.js`):
+
+```html
+<script>
+	window.WEBQX_PROD_API = 'https://webqx-production.up.railway.app';
+	window.WEBQX_PROD_EMR = 'https://webqx-production.up.railway.app'; // optional; defaults based on API
+	window.WEBQX_FORCE_ENV = 'remote'; // enables API proxy rewrite on non-GitHub Pages hosts
+</script>
+```
+
+The SPA includes a safe client-side API proxy (`pages-spa-api-proxy.js`) that rewrites relative calls like `/health`, `/api/*`, and `/fhir/*` to `WEBQX_PROD_API` on GitHub Pages (or whenever `WEBQX_FORCE_ENV==='remote'`).
+
 ### Frontend Helper Usage
 File: `assets/webqx-token-auth.js`
 ```
