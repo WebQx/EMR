@@ -313,6 +313,23 @@ class UnifiedHealthcareServer {
         const cwd = process.cwd();
         const distDir = path.join(cwd, 'dist');
         const portalDistDir = path.join(cwd, 'portal', 'dist');
+        // Favicon handler: serve from dist or provide a tiny fallback to avoid 404 noise
+        this.app.get('/favicon.ico', (req, res, next) => {
+            const candidates = [
+                path.join(distDir, 'favicon.ico'),
+                path.join(cwd, 'favicon.ico'),
+            ];
+            for (const p of candidates) {
+                if (p && fs.existsSync(p)) return res.sendFile(p);
+            }
+            // 1x1 transparent ICO fallback
+            const icoBlank = Buffer.from(
+                'AAABAAEAEBAAAAAAIABoAwAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA', 'base64');
+            res.setHeader('Content-Type', 'image/x-icon');
+            return res.status(200).send(icoBlank);
+        });
         if (fs.existsSync(distDir)) {
             this.log('info', `Serving static content from dist/: ${distDir}`);
             this.app.use(express.static(distDir));

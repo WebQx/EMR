@@ -632,10 +632,14 @@
                 }, 1000);
             }
             
-            // Debug: Check OpenEMR integration status
-            setTimeout(() => {
+            // Ensure launcher shim is present, then check integration status
+            tryInjectLauncherShim();
+            waitForLauncher(5000).then(() => {
                 checkOpenEMRIntegration();
-            }, 2000);
+            }).catch(() => {
+                // Even if timeout, run the check once to show current state
+                checkOpenEMRIntegration();
+            });
 
             // Backend status banner probe (read-only)
             try {
@@ -648,6 +652,33 @@
             const cfg = (window.WEBQX_CONFIG && window.WEBQX_CONFIG.getConfig && window.WEBQX_CONFIG.getConfig()) || {};
             const base = window.WEBQX_PROD_EMR || cfg.emr_base || cfg.api_base || window.location.origin;
             return String(base).replace(/\/$/, '');
+        }
+
+        function tryInjectLauncherShim() {
+            try {
+                if (window.openEMRLauncher) return;
+                // If a script tag with shim already exists, don't duplicate
+                var existing = document.querySelector('script[src$="openemr-launcher-shim.js"]');
+                if (existing) return;
+                var s = document.createElement('script');
+                s.src = '../assets/openemr-launcher-shim.js';
+                s.async = true;
+                s.onload = function(){ console.info('Launcher shim dynamically loaded'); };
+                s.onerror = function(){ console.warn('Failed to load launcher shim'); };
+                document.head.appendChild(s);
+            } catch (e) { /* ignore */ }
+        }
+
+        function waitForLauncher(timeoutMs) {
+            return new Promise((resolve, reject) => {
+                const start = Date.now();
+                const tick = () => {
+                    if (window.openEMRLauncher && window.openEMRConfig) return resolve(true);
+                    if (Date.now() - start >= (timeoutMs || 5000)) return reject(new Error('timeout'));
+                    setTimeout(tick, 250);
+                };
+                tick();
+            });
         }
 
         function checkOpenEMRIntegration() {

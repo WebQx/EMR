@@ -79,6 +79,19 @@ function start() {
   // .nojekyll (avoid Jekyll processing edge cases)
   fs.writeFileSync(path.join(dist, '.nojekyll'), '');
 
+  // Ensure favicons exist at root for hosting (align with build-pages.js behavior)
+  try {
+    const portalPublic = path.join(root, 'portal', 'public');
+    const candidates = ['favicon.svg', 'favicon.ico'];
+    for (const name of candidates) {
+      const src = path.join(portalPublic, name);
+      const dest = path.join(dist, name);
+      if (fs.existsSync(src)) copyRecursive(src, dest);
+    }
+  } catch (e) {
+    log('Favicons copy step skipped: ' + e.message);
+  }
+
   // Cache-busting stamp
   const indexPath = path.join(dist, 'index.html');
   if (fs.existsSync(indexPath)) {
