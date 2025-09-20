@@ -5,7 +5,27 @@ export const RoleGate: React.FC = () => {
   const { role, setRole, setPersona } = useAuth();
   if (role) return null;
 
-  const pick = (r: string, p?: string) => () => { setRole(r); if (p) setPersona(p); };
+  const seedDemoUser = (r: string) => {
+    // Create a consistent demo session used across modules/pages
+    const userByRole: Record<string, { id: string; name: string; email: string; role: string }> = {
+      patient: { id: 'demo-patient', name: 'Demo Patient', email: 'demo@patient.com', role: 'patient' },
+      provider: { id: 'demo-provider', name: 'Demo Provider', email: 'physician@webqx.com', role: 'provider' },
+      admin: { id: 'demo-admin', name: 'Demo Admin', email: 'admin@webqx.com', role: 'admin' }
+    };
+    const u = userByRole[r] || userByRole.patient;
+    try {
+      localStorage.setItem('webqx_demo', 'true');
+      localStorage.setItem('webqx_auth_provider', 'demo');
+      localStorage.setItem('webqx_token', `demo-token-${u.role}`);
+      localStorage.setItem('webqx_user', JSON.stringify(u));
+    } catch {}
+  };
+
+  const pick = (r: string, p?: string) => () => {
+    setRole(r);
+    if (p) setPersona(p);
+    seedDemoUser(r);
+  };
 
   return (
     <div className="overlay">

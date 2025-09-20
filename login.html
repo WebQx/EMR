@@ -309,6 +309,23 @@
     </div>
 
     <script>
+        function setDemoSession(role, email) {
+            const profiles = {
+                patient: { id: 'demo-patient', name: 'Demo Patient', email: email || 'demo@patient.com', role: 'patient' },
+                provider: { id: 'demo-provider', name: 'Demo Provider', email: email || 'physician@webqx.com', role: 'provider' },
+                admin: { id: 'demo-admin', name: 'Demo Admin', email: email || 'admin@webqx.com', role: 'admin' }
+            };
+            const u = profiles[role] || profiles.patient;
+            try {
+                localStorage.setItem('webqx_demo', 'true');
+                localStorage.setItem('webqx_auth_provider', 'demo');
+                localStorage.setItem('webqx_token', `demo-token-${u.role}`);
+                localStorage.setItem('webqx_user', JSON.stringify(u));
+                // Keep SPA session panel in sync if opened later
+                localStorage.setItem('portalUser', JSON.stringify(u));
+            } catch {}
+        }
+
         function selectRole(role) {
             // Show/hide facility selector for providers
             const facilityGroup = document.getElementById('facilityGroup');
@@ -492,26 +509,37 @@
             try {
                 // Demo login logic (fallback for demo accounts)
                 if (username === 'demo@patient.com' && password === 'patient123') {
+                    setDemoSession('patient', username);
                     window.location.href = 'patient-portal/';
                 } else if (username === 'doctor@webqx.com' && password === 'provider123') {
+                    setDemoSession('provider', username);
                     window.location.href = 'provider/';
                 } else if (username === 'physician@webqx.com' && password === 'demo123') {
+                    setDemoSession('provider', username);
                     window.location.href = 'provider/';
                 } else if (username === 'admin@webqx.com' && password === 'admin123') {
+                    setDemoSession('admin', username);
                     window.location.href = 'admin-console/';
                 } else if (username === 'physician' && password === 'physician') { // OpenEMR demo
+                    setDemoSession('provider', 'physician@webqx.com');
                     window.location.href = 'provider/';
                 } else if (username === 'clinician' && password === 'clinician') { // OpenEMR demo
+                    setDemoSession('provider', 'clinician@webqx.com');
                     window.location.href = 'provider/';
                 } else if (username === 'admin' && password === 'pass') { // OpenEMR demo
+                    setDemoSession('admin', 'admin@webqx.com');
                     window.location.href = 'admin-console/';
                 } else if (username === 'demo' && password === 'patient123') {
+                    setDemoSession('patient', 'demo@patient.com');
                     window.location.href = 'patient-portal/';
                 } else if (username === 'doctor' && password === 'provider123') {
+                    setDemoSession('provider', 'doctor@webqx.com');
                     window.location.href = 'provider/';
                 } else if (username === 'physician' && password === 'demo123') {
+                    setDemoSession('provider', 'physician@webqx.com');
                     window.location.href = 'provider/';
                 } else if (username === 'admin' && password === 'admin123') {
+                    setDemoSession('admin', 'admin@webqx.com');
                     window.location.href = 'admin-console/';
                 } else {
                     // Try backend authentication with local server

@@ -580,6 +580,24 @@
     <script>
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const launchParam = urlParams.get('launch'); // e.g., 'openemr'
+            const actionParam = urlParams.get('action'); // e.g., 'openemr-appointments'
+            // If no demo/auth session, send user to provider login with demo auto-fill
+            try {
+                const hasDemo = !!(localStorage.getItem('webqx_demo') || localStorage.getItem('providerAuthToken') || sessionStorage.getItem('providerAuthToken'));
+                if (!hasDemo) {
+                    // Preserve intent so login can round-trip back and deep-link
+                    const qp = new URLSearchParams();
+                    qp.set('demo', '1');
+                    qp.set('role', 'physician');
+                    if (launchParam) qp.set('launch', launchParam);
+                    if (actionParam) qp.set('action', actionParam);
+                    const target = `../auth/providers/login.html?${qp.toString()}`;
+                    window.location.replace(target);
+                    return;
+                }
+            } catch {}
             loadUserData();
             // Wire header logout button (CSP-safe)
             const logoutBtn = document.getElementById('logoutHeaderBtn');
@@ -636,9 +654,12 @@
             tryInjectLauncherShim();
             waitForLauncher(5000).then(() => {
                 checkOpenEMRIntegration();
+                // After integration check, honor deep link actions
+                tryAutoLaunchFromQuery(launchParam, actionParam);
             }).catch(() => {
                 // Even if timeout, run the check once to show current state
                 checkOpenEMRIntegration();
+                tryAutoLaunchFromQuery(launchParam, actionParam);
             });
 
             // Backend status banner probe (read-only)
@@ -705,6 +726,23 @@
                 console.error('❌ WebQX EMR launcher not available');
                 showNotification('⚠️ WebQX EMR launcher not loaded. Please refresh the page.', 'warning');
             }
+        }
+
+        function tryAutoLaunchFromQuery(launchParam, actionParam) {
+            try {
+                // Only auto-act if a session/demo is present
+                const hasSession = !!(localStorage.getItem('webqx_demo') || localStorage.getItem('providerAuthToken') || sessionStorage.getItem('providerAuthToken'));
+                if (!hasSession) return;
+                // If explicit action is provided, route through quickAction for consistent UX
+                if (actionParam) {
+                    quickAction(actionParam);
+                    return;
+                }
+                // Otherwise, if launch=openemr, launch the EMR
+                if (launchParam && launchParam.toLowerCase() === 'openemr') {
+                    launchOpenEMR();
+                }
+            } catch { /* no-op */ }
         }
 
         function startBackendStatusProbe() {

@@ -21,9 +21,25 @@ export const AuthPanel: React.FC = () => {
   const login = (u: MockUser) => {
     setUser(u);
     setRole(u.role);
-    try { localStorage.setItem('portalUser', JSON.stringify(u)); } catch {}
+    try {
+      localStorage.setItem('portalUser', JSON.stringify(u));
+      // Seed unified demo auth keys used by other modules/pages
+      localStorage.setItem('webqx_demo', 'true');
+      localStorage.setItem('webqx_auth_provider', 'demo');
+      localStorage.setItem('webqx_token', `demo-token-${u.role}`);
+      localStorage.setItem('webqx_user', JSON.stringify(u));
+    } catch {}
   };
-  const logout = () => { setUser(null); reset(); localStorage.removeItem('portalUser'); };
+  const logout = () => {
+    setUser(null);
+    reset();
+    localStorage.removeItem('portalUser');
+    // Clear unified demo auth keys
+    localStorage.removeItem('webqx_demo');
+    localStorage.removeItem('webqx_auth_provider');
+    localStorage.removeItem('webqx_token');
+    localStorage.removeItem('webqx_user');
+  };
 
   return (
     <div className="panel" style={{ position: 'relative' }}>

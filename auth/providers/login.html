@@ -694,6 +694,13 @@
     <script>
         // GitHub Pages compatibility - detect if we're on GitHub Pages
         const isGitHubPages = window.location.hostname.includes('github.io');
+        const urlParams = new URLSearchParams(window.location.search);
+    const demoParam = urlParams.get('demo');
+    const autologinParam = urlParams.get('autologin');
+        const preselectRoleParam = urlParams.get('role');
+        const returnParam = urlParams.get('return');
+    const launchParam = urlParams.get('launch');
+    const actionParam = urlParams.get('action');
         
         // Provider authentication for GitHub Pages
         class GitHubPagesProviderAuth {
@@ -704,25 +711,25 @@
                         name: 'Physician',
                         description: 'Full access to patient records, prescribing, and clinical modules',
                         modules: ['patients', 'prescriptions', 'lab-results', 'imaging', 'scheduling', 'billing'],
-                        redirect: isGitHubPages ? '/webqx/provider/' : '/provider/dashboard/physician'
+                        redirect: isGitHubPages ? '/webqx/provider/' : '/provider/dashboard/'
                     },
                     'nurse': {
                         name: 'Nurse',
                         description: 'Access to patient care, medication administration, and vital signs',
                         modules: ['patients', 'vitals', 'medication-admin', 'scheduling', 'care-plans'],
-                        redirect: isGitHubPages ? '/webqx/provider/' : '/provider/dashboard/nurse'
+                        redirect: isGitHubPages ? '/webqx/provider/' : '/provider/dashboard/'
                     },
                     'pharmacist': {
                         name: 'Pharmacist',
                         description: 'Access to prescription management and medication reconciliation',
                         modules: ['prescriptions', 'medication-reconciliation', 'drug-interactions', 'inventory'],
-                        redirect: isGitHubPages ? '/webqx/provider/' : '/provider/dashboard/pharmacist'
+                        redirect: isGitHubPages ? '/webqx/provider/' : '/provider/dashboard/'
                     },
                     'administrator': {
                         name: 'Administrator',
                         description: 'Administrative access to system management and reporting',
                         modules: ['users', 'reporting', 'billing', 'system-config', 'audit-logs'],
-                        redirect: isGitHubPages ? '/webqx/admin-console/' : '/provider/dashboard/admin'
+                        redirect: isGitHubPages ? '/webqx/admin-console/' : '/provider/dashboard/'
                     }
                 };
                 this.init();
@@ -731,6 +738,7 @@
             init() {
                 this.setupFormHandlers();
                 this.checkExistingSession();
+                this.applyDemoAutofillFromQuery();
             }
 
             setupFormHandlers() {
@@ -760,7 +768,7 @@
 
                 // Simulate authentication delay
                 setTimeout(() => {
-                    if (isGitHubPages) {
+                    if (this.forceDemoMode()) {
                         // Mock authentication for GitHub Pages
                         this.handleMockLogin(credentials);
                     } else {
@@ -828,6 +836,19 @@
                 storage.setItem('providerAuthToken', result.token);
                 storage.setItem('providerUser', JSON.stringify(result.user));
                 storage.setItem('providerLoginTime', Date.now().toString());
+
+                // Set unified demo session keys for cross-module recognition
+                try {
+                    localStorage.setItem('webqx_demo', '1');
+                    localStorage.setItem('webqx_token', result.token);
+                    localStorage.setItem('webqx_auth_provider', 'demo');
+                    localStorage.setItem('webqx_user', JSON.stringify({
+                        id: result.user.id,
+                        name: result.user.name,
+                        username: result.user.username,
+                        roles: result.user.roles
+                    }));
+                } catch {}
             }
 
             showRoleConfirmation(userRoles) {
@@ -888,7 +909,23 @@
             redirectToRoleDashboard(role) {
                 const roleConfig = this.providerRoles[role];
                 if (roleConfig) {
-                    window.location.href = roleConfig.redirect;
+                    // Honor explicit return URL when provided (demo/testing only)
+                    if (returnParam && /^\/?[\w\-\/\.?#=&%]+$/.test(returnParam)) {
+                        window.location.href = returnParam;
+                        return;
+                    }
+                    // Propagate deep-link params to provider dashboard when present
+                    try {
+                        let target = roleConfig.redirect;
+                        const qp = new URLSearchParams();
+                        if (launchParam) qp.set('launch', launchParam);
+                        if (actionParam) qp.set('action', actionParam);
+                        const qs = qp.toString();
+                        if (qs) target += (target.includes('?') ? '&' : '?') + qs;
+                        window.location.href = target;
+                    } catch {
+                        window.location.href = roleConfig.redirect;
+                    }
                 } else {
                     window.location.href = isGitHubPages ? '/webqx/provider/' : '/provider/dashboard';
                 }
@@ -1061,6 +1098,48 @@
                 document.dir = 'ltr';
             }
         }
+
+        // Helper methods added to prototype
+        GitHubPagesProviderAuth.prototype.forceDemoMode = function() {
+            try {
+                return (demoParam === '1' || demoParam === 'true' || localStorage.getItem('webqx_demo') === '1' || isGitHubPages);
+            } catch { return isGitHubPages; }
+        };
+
+        GitHubPagesProviderAuth.prototype.applyDemoAutofillFromQuery = function() {
+            try {
+                if (!((demoParam === '1' || demoParam === 'true') || (autologinParam === '1' || autologinParam === 'true'))) return;
+                const u = document.getElementById('username');
+                const p = document.getElementById('password');
+                if (u && !u.value) u.value = preselectRoleParam === 'administrator' ? 'admin@webqx.com' : 'physician';
+                if (p && !p.value) p.value = preselectRoleParam === 'administrator' ? 'pass' : 'physician';
+
+                // Trigger mock login immediately with filled credentials
+                const creds = { username: u ? u.value : 'physician', password: p ? p.value : 'physician', rememberMe: true };
+                this.setLoading(true);
+                setTimeout(() => {
+                    this.handleMockLogin(creds);
+                    // After role modal appears, auto-select and confirm if role specified
+                    if (preselectRoleParam) {
+                        const desired = preselectRoleParam;
+                        const trySelect = () => {
+                            if (!this.selectedRole && (desired in this.providerRoles)) {
+                                this.selectedRole = desired;
+                                const confirmBtn = document.getElementById('confirmRoleBtn');
+                                if (confirmBtn) confirmBtn.disabled = false;
+                                if (typeof window.confirmRole === 'function') {
+                                    window.confirmRole();
+                                    return true;
+                                }
+                            }
+                            return false;
+                        };
+                        const maxTries = 20; let count = 0;
+                        const iv = setInterval(() => { if (trySelect() || ++count >= maxTries) clearInterval(iv); }, 200);
+                    }
+                }, 300);
+            } catch {}
+        };
 
         // Initialize when DOM loads
         document.addEventListener('DOMContentLoaded', () => {
